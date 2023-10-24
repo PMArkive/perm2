@@ -96,7 +96,7 @@ namespace SAVE {
         IO::smallFont->setColor( IO::BLACK_IDX, 1 );
         IO::smallFont->setColor( 0, 2 );
 
-        IO::smallFont->printString( " FREE SOFTWARE/PHILIP WELLNITZ 2012[21][21][21]2023", 0, 0,
+        IO::smallFont->printString( " FREE SOFTWARE/PHILIP WELLNITZ 2012[21][21][21]2023", 0, -7,
                                     true );
 
         char buffer[ 50 ];
