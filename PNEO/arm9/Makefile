@@ -142,7 +142,7 @@ ARCH	:=	-mthumb -mthumb-interwork
 
 
 CFLAGS	:=	-g -Wall -Wextra -Wlogical-op -Wno-psabi -O2 -D_FORTIFY_SOURCE=1\
-			-Wshadow -Wpointer-arith -Wcast-qual -Wno-ignored-qualifiers\
+			-Wshadow -Wpointer-arith -Wno-ignored-qualifiers\
 			-Wduplicated-branches -Wduplicated-cond -Wno-volatile\
 			-Wfloat-equal -Wformat=1 -Wlogical-op\
 			-Wno-analyzer-possible-null-dereference\

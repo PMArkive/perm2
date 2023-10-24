@@ -44,12 +44,20 @@ namespace IO {
                 p_val = 11;
                 return;
             }
+            if( p_val == ':' ) {
+                p_val = 21;
+                return;
+            }
             if( p_val == ' ' ) {
                 p_val = 12;
                 return;
             }
             if( 'A' <= p_val && p_val <= 'Z' ) {
                 p_val = p_val - 'A' + 23;
+                return;
+            }
+            if( 'a' <= p_val && p_val <= 'z' ) {
+                p_val = p_val - 'a' + 23;
                 return;
             }
         }

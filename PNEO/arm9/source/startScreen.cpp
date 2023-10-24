@@ -92,22 +92,34 @@ namespace SAVE {
         IO::boldFont->setColor( 0, 0 );
         IO::boldFont->setColor( IO::WHITE_IDX, 1 );
         IO::boldFont->setColor( IO::BLACK_IDX, 2 );
+        IO::smallFont->setColor( 0, 0 );
+        IO::smallFont->setColor( IO::BLACK_IDX, 1 );
+        IO::smallFont->setColor( 0, 2 );
 
-        printf( "Free Software, PW 2012 - 2023\n"
-                "                             \n"
-                "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" );
+        IO::smallFont->printString( " FREE SOFTWARE/PHILIP WELLNITZ 2012[21][21][21]2023", 0, 0,
+                                    true );
+
+        char buffer[ 50 ];
 
         if( gMod == DEVELOPER )
-            printf( "   " __DATE__ " " __TIME__ " v%hhu.%hhu-dev\n", VERSION / 10, VERSION % 10 );
+            snprintf( buffer, 49, " " __DATE__ "/V%hhu[21]%hhu [19]DEV[20]", VERSION / 10,
+                      VERSION % 10 );
         else if( gMod == BETA )
-            printf( "  " __DATE__ " " __TIME__ " v%hhu.%hhu-beta\n", VERSION / 10, VERSION % 10 );
+            snprintf( buffer, 49, " " __DATE__ "/V%hhu[21]%hhu [19]BETA[20]", VERSION / 10,
+                      VERSION % 10 );
         else if( gMod == ALPHA )
-            printf( " " __DATE__ " " __TIME__ " v%hhu.%hhu-alpha\n", VERSION / 10, VERSION % 10 );
+            snprintf( buffer, 49, " " __DATE__ "/V%hhu[21]%hhu [19]ALPHA[20]", VERSION / 10,
+                      VERSION % 10 );
         else if( gMod == EMULATOR )
-            printf( "   " __DATE__ " " __TIME__ " v%hhu.%hhu-emu\n", VERSION / 10, VERSION % 10 );
+            snprintf( buffer, 49, " " __DATE__ "/V%hhu[21]%hhu [19]EMU[20]", VERSION / 10,
+                      VERSION % 10 );
         else if( gMod == FCARD )
-            printf( " " __DATE__ " " __TIME__ " v%hhu.%hhu-flash\n", VERSION / 10, VERSION % 10 );
-        printf( "%32s", VERSION_NAME );
+            snprintf( buffer, 49, " " __DATE__ "/V%hhu[21]%hhu [19]FLASH[20]", VERSION / 10,
+                      VERSION % 10 );
+        IO::smallFont->printString( buffer, 0, 176, true );
+
+        snprintf( buffer, 49, "%32s ", VERSION_NAME );
+        IO::smallFont->printString( buffer, 255, 176, true, IO::font::RIGHT );
 
         u8 frame = 0;
         loop( ) {
