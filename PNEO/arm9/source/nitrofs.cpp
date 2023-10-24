@@ -29,6 +29,7 @@ static int       nitroFSChdir( struct _reent *p_r, const char *p_name );
 
 #define NITRONAMELENMAX 0x80 // max file name is 127 +1 for zero byte
 #define NITROMAXPATHLEN 0x100
+#define PATH_MAX        1024
 
 #define NITROROOT    0xf000 // root entry_file_id
 #define NITRODIRMASK 0x0fff // remove leading 0xf
@@ -70,7 +71,7 @@ static u32          fatOffset;   // offset to start of file alloc table
 static u16          chdirpathid; // default dir path id...
 static int          ndsFileFD = -1;
 static unsigned int ndsFileLastpos; // Used to determine need to fseek or not
-static bool         cardRead = false;
+static bool         _cardRead = false;
 
 devoptab_t nitroFSdevoptab = {
     "nitro",
@@ -130,7 +131,7 @@ bool nitroFSInit( char **p_basepath ) {
     // fallback to direct card reads for desmume
     // TODO: validate nitrofs
     if( !nitroInit ) {
-        cardRead  = true;
+        _cardRead = true;
         nitroInit = true;
         strcpy( NITRO_PATH, "nitro:/" );
     }
@@ -193,7 +194,7 @@ static int nitroSubReadCard( unsigned int *p_npos, void *p_data, u32 p_length ) 
 }
 
 static inline int nitroSubRead( unsigned int *p_npos, void *p_data, u32 p_length ) {
-    if( cardRead ) {
+    if( _cardRead ) {
         unsigned int tmpPos = *p_npos;
         p_length            = nitroSubReadCard( &tmpPos, p_data, p_length );
     } else if( ndsFileFD != -1 ) { // read from ndsfile

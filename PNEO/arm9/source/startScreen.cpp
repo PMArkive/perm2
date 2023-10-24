@@ -81,7 +81,6 @@ namespace SAVE {
         IO::initOAMTable( false );
         IO::initOAMTable( true );
         IO::clearScreen( true, true, false );
-        consoleSelect( &IO::Top );
         FS::readPictureData( bgGetGfxPtr( IO::bg3 ), "nitro:/PICS/", "Title" );
 
         BG_PALETTE[ IO::WHITE_IDX ] = IO::WHITE;
@@ -93,11 +92,6 @@ namespace SAVE {
         IO::boldFont->setColor( 0, 0 );
         IO::boldFont->setColor( IO::WHITE_IDX, 1 );
         IO::boldFont->setColor( IO::BLACK_IDX, 2 );
-
-        consoleSetWindow( &IO::Bottom, 0, 0, 32, 24 );
-        consoleSelect( &IO::Bottom );
-
-        // BG_PALETTE[ 3 ] = BG_PALETTE_SUB[ 3 ] = RGB15( 0, 0, 0 );
 
         printf( "Free Software, PW 2012 - 2023\n"
                 "                             \n"
@@ -115,8 +109,6 @@ namespace SAVE {
             printf( " " __DATE__ " " __TIME__ " v%hhu.%hhu-flash\n", VERSION / 10, VERSION % 10 );
         printf( "%32s", VERSION_NAME );
 
-        consoleSetWindow( &IO::Top, 0, 23, 32, 1 );
-        consoleSelect( &IO::Top );
         u8 frame = 0;
         loop( ) {
             scanKeys( );
@@ -129,7 +121,6 @@ namespace SAVE {
                 SOUND::playCry( PKMN_RAYQUAZA );
                 for( u8 i = 0; i < 40; ++i ) { swiWaitForVBlank( ); };
                 IO::fadeScreen( IO::CLEAR_DARK, true, true );
-                IO::clearScreenConsole( true, true );
                 IO::clearScreen( true, true, true );
 
                 break;
@@ -145,8 +136,6 @@ namespace SAVE {
             }
         }
 
-        IO::clearScreenConsole( true, true );
-        consoleSelect( &IO::Top );
         REG_BLDCNT_SUB   = BLEND_ALPHA | BLEND_DST_BG3;
         REG_BLDALPHA_SUB = 0xff | ( 0x06 << 8 );
         bgUpdate( );

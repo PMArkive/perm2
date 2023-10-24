@@ -44,7 +44,6 @@ namespace IO {
         = new font( SMALL_FONT::fontData, SMALL_FONT::fontWidths, SMALL_FONT::shiftchar );
     font *brailleFont
         = new font( BRAILLE_FONT::fontData, BRAILLE_FONT::fontWidths, BRAILLE_FONT::shiftchar );
-    ConsoleFont *consoleFont = new ConsoleFont( );
 
     OAMTable  *Oam = new OAMTable( );
     SpriteInfo spriteInfo[ SPRITE_COUNT ];
@@ -53,8 +52,6 @@ namespace IO {
     SpriteInfo spriteInfoTop[ SPRITE_COUNT ];
 
     u8 TEXTSPEED = 50;
-
-    PrintConsole Top, Bottom;
 
     int bg3sub;
     int bg2sub;

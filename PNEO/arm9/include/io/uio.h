@@ -99,11 +99,10 @@ namespace IO {
     constexpr u8 FONT_WIDTH    = 16;
     constexpr u8 FONT_HEIGHT   = 16;
 
-    extern font*        regularFont;
-    extern font*        boldFont;
-    extern font*        smallFont;
-    extern font*        brailleFont;
-    extern ConsoleFont* consoleFont;
+    extern font* regularFont;
+    extern font* boldFont;
+    extern font* smallFont;
+    extern font* brailleFont;
 
     extern OAMTable*  Oam;
     extern SpriteInfo spriteInfo[ SPRITE_COUNT ];
@@ -113,12 +112,10 @@ namespace IO {
 
     extern u8 TEXTSPEED;
 
-    extern int          bg2;
-    extern int          bg3;
-    extern int          bg2sub;
-    extern int          bg3sub;
-    extern PrintConsole Bottom;
-    extern PrintConsole Top;
+    extern int bg2;
+    extern int bg3;
+    extern int bg2sub;
+    extern int bg3sub;
 
     void initVideo( bool p_noFade = false );
     void initVideoSub( bool p_noFade = false );

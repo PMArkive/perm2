@@ -58,8 +58,6 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "save/startScreen.h"
 #include "sound/sound.h"
 
-#include "consoleFont.h"
-
 #ifdef FLASHCARD
 GameMod gMod = GameMod::FCARD;
 #elif DESQUID
@@ -108,22 +106,8 @@ void initGraphics( ) {
     for( u8 i = 0; i < 4; ++i ) bgSetPriority( i, i );
     for( u8 i = 0; i < 4; ++i ) bgSetPriority( 4 + i, i );
     bgUpdate( );
-
-    IO::Top = *consoleInit( &IO::Top, 0, BgType_Text4bpp, BgSize_T_256x256, 2, 0, true, true );
-    IO::Bottom
-        = *consoleInit( &IO::Bottom, 0, BgType_Text4bpp, BgSize_T_256x256, 2, 0, false, true );
-
-    IO::consoleFont->gfx                = (u16*) const_cast<unsigned int*>( consoleFontTiles );
-    IO::consoleFont->pal                = (u16*) const_cast<unsigned short*>( consoleFontPal );
-    IO::consoleFont->numChars           = 218;
-    IO::consoleFont->numColors          = 16;
-    IO::consoleFont->bpp                = 8;
-    IO::consoleFont->asciiOffset        = 32;
-    IO::consoleFont->convertSingleColor = false;
-
-    consoleSetFont( &IO::Top, IO::consoleFont );
-    consoleSetFont( &IO::Bottom, IO::consoleFont );
 }
+
 void initTimeAndRnd( ) {
     auto ct      = std::time( nullptr );
     auto tStruct = std::gmtime( &ct );
@@ -281,7 +265,6 @@ START:
 #endif
 
     SAVE::startScreen( ).run( );
-    IO::clearScreenConsole( false, true );
     IO::clearScreen( false, true );
 
     FADE_TOP( );

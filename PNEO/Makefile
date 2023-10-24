@@ -3,7 +3,7 @@ ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM)
 endif
 
-include $(DEVKITARM)/ds_rules
+export SHELL := /usr/bin/env bash
 
 GAME_TITLE_JP	    :=  ポケットモンスター
 GAME_SUBTITLE1_JP	:=  ネオ

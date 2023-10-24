@@ -211,16 +211,4 @@ namespace IO {
         }
         regularFont->setColor( 0, 0 );
     }
-    void clearScreenConsole( bool p_bottom, bool p_both ) {
-        if( p_both || !p_bottom ) {
-            consoleSelect( &Top );
-            consoleSetWindow( &Top, 0, 0, 32, 24 );
-            consoleClear( );
-        }
-        if( p_both || p_bottom ) {
-            consoleSelect( &Bottom );
-            consoleSetWindow( &Bottom, 0, 0, 32, 24 );
-            consoleClear( );
-        }
-    }
 } // namespace IO

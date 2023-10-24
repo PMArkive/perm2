@@ -54,7 +54,6 @@ must not be misrepresented as being the original software.
 distribution.
 
 ---------------------------------------------------------------------------------*/
-#include <dswifi7.h>
 #include <nds.h>
 #ifndef NOSOUND
 #include "sound/sseq.h"
@@ -65,7 +64,7 @@ distribution.
 volatile bool exitflag = false;
 
 void VblankHandler( void ) {
-    Wifi_Update( );
+    // Wifi_Update( );
 }
 
 void VcountHandler( ) {
@@ -101,7 +100,7 @@ int main( ) {
 
     SetYtrigger( 80 );
 
-    installWifiFIFO( );
+    // installWifiFIFO( );
     installSoundFIFO( );
 
     installSystemFIFO( );
