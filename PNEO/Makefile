@@ -73,19 +73,23 @@ $(TARGET).nds: FORCE arm7/$(TARGET).elf arm9/$(TARGET).elf
 	padbin 0x8000000 $(TARGET).nds
 endif
 
-arm7/$(TARGET).elf: FORCE
+arm7/$(TARGET).elf: FORCE libnds
 	$(MAKE) -C arm7
 
-arm9/$(TARGET).elf: FORCE ndstool
+arm9/$(TARGET).elf: FORCE ndstool libnds
 	$(MAKE) -C arm9
 
 ndstool:
 	$(MAKE) -C tools/ndstool
 
+libnds:
+	$(MAKE) -C lib/libnds
+
 clean:
 	$(MAKE) -C arm9 clean
 	$(MAKE) -C arm7 clean
 	$(MAKE) -C tools/ndstool clean
+	$(MAKE) -C lib/libnds clean
 	rm -f $(TARGET).nds $(TARGET).arm7 $(TARGET).arm9
 
 rebuild: clean all
