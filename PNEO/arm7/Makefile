@@ -2,7 +2,12 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
+ifdef BLOCKSDS
 LIBNDS		:=	../lib/libnds
+else
+LIBNDS		:=	$(DEVKITPRO)/libnds
+endif
+
 
 #---------------------------------------------------------------------------------
 # make sure we have bash shell
@@ -163,11 +168,7 @@ ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -Wl,--nmagic -Wl,-Map,$(notdir $*).map
 
 #LIBS	:=	-ldswifi7 -lnds7
-ifdef DESQUID
-LIBS	:=	-lnds7d
-else
 LIBS	:=	-lnds7
-endif
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

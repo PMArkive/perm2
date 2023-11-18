@@ -5,7 +5,11 @@ ifeq ($(strip $(DEVKITPRO)),)
 $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>devkitPRO")
 endif
 
+ifdef BLOCKSDS
 LIBNDS		:=	../lib/libnds
+else
+LIBNDS		:=	$(DEVKITPRO)/libnds
+endif
 
 #---------------------------------------------------------------------------------
 # make sure we have bash shell
@@ -181,10 +185,10 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
 
-ifdef DESQUID
-LIBS	:=	-lnds9d
-else
 LIBS	:=	-lnds9
+
+ifndef BLOCKSDS
+LIBS	+=	-lfat
 endif
 
 #---------------------------------------------------------------------------------
