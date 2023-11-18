@@ -155,8 +155,9 @@ CFLAGS	+=	-DFLASHCARD
 endif
 
 CFLAGS	+=	$(INCLUDE) -DARM7
-CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-rtti
+CXXFLAGS	:=	$(CFLAGS) -std=gnu++23 -fno-rtti -fno-exceptions -fno-rtti
 
+CFLAGS	+= -std=gnu17
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -Wl,--nmagic -Wl,-Map,$(notdir $*).map
