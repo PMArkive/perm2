@@ -150,7 +150,7 @@ namespace BATTLE {
         bgSetPriority( IO::bg3, 3 );
         bgSetPriority( IO::bg2, 2 );
         IO::initOAMTable( false );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
 
         u16 tileCnt = SPR_PKMN_GFX( 4 ) + 16;
 
@@ -305,9 +305,9 @@ namespace BATTLE {
             u16 anchorx
                 = IO::OamTop->oamBuffer[ SPR_HPBAR_OAM + i ].x + ( ( i < 2 ) ? -8 : 34 + 82 );
             u16 anchory = IO::OamTop->oamBuffer[ SPR_HPBAR_OAM + i ].y + 4;
-            tileCnt     = IO::loadSprite( SPR_STATUS_ICON_OAM( i ), SPR_STATUS_ICON_PAL, tileCnt,
-                                          anchorx, anchory, 8, 8, 0, 0, 8 * 8 / 2, false, false, true,
-                                          OBJPRIORITY_0, false, OBJMODE_NORMAL );
+            tileCnt = IO::loadSprite( SPR_STATUS_ICON_OAM( i ), SPR_STATUS_ICON_PAL, tileCnt,
+                                      anchorx, anchory, 8, 8, 0, 0, 8 * 8 / 2, false, false, true,
+                                      OBJPRIORITY_0, false, OBJMODE_NORMAL );
             IO::loadSprite( SPR_SHINY_ICON_OAM( i ), SPR_SHINY_ICON_PAL,
                             IO::OamTop->oamBuffer[ SPR_SHINY_ICON_OAM( 0 ) ].gfxIndex, anchorx,
                             anchory + 8, 8, 8, 0, 0, 0, false, false, true, OBJPRIORITY_0, false,
@@ -369,9 +369,9 @@ namespace BATTLE {
         IO::bg3sub = bgInitSub( 3, BgType_Bmp8, BgSize_B8_256x256, 5, 0 );
         bgSetPriority( IO::bg3sub, 3 );
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), COMPLETE_SCREEN );
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 256 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN_SQ );
         bgUpdate( );
 
         // Load sprites
@@ -1010,17 +1010,17 @@ namespace BATTLE {
             u16* pal = IO::BG_PAL( i );
             std::memset( pal, 0, 256 * sizeof( u16 ) );
         }
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 256 );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 256 );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), 256 * 256 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN_SQ );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), COMPLETE_SCREEN_SQ );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN_SQ );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), COMPLETE_SCREEN_SQ );
     }
 
     void battleUI::resetLog( ) {
         SpriteEntry* oam = IO::Oam->oamBuffer;
         for( u8 i = 0; i < 128; ++i ) { oam[ i ].isHidden = true; }
         for( u8 i = 0; i < 12; ++i ) { oam[ SPR_LARGE_MESSAGE_OAM_SUB + i ].isHidden = false; }
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 256 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN_SQ );
         IO::updateOAM( true );
         _currentLogLine = 1;
     }
@@ -1628,12 +1628,12 @@ namespace BATTLE {
         IO::OamTop->matrixBuffer[ 3 ].vdx = 187 << 1;
         IO::OamTop->matrixBuffer[ 3 ].vdy = 187 << 2;
 
-        u16 sy = oam[ SPR_PKMN_START_OAM( 2 * ( !p_opponent ) + p_pos ) + 0 ].y + 8
-                 - ( IO::pkmnSpriteHeight( pinfo ) / 2 ),
-            sx = oam[ SPR_PKMN_START_OAM( 2 * ( !p_opponent ) + p_pos ) + 0 ].x + 2
-                 - 3 * IO::pkmnSpriteHeight( pinfo ) / 4;
-        s8 diffx = 80, diffy = 44;
-        s8 ske = -23;
+        u16 sy    = oam[ SPR_PKMN_START_OAM( 2 * ( !p_opponent ) + p_pos ) + 0 ].y + 8
+                    - ( IO::pkmnSpriteHeight( pinfo ) / 2 ),
+            sx    = oam[ SPR_PKMN_START_OAM( 2 * ( !p_opponent ) + p_pos ) + 0 ].x + 2
+                    - 3 * IO::pkmnSpriteHeight( pinfo ) / 4;
+        s8  diffx = 80, diffy = 44;
+        s8  ske = -23;
         if( !p_opponent ) {
             sy += 4;
             diffx = 97;
@@ -1699,9 +1699,9 @@ namespace BATTLE {
         IO::OamTop->matrixBuffer[ 2 ].vdx = ( 1LLU << 9 );
         IO::OamTop->matrixBuffer[ 2 ].vdy = ( 1LLU << 10 );
 
-        u16 sy   = oam[ SPR_PKMN_START_OAM( 0 ) + 0 ].y + 8 - ( IO::pkmnSpriteHeight( pinfo ) / 2 ),
-            sx   = oam[ SPR_PKMN_START_OAM( 0 ) + 0 ].x + 2 - 3 * IO::pkmnSpriteHeight( pinfo ) / 4;
-        s8 diffx = 80, diffy = 44;
+        u16 sy = oam[ SPR_PKMN_START_OAM( 0 ) + 0 ].y + 8 - ( IO::pkmnSpriteHeight( pinfo ) / 2 ),
+            sx = oam[ SPR_PKMN_START_OAM( 0 ) + 0 ].x + 2 - 3 * IO::pkmnSpriteHeight( pinfo ) / 4;
+        s8  diffx = 80, diffy = 44;
         IO::loadSprite( SPR_PKMN_SHADOW_START_OAM( 0 ) + 0, SPR_PKMN_SHADOW_PAL,
                         oam[ SPR_PKMN_START_OAM( 0 ) + 0 ].gfxIndex, sx, sy, 64, 64, emptyPal, 0, 0,
                         false, false, false, OBJPRIORITY_3, false, OBJMODE_BLENDED );
@@ -1884,12 +1884,12 @@ namespace BATTLE {
         IO::OamTop->matrixBuffer[ 3 ].vdx = 187 << 1;
         IO::OamTop->matrixBuffer[ 3 ].vdy = 187 << 2;
 
-        u16 sy = oam[ SPR_PKMN_START_OAM( 2 + p_pos ) + 0 ].y + 8
-                 - ( IO::pkmnSpriteHeight( pinfo ) / 2 ),
-            sx = oam[ SPR_PKMN_START_OAM( 2 + p_pos ) + 0 ].x + 2
-                 - 3 * IO::pkmnSpriteHeight( pinfo ) / 4;
-        s8 diffx = 80, diffy = 44;
-        s8 ske = -23;
+        u16 sy    = oam[ SPR_PKMN_START_OAM( 2 + p_pos ) + 0 ].y + 8
+                    - ( IO::pkmnSpriteHeight( pinfo ) / 2 ),
+            sx    = oam[ SPR_PKMN_START_OAM( 2 + p_pos ) + 0 ].x + 2
+                    - 3 * IO::pkmnSpriteHeight( pinfo ) / 4;
+        s8  diffx = 80, diffy = 44;
+        s8  ske = -23;
         sy += 4;
         diffx = 97;
         diffy = 48;
@@ -2028,7 +2028,7 @@ namespace BATTLE {
             }
 
             // Clear log window
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             for( u8 i = 0; i < 12; ++i ) { oam[ SPR_LARGE_MESSAGE_OAM_SUB + i ].isHidden = true; }
 
             IO::fadeScreen( IO::UNFADE_IMMEDIATE, true, true );
@@ -2451,7 +2451,7 @@ namespace BATTLE {
             pal[ 255 ] = IO::RGB( 23, 0, 0 );
 
             // Clear log window
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             for( u8 i = 0; i < 12; ++i ) { oam[ SPR_LARGE_MESSAGE_OAM_SUB + i ].isHidden = true; }
 
             for( u8 i = 0; i < 8; ++i ) { oam[ SPR_SMALL_MESSAGE_OAM_SUB + i ].isHidden = false; }
@@ -2628,7 +2628,7 @@ namespace BATTLE {
             pal[ 255 ] = IO::RGB( 23, 0, 0 );
 
             // Clear log window
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             for( u8 i = 0; i < 12; ++i ) { oam[ SPR_LARGE_MESSAGE_OAM_SUB + i ].isHidden = true; }
 
             for( u8 i = 0; i < 8; ++i ) { oam[ SPR_SMALL_MESSAGE_OAM_SUB + i ].isHidden = false; }

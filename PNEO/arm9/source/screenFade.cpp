@@ -198,14 +198,14 @@ namespace IO {
 
     void clearScreen( bool p_bottom, bool p_both, bool p_dark ) {
         if( p_both || p_bottom ) {
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), COMPLETE_SCREEN );
             dmaFillHalfWords( 0, BG_PALETTE_SUB, 256 );
             if( !p_dark ) { BG_PALETTE_SUB[ 0 ] = WHITE; }
         }
         if( p_both || !p_bottom ) {
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 192 );
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), COMPLETE_SCREEN );
             dmaFillHalfWords( 0, BG_PALETTE, 256 );
             if( !p_dark ) { BG_PALETTE[ 0 ] = WHITE; }
         }

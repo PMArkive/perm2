@@ -178,7 +178,7 @@ namespace SAVE {
     startScreen::drawMainChoice( const std::vector<choice>& p_choices, u8 p_slot ) {
         std::vector<std::pair<IO::inputTarget, startScreen::choice>> res
             = std::vector<std::pair<IO::inputTarget, startScreen::choice>>( );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
 
         REG_BLDCNT_SUB   = BLEND_ALPHA | BLEND_DST_BG3;
         REG_BLDALPHA_SUB = 0xff | ( 0x06 << 8 );
@@ -330,7 +330,7 @@ namespace SAVE {
 
     std::vector<std::pair<IO::inputTarget, startScreen::choice>> startScreen::drawEpisodeChoice( ) {
         SpriteEntry* oam = IO::Oam->oamBuffer;
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
 
         std::vector<std::pair<IO::inputTarget, startScreen::choice>> res
             = std::vector<std::pair<IO::inputTarget, startScreen::choice>>( );

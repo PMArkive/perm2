@@ -587,7 +587,7 @@ namespace SPX {
         char buffer[ 100 ];
         // update statistics on top and rpm counter on bottom
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
 
         // print names and stats
 
@@ -734,7 +734,7 @@ namespace SPX {
         char buffer[ 100 ];
         // update statistics on top and rpm counter on bottom
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
 
         // print names and stats
 
@@ -1004,8 +1004,7 @@ namespace SPX {
                     IO::Oam->oamBuffer[ SPR_GOOD_SUB_OAM + ( FREE_GOOD + i + 2 ) % 10 ].isHidden
                         = true;
                     IO::Oam->oamBuffer[ SPR_PERFECT_SUB_OAM + ( FREE_PERFECT + i + 2 ) % 10 ]
-                        .isHidden
-                        = true;
+                        .isHidden = true;
                     IO::Oam->oamBuffer[ SPR_MISS_SUB_OAM + ( FREE_MISS + i + 2 ) % 10 ].isHidden
                         = true;
                 }

@@ -241,7 +241,7 @@ namespace BAG {
     void pokeblockUI::initBlockView( u16* p_pokeblockCount ) {
         char buffer[ 100 ];
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
         IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 

@@ -248,7 +248,7 @@ namespace BATTLE {
             }
 
             battleMoveSelection moves[ field::NUM_SIDES ][ side::MAX_PKMN_PER_SIDE ]
-                = { {} }; // fieldPosition -> selected move
+                = { { } }; // fieldPosition -> selected move
 
             // Compute player's moves
             bool playerWillRun   = false;
@@ -1109,7 +1109,7 @@ namespace BATTLE {
                         if( !MOVE_BUFFER[ j ] ) { break; }
                         bool gd = true;
                         for( u8 mv = 0; mv < 4; ++mv ) {
-                            if( _playerTeam[ i ].getMove( i ) == MOVE_BUFFER[ j ] ) { gd = false; }
+                            if( _playerTeam[ i ].getMove( mv ) == MOVE_BUFFER[ j ] ) { gd = false; }
                         }
                         if( gd ) {
                             _battleUI.showTopMessagePkmn( &_playerTeam[ i ] );
@@ -1129,12 +1129,12 @@ namespace BATTLE {
                                     u8   rs          = cb.getResult(
                                         [ & ]( u8 ) {
                                             return _battleUI.showAttackSelection( p_pkmn, canUse,
-                                                                                             false );
+                                                                                  false );
                                         },
                                         [ & ]( u8 p_selection ) {
                                             curSel = p_selection;
                                             _battleUI.showAttackSelection( p_pkmn, canUse, false,
-                                                                                      curSel, false );
+                                                                           curSel, false );
                                         },
                                         curSel );
 
@@ -1277,7 +1277,7 @@ namespace BATTLE {
             if( SAVE::SAV.getActiveFile( ).m_caughtPkmn[ specId / 8 ] & ( 1LLU << ( specId % 8 ) ) )
                 ballCatchRate = 6;
             break;
-        case I_TIMER_BALL: ballCatchRate = std::min( _round + 10 / 5, 8 ); break;
+        case I_TIMER_BALL: ballCatchRate = std::min( ( _round + 10 ) / 5, 8 ); break;
         case I_NEST_BALL: ballCatchRate = std::max( ( 40 - wild->m_level ) / 5, 2 ); break;
         case I_NET_BALL:
             if( _field.hasType( field::OPPONENT_SIDE, field::PKMN_0, TYPE_BUG )
@@ -1300,8 +1300,8 @@ namespace BATTLE {
             break;
 
         case I_PREMIER_BALL:
-            if( wild->isShiny( ) ) { ballCatchRate = 512; }
             ballCatchRate = 2;
+            if( wild->isShiny( ) ) { ballCatchRate = 512; }
             break;
 
         case I_BEAST_BALL: ballCatchRate = 0; break;

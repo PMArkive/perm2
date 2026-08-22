@@ -190,7 +190,7 @@ namespace MAP {
             break;
         default:
             IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), COMPLETE_SCREEN_SQ );
             break;
         }
         bgSetPriority( IO::bg3, 0 );

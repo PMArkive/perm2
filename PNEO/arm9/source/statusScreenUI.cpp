@@ -841,8 +841,8 @@ namespace STS {
         REG_BLDALPHA     = 0;
         bgUpdate( );
         IO::fadeScreen( IO::CLEAR_DARK_IMMEDIATE, true, true );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), 256 * 192 );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), COMPLETE_SCREEN );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), COMPLETE_SCREEN );
 
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
         IO::regularFont->setColor( IO::GRAY_IDX, 2 );
@@ -902,7 +902,7 @@ namespace STS {
 
         FS::readPictureData( bgGetGfxPtr( IO::bg2sub ), "nitro:/PICS/", "statussub", 0, 256 * 192,
                              true );
-        // dmaCopy( statussubBitmap, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        // dmaCopy( statussubBitmap, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         char buffer[ 50 ];
 
         if( _currentPage == 2 ) {
@@ -992,13 +992,13 @@ namespace STS {
                 oam[ SPR_EXP_BAR_OAM + 1 ].isHidden = false;
                 oam[ SPR_EXP_BAR_OAM + 2 ].isHidden = false;
                 u16 exptype                         = _data.getExpType( );
-                u8  barWidth                        = ( 45 + 27 )
-                              * ( p_pokemon->m_boxdata.m_experienceGained
-                                  - EXP[ p_pokemon->m_level - 1 ][ exptype ] )
-                              / ( EXP[ p_pokemon->m_level ][ exptype ]
-                                  - EXP[ p_pokemon->m_level - 1 ][ exptype ] );
-                u16 togo = EXP[ p_pokemon->m_level ][ exptype ]
-                           - p_pokemon->m_boxdata.m_experienceGained;
+                u8  barWidth = ( 45 + 27 )
+                               * ( p_pokemon->m_boxdata.m_experienceGained
+                                   - EXP[ p_pokemon->m_level - 1 ][ exptype ] )
+                               / ( EXP[ p_pokemon->m_level ][ exptype ]
+                                   - EXP[ p_pokemon->m_level - 1 ][ exptype ] );
+                u16 togo     = EXP[ p_pokemon->m_level ][ exptype ]
+                               - p_pokemon->m_boxdata.m_experienceGained;
 
                 IO::printRectangle( oam[ SPR_EXP_BAR_OAM ].x + 1, oam[ SPR_EXP_BAR_OAM ].y + 1,
                                     oam[ SPR_EXP_BAR_OAM ].x + 1 + barWidth,

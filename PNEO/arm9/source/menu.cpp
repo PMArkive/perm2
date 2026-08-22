@@ -196,8 +196,8 @@ namespace IO {
             auto          res  = menu.getResult(
                 GET_STRING( FS::DESQUID_STRING + 46 ), MSG_NOCLOSE,
                 std::vector<u16>{ FS::DESQUID_STRING + 61, FS::DESQUID_STRING + 64,
-                                            FS::DESQUID_STRING + 62, FS::DESQUID_STRING + 63,
-                                            FS::DESQUID_STRING + 70, FS::DESQUID_STRING + 71 },
+                                  FS::DESQUID_STRING + 62, FS::DESQUID_STRING + 63,
+                                  FS::DESQUID_STRING + 70, FS::DESQUID_STRING + 71 },
                 true );
             switch( res ) {
             case 0: { // default team
@@ -368,8 +368,8 @@ namespace IO {
             auto          res  = menu.getResult(
                 GET_STRING( FS::DESQUID_STRING + 46 ), MSG_NOCLOSE,
                 std::vector<u16>{ FS::DESQUID_STRING + 56, FS::DESQUID_STRING + 57,
-                                            FS::DESQUID_STRING + 58, FS::DESQUID_STRING + 59,
-                                            FS::DESQUID_STRING + 60 },
+                                  FS::DESQUID_STRING + 58, FS::DESQUID_STRING + 59,
+                                  FS::DESQUID_STRING + 60 },
                 true );
             switch( res ) {
             case 0: { // daytime to dawn
@@ -839,7 +839,7 @@ namespace IO {
             oldsel = curItm;
 
             if( curItm == IO::choiceBox::BACK_CHOICE || curItm == IO::choiceBox::EXIT_CHOICE ) {
-                dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+                dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
                 init( true );
                 hideMessageBox( );
                 break;
@@ -851,7 +851,7 @@ namespace IO {
 
             s32 cnt = getItemCount( p_offeredItems[ curItm ], data[ curItm ], names[ curItm ],
                                     p_paymentMethod );
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             init( true );
 
             if( cnt == -1 ) {

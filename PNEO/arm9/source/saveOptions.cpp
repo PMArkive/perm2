@@ -52,7 +52,7 @@ namespace SAVE {
             std::to_string( SAVE::SAV.getActiveFile( ).m_options.m_bgIdx ).c_str( ), 192 * 2,
             192 * 256, false );
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         SpriteEntry* oam = IO::Oam->oamBuffer;
         // Print options
         //

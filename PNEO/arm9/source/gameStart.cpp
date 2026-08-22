@@ -278,7 +278,7 @@ namespace SAVE {
             FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "tbg_s", 249 * 2,
                                  256 * 192, true );
             SAV.getActiveFile( ).drawTrainersCard( false, true );
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             IO::initOAMTable( true );
 
             tileCnt = 0;
@@ -338,7 +338,7 @@ namespace SAVE {
             IO::updateOAM( false );
 
             // make player pick a name
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 50 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), MBOX_SCREEN );
             IO::regularFont->printBreakingStringC( GET_STRING( IO::STR_UI_INIT_GAME_CHOOSE_NAME ),
                                                    8, 4, 40, true, IO::font::LEFT, 13 );
 

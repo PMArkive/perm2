@@ -579,10 +579,13 @@ namespace SOUND::SSEQ {
                     }
                     auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_variables[ varname ] /= SEQ_READ16( track->m_pos );
-                    } else {
-                        GLOBAL_VARS[ varname - NUM_VARS ] /= SEQ_READ16( track->m_pos );
+                    auto val = SEQ_READ16( track->m_pos );
+                    if( val ) {
+                        if( varname <= NUM_VARS ) {
+                            track->m_variables[ varname ] /= val;
+                        } else {
+                            GLOBAL_VARS[ varname - NUM_VARS ] /= val;
+                        }
                     }
                     track->m_pos += 2;
                     break;
@@ -791,8 +794,8 @@ namespace SOUND::SSEQ {
                 }
                 case SC_PRINT_VAR: {
 #ifdef DESQUID
-                    // auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
-                    // print track->variables[ varname ] to squid eater
+                // auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                // print track->variables[ varname ] to squid eater
 #endif
                     if( skipNextCommand ) [[unlikely]] {
                         skipNextCommand = false;

@@ -328,7 +328,7 @@ namespace IO {
 
         if( p_message || p_selection >= 253 ) {
 
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             if( p_selection != 253 ) {
                 FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "subbg", 12, 49152,
                                      true );
@@ -395,7 +395,7 @@ namespace IO {
         }
 
         if( p_message || p_selection >= 254 ) {
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "subbg", 12, 49152,
                                  true );
             for( u8 i = 0; i < 7; ++i ) { oam[ SPR_MENU_OAM_SUB( i ) ].isHidden = true; }
@@ -464,7 +464,7 @@ namespace IO {
 
         if( p_message || p_selection >= 254 ) {
 
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "subbg", 12, 49152,
                                  true );
             for( u8 i = 0; i < 7; ++i ) { oam[ SPR_MENU_OAM_SUB( i ) ].isHidden = true; }
@@ -531,7 +531,7 @@ namespace IO {
 
         if( p_message || p_selection >= 254 ) {
 
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+            dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "subbg", 12, 49152,
                                  true );
             for( u8 i = 0; i < 7; ++i ) { oam[ SPR_MENU_OAM_SUB( i ) ].isHidden = true; }
@@ -615,7 +615,7 @@ namespace IO {
             = std::vector<std::pair<IO::inputTarget, u8>>( );
 
         auto& oam = IO::Oam->oamBuffer;
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "subbg", 12, 49152, true );
 
         for( u8 i = SPR_NAV_APP_ICON_SUB( 0 ); i < 128; ++i ) { oam[ i ].isHidden = true; }
@@ -703,7 +703,7 @@ namespace IO {
             = std::vector<std::pair<IO::inputTarget, u8>>( );
 
         FADE_SUB_DARK( );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "subbg", 12, 49152, true );
 
         BG_PALETTE_SUB[ IO::WHITE_IDX ] = IO::WHITE;
@@ -872,7 +872,7 @@ namespace IO {
         std::vector<std::pair<IO::inputTarget, s32>> res
             = std::vector<std::pair<IO::inputTarget, s32>>( );
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "subbg", 12, 49152, true );
 
         auto& oam = IO::Oam->oamBuffer;
@@ -1008,7 +1008,7 @@ namespace IO {
         u8*         dclstart = &SAVE::SAV.getActiveFile( ).m_dayCareDepositLevel[ p_daycare * 2 ];
 
         FADE_SUB_DARK( );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "subbg", 12, 49152, true );
 
         BG_PALETTE_SUB[ IO::WHITE_IDX ] = IO::WHITE;

@@ -57,7 +57,7 @@ namespace SAVE {
         IO::initOAMTable( p_bottom );
         u16 tileCnt = 0;
 
-        dmaFillWords( 0, bgGetGfxPtr( p_bottom ? IO::bg2sub : IO::bg2 ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( p_bottom ? IO::bg2sub : IO::bg2 ), COMPLETE_SCREEN );
         u16* pal = IO::BG_PAL( p_bottom );
 
         pal[ 0 ]             = 0;

@@ -278,8 +278,9 @@ namespace DEX {
             IO::loadSprite( SPR_TEXTBOX_OAM + i, SPR_TEXTBOX_PAL, tileCnt, 12 + 60 * i, 192 - 64,
                             64, 64, 0, 0, 0, false, false, false, OBJPRIORITY_3, false );
         }
-        tileCnt = IO::loadUIIcon( IO::ICON::INFOPAGE3_START, SPR_TEXTBOX_OAM, SPR_TEXTBOX_PAL, tileCnt,
-                                  12, 192 - 64, 64, 64, false, false, false, OBJPRIORITY_3, false );
+        tileCnt
+            = IO::loadUIIcon( IO::ICON::INFOPAGE3_START, SPR_TEXTBOX_OAM, SPR_TEXTBOX_PAL, tileCnt,
+                              12, 192 - 64, 64, 64, false, false, false, OBJPRIORITY_3, false );
 
         // pkmn name box
         for( u8 i = 1; i < 9; ++i ) {
@@ -357,8 +358,8 @@ namespace DEX {
 
         IO::fadeScreen( IO::CLEAR_DARK_IMMEDIATE, true, true );
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
         FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/DEX/", "dexsub1", 2 * 200,
                              49152, true );
         FS::readPictureData( bgGetGfxPtr( IO::bg3 ), "nitro:/PICS/DEX/", "dextop1", 2 * 200, 49152,
@@ -1025,9 +1026,9 @@ namespace DEX {
         for( u8 i = 0; i < SPR_NAT_DX_SLOT_COUNT; ++i ) {
             u8 oamStart = SPR_NAT_DX_START_OAM_SUB
                           + ( ( nextRot + i ) % SPR_NAT_DX_SLOT_COUNT ) * SPR_NAT_DX_SLOT_SIZE;
-            pidx = ( _nationalSelectedIdx + i > SPR_NAT_DX_SLOT_COUNT / 3 - 1 )
-                       ? _nationalSelectedIdx + i - SPR_NAT_DX_SLOT_COUNT / 3 - 1
-                       : 0;
+            pidx        = ( _nationalSelectedIdx + i > SPR_NAT_DX_SLOT_COUNT / 3 - 1 )
+                              ? _nationalSelectedIdx + i - SPR_NAT_DX_SLOT_COUNT / 3 - 1
+                              : 0;
             if( p_pkmnIdxUB && pidx > p_pkmnIdxUB ) { pidx = 0; }
 
             bool isHidden                = SPR_NAT_DX_HIDDEN( i );
@@ -1065,9 +1066,9 @@ namespace DEX {
         for( u8 i = 0; i < SPR_NAT_DX_SLOT_COUNT; ++i ) {
             u8 oamStart = SPR_NAT_DX_START_OAM_SUB
                           + ( ( nextRot + i ) % SPR_NAT_DX_SLOT_COUNT ) * SPR_NAT_DX_SLOT_SIZE;
-            pidx = ( _nationalSelectedIdx + i > SPR_NAT_DX_SLOT_COUNT / 3 - 1 )
-                       ? _nationalSelectedIdx + i - SPR_NAT_DX_SLOT_COUNT / 3 - 1
-                       : 0;
+            pidx        = ( _nationalSelectedIdx + i > SPR_NAT_DX_SLOT_COUNT / 3 - 1 )
+                              ? _nationalSelectedIdx + i - SPR_NAT_DX_SLOT_COUNT / 3 - 1
+                              : 0;
             if( p_pkmnIdxUB && pidx > p_pkmnIdxUB ) { pidx = 0; }
 
             bool isHidden                = SPR_NAT_DX_HIDDEN( i );

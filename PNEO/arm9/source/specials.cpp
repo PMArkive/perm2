@@ -117,7 +117,7 @@ namespace SPX {
         IO::initOAMTable( false );
         FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "startersel", 480, 49152,
                              true );
-        dmaFillWords( 0x1010101, bgGetGfxPtr( IO::bg3 ), 256 * 192 );
+        dmaFillWords( 0x1010101, bgGetGfxPtr( IO::bg3 ), COMPLETE_SCREEN );
         BG_PALETTE[ 1 ] = BG_PALETTE_SUB[ 1 ];
 
         IO::regularFont->setColor( 0, 0 );
@@ -234,24 +234,24 @@ namespace SPX {
 
             if( frame % 8 == 2 ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::STARTERBALL1_START, curSel, curSel,
-                                           IO::Oam->oamBuffer[ curSel ].gfxIndex,
-                                           IO::Oam->oamBuffer[ curSel ].x,
-                                           IO::Oam->oamBuffer[ curSel ].y, 32, 32, false, false,
-                                           false, OBJPRIORITY_0, true );
+                                          IO::Oam->oamBuffer[ curSel ].gfxIndex,
+                                          IO::Oam->oamBuffer[ curSel ].x,
+                                          IO::Oam->oamBuffer[ curSel ].y, 32, 32, false, false,
+                                          false, OBJPRIORITY_0, true );
             }
             if( frame % 4 == 0 ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::STARTERBALL2_START, curSel, curSel,
-                                           IO::Oam->oamBuffer[ curSel ].gfxIndex,
-                                           IO::Oam->oamBuffer[ curSel ].x,
-                                           IO::Oam->oamBuffer[ curSel ].y, 32, 32, false, false,
-                                           false, OBJPRIORITY_0, true );
+                                          IO::Oam->oamBuffer[ curSel ].gfxIndex,
+                                          IO::Oam->oamBuffer[ curSel ].x,
+                                          IO::Oam->oamBuffer[ curSel ].y, 32, 32, false, false,
+                                          false, OBJPRIORITY_0, true );
             }
             if( frame % 8 == 6 ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::STARTERBALL3_START, curSel, curSel,
-                                           IO::Oam->oamBuffer[ curSel ].gfxIndex,
-                                           IO::Oam->oamBuffer[ curSel ].x,
-                                           IO::Oam->oamBuffer[ curSel ].y, 32, 32, false, false,
-                                           false, OBJPRIORITY_0, true );
+                                          IO::Oam->oamBuffer[ curSel ].gfxIndex,
+                                          IO::Oam->oamBuffer[ curSel ].x,
+                                          IO::Oam->oamBuffer[ curSel ].y, 32, 32, false, false,
+                                          false, OBJPRIORITY_0, true );
             }
 
             if( frame % 16 == 0 ) {
@@ -438,7 +438,7 @@ namespace SPX {
     }
 
     void drawBadges( u8 p_page ) {
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 20 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), MBOX_SCREEN_HALF );
         IO::regularFont->setColor( 0, 0 );
         IO::regularFont->setColor( IO::GRAY_IDX, 1 );
         IO::regularFont->setColor( 0, 2 );

@@ -76,6 +76,12 @@ struct fsdataInfo {
 
 extern fsdataInfo FSDATA;
 
+// complete screen when filling with dmaFillWords
+constexpr u32 MBOX_SCREEN_HALF   = 256 * 20;
+constexpr u32 MBOX_SCREEN        = 256 * 50;
+constexpr u32 COMPLETE_SCREEN    = 256 * 192;
+constexpr u32 COMPLETE_SCREEN_SQ = 256 * 256;
+
 // Assumes that the Backup is a 512k flash memory
 constexpr u32 BACKUP_SIZE = ( 512 * 1024 );
 

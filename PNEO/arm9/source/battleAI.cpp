@@ -112,43 +112,42 @@ namespace BATTLE {
 
         switch( _AILevel ) {
         default:
-            [[likely]] case 0 : { // Wild pkmn
-                if( str ) {
-                    // Pick a random move
-                    u8 mv = rand( ) % 4;
-                    while( !canUse[ mv ] ) { mv = rand( ) % 4; }
-                    res.m_param = _field.getPkmn( field::OPPONENT_SIDE, p_slot )->getMove( mv );
-                }
-                // Choose a target
-                // Pick a random target
-                auto mdata     = FS::getMoveData( res.m_param );
-                res.m_moveData = mdata;
-                auto tg
-                    = mdata.m_pressureTarget != TG_NONE ? mdata.m_pressureTarget : mdata.m_target;
-
-                bool canTarget[ 4 ];
-                for( u8 i = 0; i < 4; ++i ) {
-                    canTarget[ i ] = _field.getPkmn( i < 2, i & 1 ) != nullptr;
-                }
-                u8 ctg = rand( ) % 2;
-
-                switch( tg ) {
-                case TG_RANDOM:
-                case TG_ANY_FOE:
-                    [[likely]] case TG_ANY : while( !canTarget[ 2 + ctg ] ) {
-                        ctg = rand( ) & 1;
-                    }
-                    res.m_target = fieldPosition( field::PLAYER_SIDE, ctg );
-                    break;
-                case TG_ALLY_OR_SELF:
-                    while( !canTarget[ ctg ] ) { ctg = rand( ) & 1; }
-                    res.m_target = fieldPosition( field::OPPONENT_SIDE, ctg );
-                    break;
-                    [[unlikely]] default : break;
-                }
-
-                return res;
+        [[likely]] case 0: { // Wild pkmn
+            if( str ) {
+                // Pick a random move
+                u8 mv = rand( ) % 4;
+                while( !canUse[ mv ] ) { mv = rand( ) % 4; }
+                res.m_param = _field.getPkmn( field::OPPONENT_SIDE, p_slot )->getMove( mv );
             }
+            // Choose a target
+            // Pick a random target
+            auto mdata     = FS::getMoveData( res.m_param );
+            res.m_moveData = mdata;
+            auto tg = mdata.m_pressureTarget != TG_NONE ? mdata.m_pressureTarget : mdata.m_target;
+
+            bool canTarget[ 4 ];
+            for( u8 i = 0; i < 4; ++i ) {
+                canTarget[ i ] = _field.getPkmn( i < 2, i & 1 ) != nullptr;
+            }
+            u8 ctg = rand( ) % 2;
+
+            switch( tg ) {
+            case TG_RANDOM:
+            case TG_ANY_FOE:
+            [[likely]] case TG_ANY:
+                while( !canTarget[ 2 + ctg ] ) { ctg = rand( ) & 1; }
+                res.m_target = fieldPosition( field::PLAYER_SIDE, ctg );
+                break;
+            case TG_ALLY_OR_SELF:
+                while( !canTarget[ ctg ] ) { ctg = rand( ) & 1; }
+                res.m_target = fieldPosition( field::OPPONENT_SIDE, ctg );
+                break;
+            [[unlikely]] default:
+                break;
+            }
+
+            return res;
+        }
         case 1:
         case 2: // Simple trainer
         case 3: // Ace trainer
@@ -190,10 +189,10 @@ namespace BATTLE {
                 switch( tg ) {
                 case TG_RANDOM:
                 case TG_ANY_FOE:
-                    [[likely]] case TG_ANY : if( !canTarget[ 2 ] && !canTarget[ 3 ] ) {
+                [[likely]] case TG_ANY:
+                    if( !canTarget[ 2 ] && !canTarget[ 3 ] ) {
                         ctg = 0;
-                    }
-                    else {
+                    } else {
                         while( !canTarget[ 2 + ctg ] ) { ctg = rand( ) & 1; }
                     }
                     bmove[ i ].m_target = { fieldPosition( field::PLAYER_SIDE, ctg ) };
@@ -205,8 +204,8 @@ namespace BATTLE {
                 case TG_SELF:
                     bmove[ i ].m_target = { fieldPosition( field::OPPONENT_SIDE, p_slot ) };
                     break;
-                    [[unlikely]] default : bmove[ i ].m_target
-                        = { fieldPosition( field::PLAYER_SIDE, field::PKMN_0 ) };
+                [[unlikely]] default:
+                    bmove[ i ].m_target = { fieldPosition( field::PLAYER_SIDE, field::PKMN_0 ) };
                     break;
                 }
 
@@ -289,6 +288,11 @@ namespace BATTLE {
                     mxscr = score[ i ];
                     idx   = i;
                 }
+            }
+
+            if( idx >= 4 ) {
+                res.m_type = MT_NO_OP;
+                break;
             }
 
             // TODO: switch pkmn if mx score is too low

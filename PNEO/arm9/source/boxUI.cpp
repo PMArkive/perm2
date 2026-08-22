@@ -495,7 +495,7 @@ namespace BOX {
     }
 
     void boxUI::drawPkmnInfoTop( pokemon* p_pokemon ) {
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
         SpriteEntry* oam     = IO::OamTop->oamBuffer;
         u16          tileCnt = 0;
 

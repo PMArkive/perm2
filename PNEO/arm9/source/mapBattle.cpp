@@ -200,8 +200,8 @@ namespace MAP {
         IO::fadeScreen( IO::BATTLE );
         IO::BG_PAL( true )[ 0 ] = 0;
         IO::fadeScreen( IO::CLEAR_DARK_IMMEDIATE, true, true );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg3sub ), COMPLETE_SCREEN );
     }
 
     BATTLE::battle::battleEndReason mapDrawer::battleWildPkmn( wildPkmnType p_type ) {
@@ -368,9 +368,9 @@ namespace MAP {
         u8 moveData = atom( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
                             SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
                           .m_movedata;
-        u8 behave = at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                        SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
-                        .m_bottombehave;
+        u8 behave   = at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
+                          SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                          .m_bottombehave;
 
         u8 tracerSlot = getTracerPkmn( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
                                        SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY );
@@ -498,7 +498,7 @@ namespace MAP {
         if( _tracerChain > 40 ) { _tracerChain = 39; }
 
         u8 luckyMod    = SAVE::SAV.getActiveFile( ).m_bag.count(
-                          BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_WISHING_CHARM )
+                             BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_WISHING_CHARM )
                              ? 5
                              : 10;
         u8 shinyFactor = 75;

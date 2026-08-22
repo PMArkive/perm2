@@ -144,8 +144,8 @@ namespace SAVE {
         BG_PALETTE[ IO::GRAY_IDX ]  = IO::GRAY;
         BG_PALETTE[ IO::BLACK_IDX ] = IO::BLACK;
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 192 );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
     }
 
     void message( const char* p_message, bool p_init = true ) {
@@ -565,9 +565,9 @@ namespace SAVE {
             auto             res = cb.getResult(
                 [ & ]( u8 p_slot ) {
                     currentCard = p_slot;
-                    auto& wc = SAVE::SAV.getActiveFile( ).m_storedWonderCards[ currentCard ];
+                    auto& wc    = SAVE::SAV.getActiveFile( ).m_storedWonderCards[ currentCard ];
 
-                    dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+                    dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
                     wcopts.clear( );
                     wcopts.push_back( IO::STR_UI_WC_FLIP );
                     if( SAVE::SAV.getActiveFile( ).collectedWC( wc.m_id ) ) {
@@ -578,11 +578,11 @@ namespace SAVE {
                     IO::regularFont->setColor( IO::WHITE_IDX, 1 );
                     IO::regularFont->setColor( IO::GRAY_IDX, 2 );
                     auto rs = drawChoice( 0, wcopts, false, currentCard > 0,
-                                                      currentCard + 1 < SAVE::MAX_STORED_WC
-                                                          && SAVE::SAV.getActiveFile( )
-                                                                     .m_storedWonderCards[ currentCard + 1 ]
-                                                                     .m_type
-                                                                 != SAVE::WCTYPE_NONE );
+                                          currentCard + 1 < SAVE::MAX_STORED_WC
+                                              && SAVE::SAV.getActiveFile( )
+                                                         .m_storedWonderCards[ currentCard + 1 ]
+                                                         .m_type
+                                                     != SAVE::WCTYPE_NONE );
                     displayWonderCard( currentCard, reverse );
                     return rs;
                 },
@@ -746,7 +746,7 @@ namespace SAVE {
         }
 
         IO::printRectangle( 0, 192 - 42, 255, 192, false, 0 );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         message( GET_STRING( IO::STR_UI_GIFT_DOWNLOADING ), false );
         hideSpritesSub( );
         // play obtain animation
@@ -792,7 +792,7 @@ namespace SAVE {
         bgSetScroll( IO::bg3sub, 0, 0 );
         FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "wcbg", 0, 256 * 256 / 2,
                              true );
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         hideSpritesSub( );
 
         displayWonderCard( freespace );

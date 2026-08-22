@@ -199,7 +199,7 @@ struct pkmnEvolveData {
     pkmnEvolution m_evolutions[ 10 ];
 };
 
-constexpr bool hasBattleTransform( u16 p_speciesId ) {
+inline bool hasBattleTransform( u16 p_speciesId ) {
     switch( p_speciesId ) {
     case PKMN_VENUSAUR:
     case PKMN_CHARIZARD:
@@ -255,7 +255,7 @@ constexpr bool hasBattleTransform( u16 p_speciesId ) {
     }
 }
 
-constexpr bool isTradeEvolution( u16 p_speciesId ) {
+inline bool isTradeEvolution( u16 p_speciesId ) {
     switch( p_speciesId ) {
     case PKMN_ALAKAZAM:
     case PKMN_MACHAMP:
@@ -292,7 +292,7 @@ constexpr bool isTradeEvolution( u16 p_speciesId ) {
 /*
  * @brief: Extra species not appearing in icave.
  */
-constexpr bool isSecret( u16 p_speciesId ) {
+inline bool isSecret( u16 p_speciesId ) {
     switch( p_speciesId ) {
     case PKMN_MIMIKYU:
     case PKMN_ORICORIO:
@@ -302,7 +302,7 @@ constexpr bool isSecret( u16 p_speciesId ) {
     }
 }
 
-constexpr bool isMythical( u16 p_speciesId ) {
+inline bool isMythical( u16 p_speciesId ) {
     switch( p_speciesId ) {
     case PKMN_MEW:
     case PKMN_CELEBI:
@@ -332,7 +332,7 @@ constexpr bool isMythical( u16 p_speciesId ) {
     }
 }
 
-constexpr bool isSpecial( u16 p_speciesId ) {
+inline bool isSpecial( u16 p_speciesId ) {
     if( isMythical( p_speciesId ) ) { return true; }
     switch( p_speciesId ) {
     case PKMN_MEWTWO:
@@ -375,7 +375,7 @@ constexpr bool isSpecial( u16 p_speciesId ) {
     }
 }
 
-constexpr bool isLegendary( u16 p_speciesId ) {
+inline bool isLegendary( u16 p_speciesId ) {
     switch( p_speciesId ) {
     case PKMN_ARTICUNO:
     case PKMN_ZAPDOS:
@@ -453,7 +453,7 @@ constexpr bool isLegendary( u16 p_speciesId ) {
     }
 }
 
-constexpr bool isUltraBeast( u16 p_speciesId ) {
+inline bool isUltraBeast( u16 p_speciesId ) {
     switch( p_speciesId ) {
     case PKMN_NIHILEGO:
     case PKMN_BUZZWOLE:
@@ -472,7 +472,7 @@ constexpr bool isUltraBeast( u16 p_speciesId ) {
     }
 }
 
-constexpr bool isParadox( u16 p_speciesId ) {
+inline bool isParadox( u16 p_speciesId ) {
     switch( p_speciesId ) {
     case PKMN_IRON_TREADS:
     case PKMN_IRON_BUNDLE:

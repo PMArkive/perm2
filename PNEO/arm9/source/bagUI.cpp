@@ -613,7 +613,7 @@ namespace BAG {
         IO::OamTop->oamBuffer[ 2 ].isHidden = true;
         IO::updateOAM( false );
 
-        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), 256 * 192 );
+        dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
         IO::regularFont->setColor( IO::GRAY_IDX, 2 );
         IO::regularFont->printStringC( GET_STRING( IO::STR_UI_BAG_PAGE_NAME_START + p_page ), 128,
