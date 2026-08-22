@@ -67,8 +67,8 @@ namespace BOX {
          * @brief: Searches for the last filled spot before the given position.
          */
         constexpr u8 getPrevFilledSpot( u8 p_position ) {
-            for( s8 i = p_position - 1; i > 0; --i ) {
-                if( m_pokemon[ i ].getSpecies( ) ) { return i; }
+            for( s8 i = s8( p_position ) - 1; i >= 0; --i ) {
+                if( m_pokemon[ i ].getSpecies( ) ) { return u8( i ); }
             }
             for( u8 i = MAX_PKMN_PER_BOX - 1; i > p_position; --i ) {
                 if( m_pokemon[ i ].getSpecies( ) ) { return i; }

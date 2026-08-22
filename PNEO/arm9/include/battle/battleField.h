@@ -187,7 +187,7 @@ namespace BATTLE {
         /*
          * @brief: Removes the given slot conditions from the specified slot
          */
-        inline bool removeSideCondition( battleUI* p_ui, bool p_opponent, u8 p_pos,
+        inline bool removeSlotCondition( battleUI* p_ui, bool p_opponent, u8 p_pos,
                                          slotCondition p_slotCondition ) {
             // TODO: proper log
             p_ui->log( "Remove slot condition " + std::to_string( u8( p_slotCondition ) ) );

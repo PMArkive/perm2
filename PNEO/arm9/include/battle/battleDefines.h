@@ -274,7 +274,7 @@ namespace BATTLE {
 
     constexpr u8 getOpposingPkmn( u8 p_slot, battleMode p_mode ) {
         if( getBattlingPKMNCount( p_mode ) == 2 ) { return !p_slot; }
-        return p_mode;
+        return p_slot;
     }
 
     struct battlePolicy {

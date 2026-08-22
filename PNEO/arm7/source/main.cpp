@@ -56,7 +56,7 @@ distribution.
 ---------------------------------------------------------------------------------*/
 #include <dswifi7.h>
 #include <nds.h>
-#ifndef NOSOUND
+#ifndef NO_SOUND
 #include "sound/sseq.h"
 #endif
 

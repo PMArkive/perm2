@@ -455,13 +455,14 @@ namespace BAG {
         if( p_bagType == TM_HM || p_bagType == BERRIES ) { sort( p_bagType ); }
     }
 
-    void bag::erase( bagType p_bagType, u16 p_itemId, u16 p_cnt ) {
+    void bag::erase( bagType p_bagType, u16 p_itemId, s16 p_cnt ) {
         for( u16 i = _startIdx[ p_bagType ]; i < _nextFree[ p_bagType ]; ++i )
             if( _items[ i ].first == p_itemId ) {
-                if( p_cnt <= _items[ i ].second )
+                if( p_cnt <= _items[ i ].second ) {
                     _items[ i ].second -= p_cnt;
-                else
+                } else {
                     _items[ i ].second = 0;
+                }
                 if( !_items[ i ].second ) {
                     for( u16 j = i; j < _nextFree[ p_bagType ]; ++j ) _items[ j ] = _items[ j + 1 ];
                     --_nextFree[ p_bagType ];

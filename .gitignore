@@ -24,7 +24,7 @@
 
 #Logs and databases #
 ######################
-*.log
+*.log*
 *.sql
 *.sqlite
 
@@ -72,3 +72,5 @@ PNEO/emulator/
 tags
 
 todo/
+
+**win_*

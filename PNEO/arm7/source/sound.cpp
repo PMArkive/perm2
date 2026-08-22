@@ -30,16 +30,15 @@ namespace SOUND::SSEQ {
         for( u8 i = NUM_BLOCKED_CHANNEL; i < NUM_CHANNEL; ++i ) { ADSR_CHANNEL[ i ].m_track = -1; }
     }
 
-    void soundTimer( ) {
-        static volatile int v = 0;
-
+    volatile int TIMER_V = 0;
+    void         soundTimer( ) {
         adsrTick( );
 
-        while( v > MAX_BPM ) {
-            v -= MAX_BPM;
+        while( TIMER_V > MAX_BPM ) {
+            TIMER_V -= MAX_BPM;
             sequenceTick( );
         }
-        v += SEQ_BPM;
+        TIMER_V += SEQ_BPM;
     }
 
     adsrState ADSR_CHANNEL[ NUM_CHANNEL ];
@@ -235,7 +234,7 @@ namespace SOUND::SSEQ {
                 SCHANNEL_REPEAT_POINT( ch ) = sInfo.m_loopOffset;
                 SCHANNEL_LENGTH( ch )       = sInfo.m_nonLoopLen;
                 SCHANNEL_TIMER( ch )        = SOUND_FREQ( sInfo.m_sampleRate );
-                SCHANNEL_CR( ch )           = SCHANNEL_ENABLE | SOUND_VOL( pInfo.m_vol )
+                SCHANNEL_CR( ch ) = SCHANNEL_ENABLE | SOUND_VOL( pInfo.m_vol )
                                     | SOUND_PAN( pInfo.m_pan ) | SOUND_FORMAT( sInfo.m_waveType )
                                     | SOUND_LOOP( sInfo.m_loop );
 
@@ -295,17 +294,20 @@ namespace SOUND::SSEQ {
         }
 
         case SNDSYS_PLAYSEQ: {
+            TIMER_V = 0;
             playSequence( &msg.m_seq, &msg.m_bnk, msg.m_war, msg.m_fadeIn );
             return;
         }
 
         case SNDSYS_FADESEQ: {
             setSequenceStatus( STATUS_FADE_OUT );
+            TIMER_V = 0;
             return;
         }
 
         case SNDSYS_STOPSEQ: {
             stopSequence( );
+            TIMER_V = 0;
             return;
         }
         }

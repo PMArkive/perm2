@@ -68,7 +68,7 @@ namespace BAG {
          * @brief: Removes cnt items with no. item_id from the bag.
          * cnt == -1: removes all items of desired kind
          */
-        void erase( bagType, u16 p_itemId, u16 p_cnt = -1 );
+        void erase( bagType, u16 p_itemId, s16 p_cnt = -1 );
 
         /*
          * @brief: Returns the number of items with no. item_id in the bag.
