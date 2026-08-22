@@ -257,7 +257,6 @@ namespace FS {
             FS::close( f );
             return true;
         }
-        FS::close( f );
         SAVE::SAV.getActiveFile( ).m_lastSaveLocation = oldl;
         SAVE::SAV.getActiveFile( ).m_lastSaveDate     = oldd;
         SAVE::SAV.getActiveFile( ).m_lastSaveTime     = oldt;

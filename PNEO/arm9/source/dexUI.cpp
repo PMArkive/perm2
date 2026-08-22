@@ -895,10 +895,10 @@ namespace DEX {
                 // load dex no (only in local dex mode
                 char buffer[ 20 ];
                 if( _mode ) {
-                    snprintf( buffer, 99, "%04hu%c", p_pkmnIdx,
+                    snprintf( buffer, 19, "%04hu%c", p_pkmnIdx,
                               p_pkmnForme ? 'a' + p_pkmnForme - 1 : 0 );
                 } else {
-                    snprintf( buffer, 99, "%03hu%c", getDexNo( p_pkmnIdx ),
+                    snprintf( buffer, 19, "%03hu%c", getDexNo( p_pkmnIdx ),
                               p_pkmnForme ? 'a' + p_pkmnForme - 1 : 0 );
                 }
 
