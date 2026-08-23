@@ -827,7 +827,7 @@ namespace MAP {
 
                 // Player obtained <pkmn>
 
-                snprintf( buffer, 99, GET_STRING( 814 ), SAVE::CURRENT_FILE->m_playername,
+                snprintf( buffer, 199, GET_STRING( 814 ), SAVE::CURRENT_FILE->m_playername,
                           giftPkmn.m_boxdata.m_name );
 
                 SOUND::playSoundEffect( SFX_CAPTURE_SUCCESSFUL );
@@ -836,7 +836,7 @@ namespace MAP {
                 // would you like to nickname <pkmn>?
 
                 IO::yesNoBox yn;
-                snprintf( buffer, 99, GET_STRING( 141 ), giftPkmn.m_boxdata.m_name );
+                snprintf( buffer, 199, GET_STRING( 141 ), giftPkmn.m_boxdata.m_name );
                 if( IO::yesNoBox::YES
                     == IO::yesNoBox( ).getResult(
                         convertMapString( buffer, MSG_INFO_NOCLOSE ).c_str( ), MSG_INFO ) ) {
@@ -864,16 +864,16 @@ namespace MAP {
                     u8 oldbx = SAVE::CURRENT_FILE->m_curBox;
                     u8 nb    = SAVE::CURRENT_FILE->storePkmn( giftPkmn );
                     if( nb != u8( -1 ) ) {
-                        snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_SENT_TO_STORAGE ),
+                        snprintf( buffer, 199, GET_STRING( IO::STR_UI_PKMN_SENT_TO_STORAGE ),
                                   giftPkmn.m_boxdata.m_name );
                         printMapMessage( buffer, MSG_INFO );
 
                         if( oldbx != nb ) {
-                            snprintf( buffer, 99, GET_STRING( IO::STR_UI_STORAGE_BOX_FULL ),
+                            snprintf( buffer, 199, GET_STRING( IO::STR_UI_STORAGE_BOX_FULL ),
                                       SAVE::CURRENT_FILE->m_storedPokemon[ oldbx ].m_name );
                             printMapMessage( buffer, MSG_INFO );
                         }
-                        snprintf( buffer, 99, GET_STRING( IO::STR_UI_STORAGE_BOX_PICKED ),
+                        snprintf( buffer, 199, GET_STRING( IO::STR_UI_STORAGE_BOX_PICKED ),
                                   giftPkmn.m_boxdata.m_name,
                                   SAVE::CURRENT_FILE->m_storedPokemon[ nb ].m_name );
                         printMapMessage( buffer, MSG_INFO );
@@ -881,7 +881,7 @@ namespace MAP {
                     } else {
                         printMapMessage( GET_STRING( IO::STR_UI_STORAGE_ALL_BOXES_FULL ),
                                          MSG_INFO );
-                        snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_RELEASED ),
+                        snprintf( buffer, 199, GET_STRING( IO::STR_UI_PKMN_RELEASED ),
                                   giftPkmn.m_boxdata.m_name );
                         printMapMessage( buffer, MSG_INFO );
                         registers[ 0 ] = 0;
@@ -1090,7 +1090,7 @@ namespace MAP {
                                         buf2 += "\x04";
                                         if( i % 3 == 2 ) { buf2 += " "; }
                                     }
-                                    snprintf( buffer, 99, GET_STRING( 93 ), buf2.c_str( ) );
+                                    snprintf( buffer, 199, GET_STRING( 93 ), buf2.c_str( ) );
                                     IO::printMessage( buffer, MSG_INFO_NOCLOSE, true );
                                 }
                             } ) ) {

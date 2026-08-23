@@ -322,34 +322,36 @@ namespace MAP {
             if( p_direction == DOWN ) return true;
             break;
 
+        case BEH_BIKE_BRIDGE_VERTICAL_ALT:
         case BEH_BIKE_BRIDGE_VERTICAL: // Bike stuff
             if( !( p_moveMode & BIKE ) ) { return false; }
             if( p_direction == LEFT || p_direction == RIGHT ) {
                 if( ( curBehave != BEH_BIKE_BRIDGE_VERTICAL
-                      && curBehave != BEH_BIKE_BRIDGE_VERTICAL_NO_JUMP )
+                      && curBehave != BEH_BIKE_BRIDGE_VERTICAL_ALT )
                     || p_moveMode != ACRO_BIKE || !( held & KEY_B ) ) {
                     return false;
                 }
             }
             break;
-        case BEH_BIKE_BRIDGE_VERTICAL_NO_JUMP:
-            if( !( p_moveMode & BIKE ) ) { return false; }
-            if( p_direction == LEFT || p_direction == RIGHT ) { return false; }
-            break;
+        // case BEH_BIKE_BRIDGE_VERTICAL_ALT:
+        //    if( !( p_moveMode & BIKE ) ) { return false; }
+        //    if( p_direction == LEFT || p_direction == RIGHT ) { return false; }
+        //    break;
+        case BEH_BIKE_BRIDGE_HORIZONTAL_ALT:
         case BEH_BIKE_BRIDGE_HORIZONTAL:
             if( !( p_moveMode & BIKE ) ) { return false; }
             if( p_direction == DOWN || p_direction == UP ) {
                 if( ( curBehave != BEH_BIKE_BRIDGE_HORIZONTAL
-                      && curBehave != BEH_BIKE_BRIDGE_HORIZONTAL_NO_JUMP )
+                      && curBehave != BEH_BIKE_BRIDGE_HORIZONTAL_ALT )
                     || p_moveMode != ACRO_BIKE || !( held & KEY_B ) ) {
                     return false;
                 }
             }
             break;
-        case BEH_BIKE_BRIDGE_HORIZONTAL_NO_JUMP:
-            if( !( p_moveMode & BIKE ) ) { return false; }
-            if( p_direction == DOWN || p_direction == UP ) { return false; }
-            break;
+            // case BEH_BIKE_BRIDGE_HORIZONTAL_ALT:
+            //     if( !( p_moveMode & BIKE ) ) { return false; }
+            //     if( p_direction == DOWN || p_direction == UP ) { return false; }
+            //     break;
 
         default: break;
         }
@@ -384,11 +386,11 @@ namespace MAP {
             }
 
         case BEH_BIKE_BRIDGE_VERTICAL: // Bike stuff
-        case BEH_BIKE_BRIDGE_VERTICAL_NO_JUMP:
+        case BEH_BIKE_BRIDGE_VERTICAL_ALT:
             if( !( p_moveMode & BIKE ) ) { return false; }
             break;
         case BEH_BIKE_BRIDGE_HORIZONTAL:
-        case BEH_BIKE_BRIDGE_HORIZONTAL_NO_JUMP:
+        case BEH_BIKE_BRIDGE_HORIZONTAL_ALT:
             if( !( p_moveMode & BIKE ) ) { return false; }
             break;
 
@@ -531,13 +533,15 @@ namespace MAP {
                 p_direction = DOWN;
                 break;
 
-            case BEH_BIKE_BRIDGE_VERTICAL: // Bike stuff
+            case BEH_BIKE_BRIDGE_VERTICAL_ALT: // Bike stuff
+            case BEH_BIKE_BRIDGE_VERTICAL:     // Bike stuff
                 if( p_direction == LEFT || p_direction == RIGHT ) {
                     bikeJumpPlayer( p_direction );
                     stopPlayer( p_direction );
                     return;
                 }
                 goto NO_BREAK;
+            case BEH_BIKE_BRIDGE_HORIZONTAL_ALT:
             case BEH_BIKE_BRIDGE_HORIZONTAL:
                 if( p_direction == UP || p_direction == DOWN ) {
                     bikeJumpPlayer( p_direction );
@@ -1243,8 +1247,8 @@ namespace MAP {
                            .m_bottombehave;
 
         if( ( lstBehave == BEH_BIKE_BRIDGE_VERTICAL || lstBehave == BEH_BIKE_BRIDGE_HORIZONTAL
-              || lstBehave == BEH_BIKE_BRIDGE_VERTICAL_NO_JUMP
-              || lstBehave == BEH_BIKE_BRIDGE_HORIZONTAL_NO_JUMP )
+              || lstBehave == BEH_BIKE_BRIDGE_VERTICAL_ALT
+              || lstBehave == BEH_BIKE_BRIDGE_HORIZONTAL_ALT )
             && p_direction % 2 != SAVE::CURRENT_FILE->m_player.m_direction % 2 ) {
             return;
         }
@@ -1859,6 +1863,8 @@ namespace MAP {
             }
             FRAME_COUNT = 0;
             IO::printMessage( GET_STRING( IO::STR_MAP_FISH_SUCCESS ), MSG_NOCLOSE );
+            // IO::printMessage increases FRAME_COUNT while message is showing. If message
+            // is displayed for too long, PKMN is gone.
             if( FRAME_COUNT > 180 ) {
                 failed = true;
                 break;

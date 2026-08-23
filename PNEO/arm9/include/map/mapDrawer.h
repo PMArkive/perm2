@@ -169,12 +169,13 @@ namespace MAP {
             BEH_MUD_SLIDE
             = 0xD0, // slide down player unless FASTBIKE_SPEED_NO_TILE_BREAK fast on bike
 
-            BEH_BREAKABLE_TILE                 = 0xD2,
-            BEH_BIKE_BRIDGE_VERTICAL           = 0xD3,
-            BEH_BIKE_BRIDGE_HORIZONTAL         = 0xD4,
-            BEH_BIKE_BRIDGE_VERTICAL_NO_JUMP   = 0xD5,
-            BEH_BIKE_BRIDGE_HORIZONTAL_NO_JUMP = 0xD6,
-            BEH_OBSTACLE                       = 0xD7,
+            BEH_BIKE_BOULDER               = 0xD1, // TODO
+            BEH_BREAKABLE_TILE             = 0xD2,
+            BEH_BIKE_BRIDGE_VERTICAL       = 0xD3,
+            BEH_BIKE_BRIDGE_HORIZONTAL     = 0xD4,
+            BEH_BIKE_BRIDGE_VERTICAL_ALT   = 0xD5, // was: no jump, but should allow jump
+            BEH_BIKE_BRIDGE_HORIZONTAL_ALT = 0xD6, // was: no jump, but should allow jump
+            BEH_OBSTACLE                   = 0xD7,
 
             BEH_INTERACT_S133                 = 0xE0,
             BEH_INTERACT_S134                 = 0xE1,
@@ -744,8 +745,8 @@ namespace MAP {
             switch( lstBehave ) {
             case BEH_BIKE_BRIDGE_VERTICAL:
             case BEH_BIKE_BRIDGE_HORIZONTAL:
-            case BEH_BIKE_BRIDGE_VERTICAL_NO_JUMP:
-            case BEH_BIKE_BRIDGE_HORIZONTAL_NO_JUMP: return false;
+            case BEH_BIKE_BRIDGE_VERTICAL_ALT:
+            case BEH_BIKE_BRIDGE_HORIZONTAL_ALT: return false;
             default: break;
             }
 
