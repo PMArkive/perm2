@@ -466,19 +466,17 @@ namespace MAP {
         if( reordering ) { return; }
         reordering = true;
 
-        // sort things via bubble sort; there are only few elements so it should be fast
+        // sort things via insertion sort; there are only few elements so it should be fast
         // enough
+
         for( u8 i = 0; i < MAX_OAM; ++i ) {
-            bool swp = false;
-            for( u8 j = 1; j < MAX_OAM - i; ++j ) {
+            for( u8 j = i + 1; j < MAX_OAM; ++j ) {
                 // take care of potentially negative coordinates
-                auto cmp = cmpSprY( j - 1, j );
-                if( cmp < 0 || ( cmp == 0 && _oamPositionR[ j - 1 ] > _oamPositionR[ j ] ) ) {
-                    swapSprites( j - 1, j, false );
-                    swp = true;
+                auto cmp = cmpSprY( i, j );
+                if( cmp < 0 || ( cmp == 0 && _oamPositionR[ i ] > _oamPositionR[ j ] ) ) {
+                    swapSprites( i, j, false );
                 }
             }
-            if( !swp ) { break; }
         }
 
         if( p_update ) { update( ); }

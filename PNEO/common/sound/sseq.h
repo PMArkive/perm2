@@ -291,7 +291,7 @@ namespace SOUND::SSEQ {
                 return i;
             }
         }
-        u8  j    = -1;
+        s8  j    = -1;
         int ampl = 1;
         for( u8 i = p_chStart; i < p_chEnd; ++i ) {
             if( ADSR_CHANNEL[ i ].m_state == adsrState::ADSR_RELEASE
