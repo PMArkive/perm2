@@ -294,23 +294,22 @@ namespace BAG {
     bool use( const u16 p_itemId, std::function<void( const char* )> p_message, bool p_dryRun ) {
         char buffer[ 50 ];
         if( !p_dryRun ) {
-            if( SAVE::SAV.getActiveFile( ).m_lstUsedItem != p_itemId ) {
-                SAVE::SAV.getActiveFile( ).m_lstUsedItem = p_itemId;
+            if( SAVE::CURRENT_FILE->m_lstUsedItem != p_itemId ) {
+                SAVE::CURRENT_FILE->m_lstUsedItem = p_itemId;
             }
         }
         switch( p_itemId ) {
         case I_POKEBLOCK_CASE: {
             if( !p_dryRun ) {
                 // run pokeblock viewer
-                pokeblockViewer pbv( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                     SAVE::SAV.getActiveFile( ).m_pokeblockCount );
+                pokeblockViewer pbv( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                     SAVE::CURRENT_FILE->m_pokeblockCount );
                 pbv.run( );
             }
             return true;
         }
         case I_POKE_RADAR: {
-            bool tracerUsable
-                = MAP::curMap->tracerUsable( SAVE::SAV.getActiveFile( ).m_player.m_pos );
+            bool tracerUsable  = MAP::curMap->tracerUsable( SAVE::CURRENT_FILE->m_player.m_pos );
             bool tracerCharged = MAP::curMap->tracerCharged( );
             if( !p_dryRun ) {
                 if( !tracerCharged ) {
@@ -318,7 +317,7 @@ namespace BAG {
                     return true;
                 }
                 if( !tracerUsable ) { return true; }
-                if( SAVE::SAV.getActiveFile( ).m_player.m_movement != MAP::DIVE ) {
+                if( SAVE::CURRENT_FILE->m_player.m_movement != MAP::DIVE ) {
                     MAP::curMap->changeMoveMode( MAP::WALK );
                 }
                 MAP::curMap->useTracer( );
@@ -328,53 +327,53 @@ namespace BAG {
         }
         case I_REPEL:
             if( !p_dryRun ) {
-                SAVE::SAV.getActiveFile( ).m_repelSteps
-                    = std::max( SAVE::SAV.getActiveFile( ).m_repelSteps, (s16) 50 );
+                SAVE::CURRENT_FILE->m_repelSteps
+                    = std::max( SAVE::CURRENT_FILE->m_repelSteps, (s16) 50 );
                 p_message( GET_STRING( IO::STR_ITEM_REPEL_ACTIVATED ) );
             }
             return true;
         case I_SUPER_REPEL:
             if( !p_dryRun ) {
-                SAVE::SAV.getActiveFile( ).m_repelSteps
-                    = std::max( SAVE::SAV.getActiveFile( ).m_repelSteps, (s16) 100 );
+                SAVE::CURRENT_FILE->m_repelSteps
+                    = std::max( SAVE::CURRENT_FILE->m_repelSteps, (s16) 100 );
                 p_message( GET_STRING( IO::STR_ITEM_SUPER_REPEL_ACTIVATED ) );
             }
             return true;
         case I_MAX_REPEL:
             if( !p_dryRun ) {
-                SAVE::SAV.getActiveFile( ).m_repelSteps
-                    = std::max( SAVE::SAV.getActiveFile( ).m_repelSteps, (s16) 250 );
+                SAVE::CURRENT_FILE->m_repelSteps
+                    = std::max( SAVE::CURRENT_FILE->m_repelSteps, (s16) 250 );
                 p_message( GET_STRING( IO::STR_ITEM_MAX_REPEL_ACTIVATED ) );
             }
             return true;
         case I_EXP_ALL:
             if( !p_dryRun ) {
-                if( SAVE::SAV.getActiveFile( ).m_options.m_EXPShareEnabled )
+                if( SAVE::CURRENT_FILE->m_options.m_EXPShareEnabled )
                     p_message( GET_STRING( IO::STR_ITEM_EXP_ALL_ACTIVATED ) );
                 else
                     p_message( GET_STRING( IO::STR_ITEM_EXP_ALL_DEACTIVATED ) );
-                SAVE::SAV.getActiveFile( ).m_options.m_EXPShareEnabled
-                    = !SAVE::SAV.getActiveFile( ).m_options.m_EXPShareEnabled;
+                SAVE::CURRENT_FILE->m_options.m_EXPShareEnabled
+                    = !SAVE::CURRENT_FILE->m_options.m_EXPShareEnabled;
             }
             return true;
         case I_SOOT_SACK:
             if( !p_dryRun ) {
                 snprintf( buffer, 50, GET_STRING( IO::STR_UI_ASH_COUNT ),
-                          SAVE::SAV.getActiveFile( ).m_ashCount );
+                          SAVE::CURRENT_FILE->m_ashCount );
                 p_message( buffer );
             }
             return true;
         case I_COIN_CASE:
             if( !p_dryRun ) {
                 snprintf( buffer, 50, GET_STRING( IO::STR_UI_COIN_COUNT ),
-                          SAVE::SAV.getActiveFile( ).m_coins );
+                          SAVE::CURRENT_FILE->m_coins );
                 p_message( buffer );
             }
             return true;
         case I_POINT_CARD:
             if( !p_dryRun ) {
                 snprintf( buffer, 50, GET_STRING( IO::STR_UI_BP_COUNT ),
-                          SAVE::SAV.getActiveFile( ).m_battlePoints );
+                          SAVE::CURRENT_FILE->m_battlePoints );
                 p_message( buffer );
             }
             return true;
@@ -386,81 +385,75 @@ namespace BAG {
             return false;
         case I_BIKE2:
         case I_BIKE:
-            if( !MAP::curMap->canBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
+            if( !MAP::curMap->canBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) { return true; }
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::BIKE
+                && !MAP::curMap->canGetOffBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) {
                 return true;
             }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::BIKE
-                && !MAP::curMap->canGetOffBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
-                return true;
-            }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::WALK
-                || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::MACH_BIKE
-                || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::ACRO_BIKE ) {
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::WALK
+                || SAVE::CURRENT_FILE->m_player.m_movement == MAP::MACH_BIKE
+                || SAVE::CURRENT_FILE->m_player.m_movement == MAP::ACRO_BIKE ) {
                 if( !p_dryRun ) MAP::curMap->changeMoveMode( MAP::BIKE );
                 return false;
-            } else if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::BIKE ) {
+            } else if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::BIKE ) {
                 if( !p_dryRun ) MAP::curMap->changeMoveMode( MAP::WALK );
                 return false;
             } else
                 return true;
         case I_MACH_BIKE:
-            if( !MAP::curMap->canBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
+            if( !MAP::curMap->canBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) { return true; }
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::MACH_BIKE
+                && !MAP::curMap->canGetOffBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) {
                 return true;
             }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::MACH_BIKE
-                && !MAP::curMap->canGetOffBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
-                return true;
-            }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::WALK
-                || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::BIKE
-                || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::ACRO_BIKE ) {
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::WALK
+                || SAVE::CURRENT_FILE->m_player.m_movement == MAP::BIKE
+                || SAVE::CURRENT_FILE->m_player.m_movement == MAP::ACRO_BIKE ) {
                 if( !p_dryRun ) MAP::curMap->changeMoveMode( MAP::MACH_BIKE );
                 return false;
-            } else if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::MACH_BIKE ) {
+            } else if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::MACH_BIKE ) {
                 if( !p_dryRun ) MAP::curMap->changeMoveMode( MAP::WALK );
                 return false;
             } else
                 return true;
         case I_ACRO_BIKE:
-            if( !MAP::curMap->canBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
+            if( !MAP::curMap->canBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) { return true; }
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::ACRO_BIKE
+                && !MAP::curMap->canGetOffBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) {
                 return true;
             }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::ACRO_BIKE
-                && !MAP::curMap->canGetOffBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
-                return true;
-            }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::WALK
-                || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::BIKE
-                || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::MACH_BIKE ) {
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::WALK
+                || SAVE::CURRENT_FILE->m_player.m_movement == MAP::BIKE
+                || SAVE::CURRENT_FILE->m_player.m_movement == MAP::MACH_BIKE ) {
                 if( !p_dryRun ) MAP::curMap->changeMoveMode( MAP::ACRO_BIKE );
                 return false;
-            } else if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::ACRO_BIKE ) {
+            } else if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::ACRO_BIKE ) {
                 if( !p_dryRun ) MAP::curMap->changeMoveMode( MAP::WALK );
                 return false;
             } else
                 return true;
 
         case I_OLD_ROD:
-            if( MAP::curMap->canFish( SAVE::SAV.getActiveFile( ).m_player.m_pos,
-                                      SAVE::SAV.getActiveFile( ).m_player.m_direction ) ) {
+            if( MAP::curMap->canFish( SAVE::CURRENT_FILE->m_player.m_pos,
+                                      SAVE::CURRENT_FILE->m_player.m_direction ) ) {
                 if( !p_dryRun )
-                    MAP::curMap->fishPlayer( SAVE::SAV.getActiveFile( ).m_player.m_direction, 0 );
+                    MAP::curMap->fishPlayer( SAVE::CURRENT_FILE->m_player.m_direction, 0 );
                 return false;
             } else
                 return true;
         case I_GOOD_ROD:
-            if( MAP::curMap->canFish( SAVE::SAV.getActiveFile( ).m_player.m_pos,
-                                      SAVE::SAV.getActiveFile( ).m_player.m_direction ) ) {
+            if( MAP::curMap->canFish( SAVE::CURRENT_FILE->m_player.m_pos,
+                                      SAVE::CURRENT_FILE->m_player.m_direction ) ) {
                 if( !p_dryRun )
-                    MAP::curMap->fishPlayer( SAVE::SAV.getActiveFile( ).m_player.m_direction, 1 );
+                    MAP::curMap->fishPlayer( SAVE::CURRENT_FILE->m_player.m_direction, 1 );
                 return false;
             } else
                 return true;
         case I_SUPER_ROD:
-            if( MAP::curMap->canFish( SAVE::SAV.getActiveFile( ).m_player.m_pos,
-                                      SAVE::SAV.getActiveFile( ).m_player.m_direction ) ) {
+            if( MAP::curMap->canFish( SAVE::CURRENT_FILE->m_player.m_pos,
+                                      SAVE::CURRENT_FILE->m_player.m_direction ) ) {
                 if( !p_dryRun )
-                    MAP::curMap->fishPlayer( SAVE::SAV.getActiveFile( ).m_player.m_direction, 2 );
+                    MAP::curMap->fishPlayer( SAVE::CURRENT_FILE->m_player.m_direction, 2 );
                 return false;
             } else
                 return true;
@@ -471,9 +464,8 @@ namespace BAG {
 
     bool isUsable( const u16 p_itemId ) {
         switch( p_itemId ) {
-        case I_POKE_RADAR:
-            return MAP::curMap->tracerUsable( SAVE::SAV.getActiveFile( ).m_player.m_pos );
-        case I_POKEBLOCK_CASE: return SAVE::SAV.getActiveFile( ).getTeamPkmnCount( );
+        case I_POKE_RADAR: return MAP::curMap->tracerUsable( SAVE::CURRENT_FILE->m_player.m_pos );
+        case I_POKEBLOCK_CASE: return SAVE::CURRENT_FILE->getTeamPkmnCount( );
         case I_REPEL:
         case I_SUPER_REPEL:
         case I_MAX_REPEL:
@@ -485,40 +477,34 @@ namespace BAG {
         case I_HONEY: return BATTLE::possible( M_SWEET_SCENT, 0 );
         case I_BIKE2:
         case I_BIKE:
-            if( !MAP::curMap->canBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
+            if( !MAP::curMap->canBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) { return false; }
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::BIKE
+                && !MAP::curMap->canGetOffBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) {
                 return false;
             }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::BIKE
-                && !MAP::curMap->canGetOffBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
-                return false;
-            }
-            return SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::WALK
-                   || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::BIKE;
+            return SAVE::CURRENT_FILE->m_player.m_movement == MAP::WALK
+                   || SAVE::CURRENT_FILE->m_player.m_movement == MAP::BIKE;
         case I_MACH_BIKE:
-            if( !MAP::curMap->canBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
+            if( !MAP::curMap->canBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) { return false; }
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::MACH_BIKE
+                && !MAP::curMap->canGetOffBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) {
                 return false;
             }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::MACH_BIKE
-                && !MAP::curMap->canGetOffBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
-                return false;
-            }
-            return SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::WALK
-                   || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::MACH_BIKE;
+            return SAVE::CURRENT_FILE->m_player.m_movement == MAP::WALK
+                   || SAVE::CURRENT_FILE->m_player.m_movement == MAP::MACH_BIKE;
         case I_ACRO_BIKE:
-            if( !MAP::curMap->canBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
+            if( !MAP::curMap->canBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) { return false; }
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::ACRO_BIKE
+                && !MAP::curMap->canGetOffBike( SAVE::CURRENT_FILE->m_player.m_pos ) ) {
                 return false;
             }
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::ACRO_BIKE
-                && !MAP::curMap->canGetOffBike( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
-                return false;
-            }
-            return SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::WALK
-                   || SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::ACRO_BIKE;
+            return SAVE::CURRENT_FILE->m_player.m_movement == MAP::WALK
+                   || SAVE::CURRENT_FILE->m_player.m_movement == MAP::ACRO_BIKE;
         case I_OLD_ROD:
         case I_GOOD_ROD:
         case I_SUPER_ROD:
-            return MAP::curMap->canFish( SAVE::SAV.getActiveFile( ).m_player.m_pos,
-                                         SAVE::SAV.getActiveFile( ).m_player.m_direction );
+            return MAP::curMap->canFish( SAVE::CURRENT_FILE->m_player.m_pos,
+                                         SAVE::CURRENT_FILE->m_player.m_direction );
         case I_VS_SEEKER:
             // TODO
         case I_VS_RECORDER:

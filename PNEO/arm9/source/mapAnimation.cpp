@@ -68,7 +68,7 @@ namespace MAP {
     u8 mapDrawer::getTileExitAnimation( u16 p_globX, u16 p_globY, bool p_isPlayer ) {
         u8 behave = at( p_globX, p_globY ).m_bottombehave;
 
-        auto mm = SAVE::SAV.getActiveFile( ).m_player.m_movement;
+        auto mm = SAVE::CURRENT_FILE->m_player.m_movement;
 
         bool playerBike = mm == MAP::MACH_BIKE || mm == MAP::ACRO_BIKE || mm == MAP::BIKE;
 
@@ -86,8 +86,8 @@ namespace MAP {
     }
 
     u8 mapDrawer::animateField( u16 p_globX, u16 p_globY, u8 p_animation, u8 p_frame ) {
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         if( !p_frame ) {
             auto res = _mapSprites.loadSprite( curx, cury, p_globX, p_globY, 3, p_animation );
             _mapSprites.drawFrame( res, 1 );
@@ -122,8 +122,8 @@ namespace MAP {
 
     void mapDrawer::animateField( u16 p_globX, u16 p_globY, u8 p_animation, direction p_enterDir,
                                   direction p_exitDir ) {
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         if( _tileAnimations.count( { p_globX, p_globY, 0 } ) ) {
             clearFieldAnimation( p_globX, p_globY );
         }
@@ -261,7 +261,7 @@ namespace MAP {
             break;
         }
         case BEH_FORTREE_BRIDGE_BIKE_BELOW: {
-            if( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ > 3 ) {
+            if( SAVE::CURRENT_FILE->m_player.m_pos.m_posZ > 3 ) {
                 setBlock( p_globX, p_globY, atom( p_globX, p_globY ).m_blockidx | 1 );
             }
             break;
@@ -302,7 +302,7 @@ namespace MAP {
             break;
         }
         case BEH_FORTREE_BRIDGE_BIKE_BELOW: {
-            if( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ > 3 ) {
+            if( SAVE::CURRENT_FILE->m_player.m_pos.m_posZ > 3 ) {
                 setBlock( p_globX, p_globY, atom( p_globX, p_globY ).m_blockidx & ( ~1 ) );
             }
             break;
@@ -315,8 +315,8 @@ namespace MAP {
     }
 
     void mapDrawer::animateDoor( u16 p_globX, u16 p_globY, u8 p_z, bool p_close ) {
-        u16  curx  = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16  cury  = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16  curx  = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16  cury  = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         auto wdata = getWarpData( p_globX, p_globY, p_z );
         if( !wdata.first ) { return; }
 
@@ -375,8 +375,8 @@ namespace MAP {
 
     void mapDrawer::animateMapObjects( u8 p_frame ) {
         bool change = false;
-        u16  curx   = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16  cury   = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16  curx   = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16  cury   = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
 
         u16 cx2 = curx, cy2 = cury;
 
@@ -385,8 +385,8 @@ namespace MAP {
             cy2 = _followPkmn.m_pos.m_posY;
         }
 
-        for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-            auto& o = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+        for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+            auto& o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
 
             if( o.first == UNUSED_MAPOBJECT ) { continue; }
             if( o.first == 255 ) { continue; }
@@ -569,8 +569,8 @@ namespace MAP {
             bgUpdate( );
         }
 
-        // u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        // u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        // u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        // u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
 
         // animate map objects
         animateTiles( );
@@ -608,13 +608,13 @@ namespace MAP {
     }
 
     void mapDrawer::animateTracer( ) {
-        u16 sx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX - TRACER_AREA;
-        u16 sy = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY - TRACER_AREA;
+        u16 sx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX - TRACER_AREA;
+        u16 sy = SAVE::CURRENT_FILE->m_player.m_pos.m_posY - TRACER_AREA;
 
-        u16 ta  = getTileAnimation( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                    SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY );
-        u16 tas = getTileAnimation( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                    SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY, true );
+        u16 ta  = getTileAnimation( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                    SAVE::CURRENT_FILE->m_player.m_pos.m_posY );
+        u16 tas = getTileAnimation( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                    SAVE::CURRENT_FILE->m_player.m_pos.m_posY, true );
 
         u8 sid[ TRACER_AREA ] = { }, scnt = 0;
         std::memset( sid, 255, sizeof( sid ) );

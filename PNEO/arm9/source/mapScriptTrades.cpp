@@ -54,15 +54,14 @@ namespace MAP {
         ANIMATE_MAP = false;
 
         // check if self-trader has a pkmn of the player
-        if( !SAVE::SAV.getActiveFile( ).m_traderPokemon.getSpecies( ) ) {
-            SAVE::SAV.getActiveFile( ).m_traderPokemon = boxPokemon( PKMN_DITTO, 5, 0, 0, 1, true );
-            SAVE::SAV.getActiveFile( ).m_traderPokemon.m_oTId  = SAVE::SAV.getActiveFile( ).m_sid;
-            SAVE::SAV.getActiveFile( ).m_traderPokemon.m_oTSid = SAVE::SAV.getActiveFile( ).m_id;
-            SAVE::SAV.getActiveFile( ).m_traderPokemon.m_ball  = 1;
+        if( !SAVE::CURRENT_FILE->m_traderPokemon.getSpecies( ) ) {
+            SAVE::CURRENT_FILE->m_traderPokemon        = boxPokemon( PKMN_DITTO, 5, 0, 0, 1, true );
+            SAVE::CURRENT_FILE->m_traderPokemon.m_oTId = SAVE::CURRENT_FILE->m_sid;
+            SAVE::CURRENT_FILE->m_traderPokemon.m_oTSid = SAVE::CURRENT_FILE->m_id;
+            SAVE::CURRENT_FILE->m_traderPokemon.m_ball  = 1;
 
-            memcpy( SAVE::SAV.getActiveFile( ).m_traderPokemon.m_oT, GET_TRADE_STRING( 0 ),
-                    OTLENGTH );
-            memcpy( SAVE::SAV.getActiveFile( ).m_traderPokemon.m_name, GET_TRADE_STRING( 1 ),
+            memcpy( SAVE::CURRENT_FILE->m_traderPokemon.m_oT, GET_TRADE_STRING( 0 ), OTLENGTH );
+            memcpy( SAVE::CURRENT_FILE->m_traderPokemon.m_name, GET_TRADE_STRING( 1 ),
                     PKMN_NAMELENGTH );
 
             printMapMessage( GET_MAP_STRING( IO::STR_MAP_ST_INTRO ), MSG_NORMAL );
@@ -70,13 +69,13 @@ namespace MAP {
             printMapMessage( GET_MAP_STRING( IO::STR_MAP_ST_MSG1 ), MSG_NORMAL );
         }
 
-        snprintf( buffer, 199, GET_MAP_STRING( IO::STR_MAP_ST_MSG2 ),
-                  FS::getDisplayName( SAVE::SAV.getActiveFile( ).m_traderPokemon.getSpecies( ) )
-                      .c_str( ) );
+        snprintf(
+            buffer, 199, GET_MAP_STRING( IO::STR_MAP_ST_MSG2 ),
+            FS::getDisplayName( SAVE::CURRENT_FILE->m_traderPokemon.getSpecies( ) ).c_str( ) );
         printMapMessage( buffer, MSG_NORMAL );
 
         // check if player has at least two pkmn that are not eggs
-        if( SAVE::SAV.getActiveFile( ).countAlivePkmn( ) < 2 ) {
+        if( SAVE::CURRENT_FILE->countAlivePkmn( ) < 2 ) {
             printMapMessage( GET_MAP_STRING( 1106 ), MSG_NORMAL );
             ANIMATE_MAP = true;
             return;
@@ -87,19 +86,19 @@ namespace MAP {
                 convertMapString( GET_MAP_STRING( IO::STR_MAP_ST_MSG3 ), MSG_NORMAL ).c_str( ),
                 MSG_NOCLOSE, false ) ) {
 
-            STS::partyScreen sts = STS::partyScreen( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                                     SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ),
-                                                     false, false, false, 1 );
+            STS::partyScreen sts = STS::partyScreen( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                                     SAVE::CURRENT_FILE->getTeamPkmnCount( ), false,
+                                                     false, false, 1 );
 
             auto selection = sts.run( ).getSelectedPkmn( );
 
-            if( selection < SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) ) {
-                auto trpkmn = pokemon( SAVE::SAV.getActiveFile( ).m_traderPokemon );
+            if( selection < SAVE::CURRENT_FILE->getTeamPkmnCount( ) ) {
+                auto trpkmn = pokemon( SAVE::CURRENT_FILE->m_traderPokemon );
 
-                std::swap( SAVE::SAV.getActiveFile( ).m_pkmnTeam[ selection ], trpkmn );
-                SAVE::SAV.getActiveFile( ).m_traderPokemon = trpkmn.m_boxdata;
+                std::swap( SAVE::CURRENT_FILE->m_pkmnTeam[ selection ], trpkmn );
+                SAVE::CURRENT_FILE->m_traderPokemon = trpkmn.m_boxdata;
 
-                pokemon::trade( trpkmn, SAVE::SAV.getActiveFile( ).m_pkmnTeam[ selection ],
+                pokemon::trade( trpkmn, SAVE::CURRENT_FILE->m_pkmnTeam[ selection ],
                                 GET_TRADE_STRING( 0 ) );
             }
             FADE_TOP_DARK( );
@@ -122,14 +121,14 @@ namespace MAP {
                                u8 p_offeredForme ) {
         ANIMATE_MAP = false;
 
-        STS::partyScreen sts = STS::partyScreen( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                                 SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ),
-                                                 false, false, false, 1 );
+        STS::partyScreen sts
+            = STS::partyScreen( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                SAVE::CURRENT_FILE->getTeamPkmnCount( ), false, false, false, 1 );
 
         u8   res       = 2;
         auto selection = sts.run( ).getSelectedPkmn( );
-        if( selection < SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) ) {
-            auto& pkmn = SAVE::SAV.getActiveFile( ).m_pkmnTeam[ selection ];
+        if( selection < SAVE::CURRENT_FILE->getTeamPkmnCount( ) ) {
+            auto& pkmn = SAVE::CURRENT_FILE->m_pkmnTeam[ selection ];
             if( pkmn.getSpecies( ) != p_targetPkmn || pkmn.getForme( ) != p_targetForme ) {
                 res = 2;
             } else {
@@ -139,9 +138,9 @@ namespace MAP {
                 trpkmn.m_boxdata.m_oTId
                     = u16{ trpkmn.m_boxdata.m_oT[ 0 ] } * trpkmn.m_boxdata.m_oT[ 1 ] + p_tradeIdx;
                 trpkmn.m_boxdata.m_oTSid = 2 * p_tradeIdx;
-                std::swap( SAVE::SAV.getActiveFile( ).m_pkmnTeam[ selection ], trpkmn );
+                std::swap( SAVE::CURRENT_FILE->m_pkmnTeam[ selection ], trpkmn );
 
-                pokemon::trade( trpkmn, SAVE::SAV.getActiveFile( ).m_pkmnTeam[ selection ],
+                pokemon::trade( trpkmn, SAVE::CURRENT_FILE->m_pkmnTeam[ selection ],
                                 GET_TRADE_STRING( 2 * p_tradeIdx ) );
                 res = 0;
             }

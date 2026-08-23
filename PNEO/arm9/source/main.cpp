@@ -197,17 +197,16 @@ void vblankIRQ( ) {
                     }
                 }
             }
+        } else if( tStruct != nullptr ) {
+            SAVE::CURRENT_TIME.m_hours = tStruct->tm_hour;
+            SAVE::CURRENT_TIME.m_mins  = tStruct->tm_min;
+            SAVE::CURRENT_TIME.m_secs  = tStruct->tm_sec;
+            SAVE::CURRENT_DATE.m_day   = tStruct->tm_mday - 1;
+            SAVE::CURRENT_DATE.m_month = tStruct->tm_mon;
+            SAVE::CURRENT_DATE.m_year  = tStruct->tm_year;
         }
-        if( IN_GAME ) { SAVE::SAV.getActiveFile( ).increaseTime( ); }
-    }
 
-    if( !RTC_BAD && tStruct != nullptr ) {
-        SAVE::CURRENT_TIME.m_hours = tStruct->tm_hour;
-        SAVE::CURRENT_TIME.m_mins  = tStruct->tm_min;
-        SAVE::CURRENT_TIME.m_secs  = tStruct->tm_sec;
-        SAVE::CURRENT_DATE.m_day   = tStruct->tm_mday - 1;
-        SAVE::CURRENT_DATE.m_month = tStruct->tm_mon;
-        SAVE::CURRENT_DATE.m_year  = tStruct->tm_year;
+        if( IN_GAME ) { SAVE::CURRENT_FILE->increaseTime( ); }
     }
 
     if( !ANIMATE_MAP ) {
@@ -220,7 +219,7 @@ void vblankIRQ( ) {
         }
     }
     FRAME_COUNT++;
-    if( ANIMATE_MAP && MAP::curMap ) MAP::curMap->animateMap( FRAME_COUNT );
+    if( ANIMATE_MAP && MAP::curMap ) { MAP::curMap->animateMap( FRAME_COUNT ); }
 }
 
 int main( int, char** p_argv ) {
@@ -281,17 +280,18 @@ START:
 #ifdef DESQUID
     printf( "[ OK ]\nALL GOOD!" );
 #endif
-
     SAVE::startScreen( ).run( );
     IO::clearScreenConsole( false, true );
     IO::clearScreen( false, true );
+
+    SAVE::CURRENT_FILE = &SAVE::SAV.getActiveFile( );
 
     FADE_TOP( );
     SOUND::stopBGM( );
 
     ANIMATE_MAP = false;
     // Reset infinity cave on reload
-    SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) = 0;
+    SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) = 0;
 
     MAP::curMap->registerOnLocationChangedHandler( SOUND::onLocationChange );
     MAP::curMap->registerOnMoveModeChangedHandler( SOUND::onMovementTypeChange );
@@ -332,24 +332,22 @@ START:
             snprintf( buffer, 99,
                       "POS %hhu-(%hx,%hx,%hhx). %i:%i, (%02u,%02u)\n"
                       "S-Rou %hhu | %6s (%hu) | %hx %hx | TM %hhu %02hhu :%02hhu ",
-                      SAVE::SAV.getActiveFile( ).m_currentMap,
-                      SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                      SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY,
-                      SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ,
-                      SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY / 32,
-                      SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX / 32,
-                      SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX % 32,
-                      SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY % 32,
-                      SAVE::SAV.getActiveFile( ).m_route,
+                      SAVE::CURRENT_FILE->m_currentMap, SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                      SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
+                      SAVE::CURRENT_FILE->m_player.m_pos.m_posZ,
+                      SAVE::CURRENT_FILE->m_player.m_pos.m_posY / 32,
+                      SAVE::CURRENT_FILE->m_player.m_pos.m_posX / 32,
+                      SAVE::CURRENT_FILE->m_player.m_pos.m_posX % 32,
+                      SAVE::CURRENT_FILE->m_player.m_pos.m_posY % 32, SAVE::CURRENT_FILE->m_route,
                       FS::getLocation( MAP::curMap->getCurrentLocationId( ) ).c_str( ),
                       MAP::curMap->getCurrentLocationId( ),
                       MAP::curMap
-                          ->at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                          ->at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                           .m_bottombehave,
                       MAP::curMap
-                          ->at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                          ->at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                           .m_topbehave,
                       getCurrentDaytime( ), SAVE::CURRENT_TIME.m_hours, SAVE::CURRENT_TIME.m_mins );
             IO::printMessage( buffer );
@@ -359,8 +357,8 @@ START:
         if( GET_AND_WAIT( KEY_A ) ) {
             if( MAP::curMap->currentPosAllowsDirectFieldMove( ) ) {
                 for( u8 i = 0; i < 6; ++i ) {
-                    if( !SAVE::SAV.getActiveFile( ).m_pkmnTeam[ i ].m_boxdata.m_speciesId ) break;
-                    auto a = SAVE::SAV.getActiveFile( ).m_pkmnTeam[ i ];
+                    if( !SAVE::CURRENT_FILE->m_pkmnTeam[ i ].m_boxdata.m_speciesId ) break;
+                    auto a = SAVE::CURRENT_FILE->m_pkmnTeam[ i ];
                     if( a.isEgg( ) ) continue;
                     for( u8 j = 0; j < 4; ++j )
                         for( u8 param = 0; param < 2; ++param ) {
@@ -396,9 +394,9 @@ START:
 
                                     if( a.m_boxdata.m_moves[ j ] == M_CUT
                                         || a.m_boxdata.m_moves[ j ] == M_ROCK_SMASH ) {
-                                        SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX
+                                        SAVE::CURRENT_FILE->m_player.m_pos.m_posX
                                             += MAP::dir[ d ][ 0 ];
-                                        SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY
+                                        SAVE::CURRENT_FILE->m_player.m_pos.m_posY
                                             += MAP::dir[ d ][ 1 ];
                                     }
 
@@ -406,9 +404,9 @@ START:
 
                                     if( a.m_boxdata.m_moves[ j ] == M_CUT
                                         || a.m_boxdata.m_moves[ j ] == M_ROCK_SMASH ) {
-                                        SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX
+                                        SAVE::CURRENT_FILE->m_player.m_pos.m_posX
                                             -= MAP::dir[ d ][ 0 ];
-                                        SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY
+                                        SAVE::CURRENT_FILE->m_player.m_pos.m_posY
                                             -= MAP::dir[ d ][ 1 ];
                                     }
                                 }
@@ -440,8 +438,8 @@ START:
             }
 
             stopped = false;
-            if( MAP::curMap->canMove( SAVE::SAV.getActiveFile( ).m_player.m_pos, curDir,
-                                      SAVE::SAV.getActiveFile( ).m_player.m_movement ) ) {
+            if( MAP::curMap->canMove( SAVE::CURRENT_FILE->m_player.m_pos, curDir,
+                                      SAVE::CURRENT_FILE->m_player.m_movement ) ) {
                 MAP::curMap->allowFollowPokemon( );
                 MAP::curMap->movePlayer( curDir, ( held & KEY_B ) );
                 bmp = false;

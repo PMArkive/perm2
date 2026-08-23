@@ -175,10 +175,10 @@ namespace DEX {
         _localSelectedPage   = -1;
 
         _OWbank = 0;
-        if( FSDATA.isOWMap( SAVE::SAV.getActiveFile( ).m_currentMap ) ) {
-            _OWbank = SAVE::SAV.getActiveFile( ).m_currentMap;
-        } else if( FSDATA.isOWMap( SAVE::SAV.getActiveFile( ).m_lastOWPos.first ) ) {
-            _OWbank = SAVE::SAV.getActiveFile( ).m_lastOWPos.first;
+        if( FSDATA.isOWMap( SAVE::CURRENT_FILE->m_currentMap ) ) {
+            _OWbank = SAVE::CURRENT_FILE->m_currentMap;
+        } else if( FSDATA.isOWMap( SAVE::CURRENT_FILE->m_lastOWPos.first ) ) {
+            _OWbank = SAVE::CURRENT_FILE->m_lastOWPos.first;
         }
 
         // open and read basic data about habitat map
@@ -436,22 +436,22 @@ namespace DEX {
             IO::regularFont->printStringC( GET_STRING( 580 ), 128 - 32, y + 21 + 14, true,
                                            IO::font::LEFT );
 
-            snprintf( buffer, 9, "%hu", SAVE::SAV.getActiveFile( ).getLocalSeenCount( ) );
+            snprintf( buffer, 9, "%hu", SAVE::CURRENT_FILE->getLocalSeenCount( ) );
             IO::regularFont->printStringC( buffer, 128 + 31, y + 21, true, IO::font::RIGHT );
-            snprintf( buffer, 9, "%hu", SAVE::SAV.getActiveFile( ).getLocalCaughtCount( ) );
+            snprintf( buffer, 9, "%hu", SAVE::CURRENT_FILE->getLocalCaughtCount( ) );
             IO::regularFont->printStringC( buffer, 128 + 31, y + 21 + 14, true, IO::font::RIGHT );
             IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 
             res.push_back( std::pair( IO::inputTarget( x, y, 255 - x, y + 20 ), 0 ) );
 
             // crown sprites for completed dex
-            if( SAVE::SAV.getActiveFile( ).getLocalCaughtCount( ) == LOCAL_DEX_SIZE ) {
+            if( SAVE::CURRENT_FILE->getLocalCaughtCount( ) == LOCAL_DEX_SIZE ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::CROWN3_START, 20, 3, tileCnt, 255 - x + 6,
                                           y + 3, 16, 16, false, false, false, OBJPRIORITY_3, true );
-            } else if( SAVE::SAV.getActiveFile( ).localDexCompleted( ) ) {
+            } else if( SAVE::CURRENT_FILE->localDexCompleted( ) ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::CROWN2_START, 20, 3, tileCnt, 255 - x + 6,
                                           y + 3, 16, 16, false, false, false, OBJPRIORITY_3, true );
-            } else if( SAVE::SAV.getActiveFile( ).localDexSeenCompleted( ) ) {
+            } else if( SAVE::CURRENT_FILE->localDexSeenCompleted( ) ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::CROWN1_START, 20, 3, tileCnt, 255 - x + 6,
                                           y + 3, 16, 16, false, false, false, OBJPRIORITY_3, true );
             }
@@ -477,22 +477,22 @@ namespace DEX {
             IO::regularFont->printStringC( GET_STRING( 580 ), 128 - 32, y + 21 + 14, true,
                                            IO::font::LEFT );
 
-            snprintf( buffer, 9, "%hu", SAVE::SAV.getActiveFile( ).getSeenCount( ) );
+            snprintf( buffer, 9, "%hu", SAVE::CURRENT_FILE->getSeenCount( ) );
             IO::regularFont->printStringC( buffer, 128 + 31, y + 21, true, IO::font::RIGHT );
-            snprintf( buffer, 9, "%hu", SAVE::SAV.getActiveFile( ).getCaughtCount( ) );
+            snprintf( buffer, 9, "%hu", SAVE::CURRENT_FILE->getCaughtCount( ) );
             IO::regularFont->printStringC( buffer, 128 + 31, y + 21 + 14, true, IO::font::RIGHT );
             IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 
             res.push_back( std::pair( IO::inputTarget( x, y, 255 - x, y + 20 ), 1 ) );
 
             // crown sprites for completed dex
-            if( SAVE::SAV.getActiveFile( ).getCaughtCount( ) == MAX_PKMN ) {
+            if( SAVE::CURRENT_FILE->getCaughtCount( ) == MAX_PKMN ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::CROWN3_START, 21, 4, tileCnt, 255 - x + 6,
                                           y + 3, 16, 16, false, false, false, OBJPRIORITY_3, true );
-            } else if( SAVE::SAV.getActiveFile( ).dexCompleted( ) ) {
+            } else if( SAVE::CURRENT_FILE->dexCompleted( ) ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::CROWN2_START, 21, 4, tileCnt, 255 - x + 6,
                                           y + 3, 16, 16, false, false, false, OBJPRIORITY_3, true );
-            } else if( SAVE::SAV.getActiveFile( ).dexSeenCompleted( ) ) {
+            } else if( SAVE::CURRENT_FILE->dexSeenCompleted( ) ) {
                 tileCnt = IO::loadUIIcon( IO::ICON::CROWN1_START, 21, 4, tileCnt, 255 - x + 6,
                                           y + 3, 16, 16, false, false, false, OBJPRIORITY_3, true );
             }
@@ -533,10 +533,10 @@ namespace DEX {
                                            IO::font::CENTER );
             localInitSub( true );
             std::snprintf( buffer, 89, GET_STRING( 583 ),
-                           SAVE::SAV.getActiveFile( ).getLocalSeenCount( ) );
+                           SAVE::CURRENT_FILE->getLocalSeenCount( ) );
             IO::regularFont->printStringC( buffer, 74, 2, true, IO::font::CENTER );
             std::snprintf( buffer, 89, GET_STRING( 584 ),
-                           SAVE::SAV.getActiveFile( ).getLocalCaughtCount( ) );
+                           SAVE::CURRENT_FILE->getLocalCaughtCount( ) );
             IO::regularFont->printStringC( buffer, 54 + 128, 2, true, IO::font::CENTER );
 
             _nationalSelectedIdx = 0;
@@ -544,11 +544,9 @@ namespace DEX {
         } else if( p_newMode == 1 ) { // national dex
             IO::regularFont->printStringC( GET_STRING( 578 ), 94 / 2 + 1, 5, false,
                                            IO::font::CENTER );
-            std::snprintf( buffer, 89, GET_STRING( 583 ),
-                           SAVE::SAV.getActiveFile( ).getSeenCount( ) );
+            std::snprintf( buffer, 89, GET_STRING( 583 ), SAVE::CURRENT_FILE->getSeenCount( ) );
             IO::regularFont->printStringC( buffer, 74, 2, true, IO::font::CENTER );
-            std::snprintf( buffer, 89, GET_STRING( 584 ),
-                           SAVE::SAV.getActiveFile( ).getCaughtCount( ) );
+            std::snprintf( buffer, 89, GET_STRING( 584 ), SAVE::CURRENT_FILE->getCaughtCount( ) );
             IO::regularFont->printStringC( buffer, 54 + 128, 2, true, IO::font::CENTER );
 
             _nationalSelectedIdx = 0;
@@ -571,8 +569,8 @@ namespace DEX {
         auto     oamTop = !p_bottom ? IO::OamTop->oamBuffer : IO::Oam->oamBuffer;
         pkmnData data   = FS::getPkmnData( p_pkmn.m_pkmnIdx, p_pkmn.m_forme );
 
-        bool seen   = SAVE::SAV.getActiveFile( ).seen( p_pkmn.m_pkmnIdx );
-        bool caught = SAVE::SAV.getActiveFile( ).caught( p_pkmn.m_pkmnIdx );
+        bool seen   = SAVE::CURRENT_FILE->seen( p_pkmn.m_pkmnIdx );
+        bool caught = SAVE::CURRENT_FILE->caught( p_pkmn.m_pkmnIdx );
 
         char buffer[ 100 ];
 
@@ -838,8 +836,8 @@ namespace DEX {
                                u16 p_x, u16 p_y, bool p_bottom ) {
         bool ispkmn = p_pkmnIdx && p_pkmnIdx <= MAX_PKMN;
 
-        bool seen   = ispkmn && SAVE::SAV.getActiveFile( ).seen( p_pkmnIdx );
-        bool caught = ispkmn && SAVE::SAV.getActiveFile( ).caught( p_pkmnIdx );
+        bool seen   = ispkmn && SAVE::CURRENT_FILE->seen( p_pkmnIdx );
+        bool caught = ispkmn && SAVE::CURRENT_FILE->caught( p_pkmnIdx );
 
         SpriteEntry* oam = p_bottom ? IO::Oam->oamBuffer : IO::OamTop->oamBuffer;
 
@@ -945,8 +943,8 @@ namespace DEX {
         u8 oamStart = SPR_NAT_DX_START_OAM_SUB
                       + ( ( currRot + p_OAMslot ) % SPR_NAT_DX_SLOT_COUNT ) * SPR_NAT_DX_SLOT_SIZE;
 
-        bool         seen   = SAVE::SAV.getActiveFile( ).seen( p_pkmnIdx );
-        bool         caught = SAVE::SAV.getActiveFile( ).caught( p_pkmnIdx );
+        bool         seen   = SAVE::CURRENT_FILE->seen( p_pkmnIdx );
+        bool         caught = SAVE::CURRENT_FILE->caught( p_pkmnIdx );
         SpriteEntry* oam    = p_bottom ? IO::Oam->oamBuffer : IO::OamTop->oamBuffer;
 
         char buffer[ 10 ];

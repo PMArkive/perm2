@@ -69,7 +69,7 @@ namespace MAP {
         infinityCaveType = 1 + p_icavetype;
         infinityCaveReqs = 0;
 
-        SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) = 0;
+        SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) = 0;
 
         for( u8 i = 0; i < MAX_INFINITY_POKE; ++i ) { infinityCavePoke[ i ] = { 0, 0 }; }
         infinityCaveSpecials.clear( );
@@ -85,46 +85,43 @@ namespace MAP {
             p_resultY = 1;
             return false;
         }
-        SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( )
-            = std::min( 100, SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) + 1 );
+        SAVE::CURRENT_FILE->infinityCaveCurrentLayer( )
+            = std::min( 100, SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) + 1 );
 
-        SAVE::SAV.getActiveFile( ).infinityCaveMaxLayer( )
-            = std::max( SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ),
-                        SAVE::SAV.getActiveFile( ).infinityCaveMaxLayer( ) );
+        SAVE::CURRENT_FILE->infinityCaveMaxLayer( )
+            = std::max( SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ),
+                        SAVE::CURRENT_FILE->infinityCaveMaxLayer( ) );
 
-        if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_NAT_DEX_OBTAINED )
-            && SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_1 ) {
+        if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_NAT_DEX_OBTAINED )
+            && SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_1 ) {
             p_resultX        = 3;
             p_resultY        = 1;
             infinityCaveReqs = 0;
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
-        } else if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_NAT_DEX_OBTAINED )
-                   && SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( )
-                          == ICAVE_TSYO_POKE_2 ) {
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
+        } else if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_NAT_DEX_OBTAINED )
+                   && SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_2 ) {
             p_resultX        = 5;
             p_resultY        = 1;
             infinityCaveReqs = 0;
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
-        } else if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_NAT_DEX_OBTAINED )
-                   && SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( )
-                          == ICAVE_TSYO_POKE_3 ) {
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
+        } else if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_NAT_DEX_OBTAINED )
+                   && SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_3 ) {
             p_resultX        = 7;
             p_resultY        = 1;
             infinityCaveReqs = 0;
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
-        } else if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_NAT_DEX_OBTAINED )
-                   && SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( )
-                          == ICAVE_TSYO_POKE_4 ) {
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
+        } else if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_NAT_DEX_OBTAINED )
+                   && SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_4 ) {
             p_resultX        = 9;
             p_resultY        = 1;
             infinityCaveReqs = 0;
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
         } else {
             p_resultX = 2 * ( rand( ) % 5 ) + 1;
             p_resultY = 2 * ( rand( ) % 4 ) + 3;
 
             u8 start = rand( ) % 4;
-            u8 rem   = SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( );
+            u8 rem   = SAVE::CURRENT_FILE->infinityCaveCurrentLayer( );
             for( u8 i = 1; i < 4; ++i ) {
                 u8 shift = ( start + i ) % 4;
                 u8 nx    = rand( ) % rem;
@@ -132,62 +129,59 @@ namespace MAP {
                 rem -= nx;
             }
             infinityCaveReqs |= rem << ( 8 * start );
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 0 );
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 0 );
         }
 
         // reset items
         for( u16 i = SAVE::F_ICAVE_LAYER_ITEM1; i <= SAVE::F_ICAVE_LAYER_ITEM10; ++i ) {
-            SAVE::SAV.getActiveFile( ).setFlag( i, 0 );
+            SAVE::CURRENT_FILE->setFlag( i, 0 );
         }
-        SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_POKE_CLEARED, 0 );
+        SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_POKE_CLEARED, 0 );
         return true;
     }
 
     bool mapDrawer::mapEnterInfinityCave( ) {
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
-        u16 mapX = curx / SIZE, mapY = cury / SIZE;
+        auto& cD   = currentData( );
+        u16   curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16   cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+        u16   mapX = curx / SIZE, mapY = cury / SIZE;
 
-        if( !SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) ) {
+        if( !SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) ) {
             infinityCaveReqs = 1;
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 0 );
-            currentData( ).m_pokemon[ 0 ] = { PKMN_ZUBAT, 0, INFINITY_CAVE, 1, 15, 20 };
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 0 );
+            cD.m_pokemon[ 0 ] = { PKMN_ZUBAT, 0, INFINITY_CAVE, 1, 15, 20 };
             return false;
         }
-        if( infinityCaveReqs ) {
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 0 );
-        }
+        if( infinityCaveReqs ) { SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 0 ); }
 
         // update stored pkmn
-        u8  base_level = SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( );
+        u8  base_level = SAVE::CURRENT_FILE->infinityCaveCurrentLayer( );
         u16 bst_upper  = base_level * base_level / 2 + 300;
-        if( SAVE::SAV.getActiveFile( ).m_options.m_difficulty == 3 ) {
+        if( SAVE::CURRENT_FILE->m_options.m_difficulty == 3 ) {
             base_level = std::max( 1, base_level / 2 );
             bst_upper  = base_level * base_level / 2 + 250;
-        } else if( SAVE::SAV.getActiveFile( ).m_options.m_difficulty < 3 ) {
+        } else if( SAVE::CURRENT_FILE->m_options.m_difficulty < 3 ) {
             base_level = std::max( 1, base_level / 3 );
             bst_upper  = base_level * base_level / 2 + 225;
             bst_upper  = 5 * base_level + 220;
         }
 
-        if( SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_1
-            || SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_2
-            || SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_3
-            || SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_4 ) {
+        if( SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_1
+            || SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_2
+            || SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_3
+            || SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) == ICAVE_TSYO_POKE_4 ) {
             // spawn a random special pkmn
             if( infinityCaveSpecials.empty( )
-                || SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_ICAVE_POKE_CLEARED ) ) {
+                || SAVE::CURRENT_FILE->checkFlag( SAVE::F_ICAVE_POKE_CLEARED ) ) {
                 return true;
             }
             u16 idx = rand( ) % ( infinityCaveSpecials.size( ) );
             // create wildPoke
-            if( currentData( ).m_events[ 19 ].m_type == EVENT_OW_PKMN ) {
-                currentData( ).m_events[ 19 ].m_data.m_owPkmn.m_speciesId
-                    = infinityCaveSpecials[ idx ].first;
-                currentData( ).m_events[ 19 ].m_data.m_owPkmn.m_forme
-                    = infinityCaveSpecials[ idx ].second;
+            if( cD.m_events[ 19 ].m_type == EVENT_OW_PKMN ) {
+                cD.m_events[ 19 ].m_data.m_owPkmn.m_speciesId = infinityCaveSpecials[ idx ].first;
+                cD.m_events[ 19 ].m_data.m_owPkmn.m_forme     = infinityCaveSpecials[ idx ].second;
                 resetMapSprites( );
-                constructAndAddNewMapObjects( currentData( ), mapX, mapY );
+                constructAndAddNewMapObjects( cD, mapX, mapY );
             }
         } else {
             u16 nxt_bst  = 0;
@@ -209,7 +203,7 @@ namespace MAP {
                 if( !fread( &nxt_ev, sizeof( u8 ), 1, icavef ) ) { break; }
 
                 if( hasBattleTransform( nxt_idx ) ) { nxt_form = 0; }
-                if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_NAT_DEX_OBTAINED )
+                if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_NAT_DEX_OBTAINED )
                     && ( isLegendary( nxt_idx ) || isUltraBeast( nxt_idx ) )
                     && !isSpecial( nxt_idx ) ) {
                     if( nxt_idx == PKMN_SILVALLY && nxt_form ) { continue; }
@@ -220,13 +214,13 @@ namespace MAP {
                     || isParadox( nxt_idx ) || isSecret( nxt_idx ) ) {
                     continue;
                 }
-                if( !SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_NAT_DEX_OBTAINED )
+                if( !SAVE::CURRENT_FILE->checkFlag( SAVE::F_NAT_DEX_OBTAINED )
                     && isTradeEvolution( nxt_idx ) ) {
                     infinityCaveSpecials.push_back( std::pair<u16, u8>{ nxt_idx, nxt_form } );
                     continue;
                 }
-                if( !SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_NAT_DEX_OBTAINED )
-                    && SAVE::SAV.getActiveFile( ).getPkmnDisplayDexId( nxt_idx ) == u16( -1 ) ) {
+                if( !SAVE::CURRENT_FILE->checkFlag( SAVE::F_NAT_DEX_OBTAINED )
+                    && SAVE::CURRENT_FILE->getPkmnDisplayDexId( nxt_idx ) == u16( -1 ) ) {
                     continue;
                 }
 
@@ -254,16 +248,16 @@ namespace MAP {
                 if( nxt_bst >= bst_upper ) { break; }
             }
 
-            currentData( ).m_pokemon[ 0 ] = { PKMN_ZUBAT, 0, INFINITY_CAVE, base_level, 15, 20 };
+            cD.m_pokemon[ 0 ] = { PKMN_ZUBAT, 0, INFINITY_CAVE, base_level, 15, 20 };
 
             for( u8 i = 0; i < MAX_INFINITY_POKE; ++i ) {
                 if( infinityCavePoke[ i ].first ) {
-                    currentData( ).m_pokemon[ i ] = { infinityCavePoke[ i ].first,
-                                                      infinityCavePoke[ i ].second,
-                                                      INFINITY_CAVE,
-                                                      base_level,
-                                                      15,
-                                                      20 };
+                    cD.m_pokemon[ i ] = { infinityCavePoke[ i ].first,
+                                          infinityCavePoke[ i ].second,
+                                          INFINITY_CAVE,
+                                          base_level,
+                                          15,
+                                          20 };
                 }
             }
         }
@@ -271,18 +265,17 @@ namespace MAP {
     }
 
     bool mapDrawer::gateCheckInfinityCave( ) {
-        u16  curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16  cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16  curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16  cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         u16  mapX = curx / SIZE, mapY = cury / SIZE;
         char buffer[ 200 ] = { 0 };
 
-        if( !SAVE::SAV.getActiveFile( ).infinityCaveCurrentLayer( ) ) {
+        if( !SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) ) {
             IO::printMessage( GET_MAP_STRING( IO::STR_MAP_ICAVE_REPORT_REQS_MET_AFTER ), MSG_INFO );
             return false;
         }
-        if( !infinityCaveReqs
-            || SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_ICAVE_LAYER_CLEARED ) ) {
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
+        if( !infinityCaveReqs || SAVE::CURRENT_FILE->checkFlag( SAVE::F_ICAVE_LAYER_CLEARED ) ) {
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
             infinityCaveReqs = 0;
             IO::printMessage( GET_MAP_STRING( IO::STR_MAP_ICAVE_REPORT_REQS_MET_AFTER ), MSG_INFO );
             return false;
@@ -299,13 +292,13 @@ namespace MAP {
         IO::printMessage( buffer, MSG_INFO );
 
         // check if player has required shards
-        bool clear = blue <= SAVE::SAV.getActiveFile( ).m_bag.count(
+        bool clear = blue <= SAVE::CURRENT_FILE->m_bag.count(
                          BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ), I_BLUE_SHARD );
-        clear &= red <= SAVE::SAV.getActiveFile( ).m_bag.count(
+        clear &= red <= SAVE::CURRENT_FILE->m_bag.count(
                      BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ), I_RED_SHARD );
-        clear &= green <= SAVE::SAV.getActiveFile( ).m_bag.count(
+        clear &= green <= SAVE::CURRENT_FILE->m_bag.count(
                      BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ), I_GREEN_SHARD );
-        clear &= yellow <= SAVE::SAV.getActiveFile( ).m_bag.count(
+        clear &= yellow <= SAVE::CURRENT_FILE->m_bag.count(
                      BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ), I_YELLOW_SHARD );
 
         if( !clear ) {
@@ -319,17 +312,17 @@ namespace MAP {
             == IO::yesNoBox::YES ) {
             IO::init( );
             // remove shards from bag
-            SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ),
-                                                    I_BLUE_SHARD, blue );
-            SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ),
-                                                    I_RED_SHARD, red );
-            SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ),
-                                                    I_GREEN_SHARD, green );
-            SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ),
-                                                    I_YELLOW_SHARD, yellow );
+            SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ),
+                                             I_BLUE_SHARD, blue );
+            SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ),
+                                             I_RED_SHARD, red );
+            SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ),
+                                             I_GREEN_SHARD, green );
+            SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_COLLECTIBLE ),
+                                             I_YELLOW_SHARD, yellow );
 
             // set reqs to 0
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_ICAVE_LAYER_CLEARED, 1 );
             infinityCaveReqs = 0;
             // eq
             earthquake( );

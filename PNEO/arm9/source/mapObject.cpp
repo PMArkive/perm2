@@ -67,8 +67,8 @@ namespace MAP {
         if( !p_mapObject.second.valid( ) ) { return false; }
 
         bool fakeload = false;
-        u16  curx     = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16  cury     = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16  curx     = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16  cury     = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         auto dx       = int( curx ) - p_mapObject.second.m_pos.m_posX;
         auto dy       = int( cury ) - p_mapObject.second.m_pos.m_posY;
         if( dx < -12 || dx > 12 || dy < -9 || dy > 9 ) {
@@ -126,11 +126,11 @@ namespace MAP {
             }
             case EVENT_BERRYTREE: {
                 // Check the growth of the specified berry tree
-                if( SAVE::SAV.getActiveFile( ).berryIsAlive(
+                if( SAVE::CURRENT_FILE->berryIsAlive(
                         p_mapObject.second.m_event.m_data.m_berryTree.m_treeIdx ) ) {
-                    u8 stage = SAVE::SAV.getActiveFile( ).getBerryStage(
+                    u8 stage = SAVE::CURRENT_FILE->getBerryStage(
                         p_mapObject.second.m_event.m_data.m_berryTree.m_treeIdx );
-                    u8 berryType = SAVE::SAV.getActiveFile( ).getBerry(
+                    u8 berryType = SAVE::CURRENT_FILE->getBerry(
                         p_mapObject.second.m_event.m_data.m_berryTree.m_treeIdx );
                     p_mapObject.first = _mapSprites.loadBerryTree(
                         curx, cury, p_mapObject.second.m_pos.m_posX,
@@ -164,35 +164,35 @@ namespace MAP {
 
     void mapDrawer::attachMapObjectToPlayer( u8 p_objectId ) {
         removeAttachedObjects( );
-        SAVE::SAV.getActiveFile( ).m_objectAttached    = 1;
-        SAVE::SAV.getActiveFile( ).m_mapObjAttachedIdx = fixMapObject( p_objectId );
+        SAVE::CURRENT_FILE->m_objectAttached    = 1;
+        SAVE::CURRENT_FILE->m_mapObjAttachedIdx = fixMapObject( p_objectId );
     }
 
     void mapDrawer::removeAttachedObjects( ) {
-        if( SAVE::SAV.getActiveFile( ).m_objectAttached ) {
-            SAVE::SAV.getActiveFile( ).m_mapObjAttachedIdx = 0;
-            SAVE::SAV.getActiveFile( ).m_objectAttached    = 0;
+        if( SAVE::CURRENT_FILE->m_objectAttached ) {
+            SAVE::CURRENT_FILE->m_mapObjAttachedIdx = 0;
+            SAVE::CURRENT_FILE->m_objectAttached    = 0;
             unfixMapObject( );
         }
     }
 
     void mapDrawer::drawPlayer( ObjPriority p_playerPrio, bool p_playerHidden ) {
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
 
-        _playerSprite = _mapSprites.loadSprite( curx, cury, mapSpriteManager::SPTYPE_PLAYER,
-                                                SAVE::SAV.getActiveFile( ).m_player.sprite( ),
-                                                p_playerHidden );
-        changeMoveMode( SAVE::SAV.getActiveFile( ).m_player.m_movement );
-        _mapSprites.setPriority(
-            _playerSprite, SAVE::SAV.getActiveFile( ).m_playerPriority = p_playerPrio, false );
+        _playerSprite
+            = _mapSprites.loadSprite( curx, cury, mapSpriteManager::SPTYPE_PLAYER,
+                                      SAVE::CURRENT_FILE->m_player.sprite( ), p_playerHidden );
+        changeMoveMode( SAVE::CURRENT_FILE->m_player.m_movement );
+        _mapSprites.setPriority( _playerSprite, SAVE::CURRENT_FILE->m_playerPriority = p_playerPrio,
+                                 false );
         _mapSprites.setVisibility( _playerSprite, p_playerHidden );
     }
 
     u8 mapDrawer::fixMapObject( u8 p_objectId ) {
         // swap mo to position 0
-        std::swap( SAVE::SAV.getActiveFile( ).m_mapObjects[ p_objectId ],
-                   SAVE::SAV.getActiveFile( ).m_mapObjects[ _fixedObjectCount ] );
+        std::swap( SAVE::CURRENT_FILE->m_mapObjects[ p_objectId ],
+                   SAVE::CURRENT_FILE->m_mapObjects[ _fixedObjectCount ] );
         return _fixedObjectCount++;
     }
 
@@ -201,7 +201,7 @@ namespace MAP {
     }
 
     void mapDrawer::showExclamationAboveMapObject( u8 p_objectId ) {
-        auto& o = SAVE::SAV.getActiveFile( ).m_mapObjects[ p_objectId ];
+        auto& o = SAVE::CURRENT_FILE->m_mapObjects[ p_objectId ];
         _mapSprites.showExclamation( o.first );
         SOUND::playSoundEffect( SFX_EXMARK );
         for( u8 i = 0; i < 60; ++i ) { swiWaitForVBlank( ); }
@@ -246,8 +246,8 @@ namespace MAP {
             if( p_movePlayer ) {
                 animateField( p_mapObject.m_pos.m_posX, p_mapObject.m_pos.m_posY );
 
-                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX = p_mapObject.m_pos.m_posX;
-                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY = p_mapObject.m_pos.m_posY;
+                SAVE::CURRENT_FILE->m_player.m_pos.m_posX = p_mapObject.m_pos.m_posX;
+                SAVE::CURRENT_FILE->m_player.m_pos.m_posY = p_mapObject.m_pos.m_posY;
             }
             p_mapObject.m_pos.m_posX += dir[ p_movement.m_direction ][ 0 ];
             p_mapObject.m_pos.m_posY += dir[ p_movement.m_direction ][ 1 ];
@@ -307,8 +307,8 @@ namespace MAP {
 
     void mapDrawer::moveMapObject( u8 p_objectId, movement p_movement, bool p_movePlayer,
                                    direction p_playerMovement, bool p_adjustAnim ) {
-        moveMapObject( SAVE::SAV.getActiveFile( ).m_mapObjects[ p_objectId ].second,
-                       SAVE::SAV.getActiveFile( ).m_mapObjects[ p_objectId ].first, p_movement,
+        moveMapObject( SAVE::CURRENT_FILE->m_mapObjects[ p_objectId ].second,
+                       SAVE::CURRENT_FILE->m_mapObjects[ p_objectId ].first, p_movement,
                        p_movePlayer, p_playerMovement, p_adjustAnim );
     }
 
@@ -354,21 +354,21 @@ namespace MAP {
     bool mapDrawer::updateFollowPkmn( ) {
         _followPkmnData        = nullptr;
         _followPkmnSpeciesData = nullptr;
-        auto teamCnt           = SAVE::SAV.getActiveFile( ).getTeamPkmnCount( );
+        auto teamCnt           = SAVE::CURRENT_FILE->getTeamPkmnCount( );
         if( !teamCnt ) { return false; }
         if( _forceNoFollow ) { return false; }
 
         // only if first pkmn is not ko, it will follow the player.
-        if( !SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 0 ].canBattle( ) ) { return false; }
+        if( !SAVE::CURRENT_FILE->m_pkmnTeam[ 0 ].canBattle( ) ) { return false; }
 
         if( !_followPkmnDisguiseBusted
-            && SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 0 ].getAbility( ) == A_ILLUSION && teamCnt > 1
-            && SAVE::SAV.getActiveFile( ).m_pkmnTeam[ teamCnt - 1 ].canBattle( ) ) {
+            && SAVE::CURRENT_FILE->m_pkmnTeam[ 0 ].getAbility( ) == A_ILLUSION && teamCnt > 1
+            && SAVE::CURRENT_FILE->m_pkmnTeam[ teamCnt - 1 ].canBattle( ) ) {
             _followPkmnIsDisguised = true;
-            _followPkmnData        = &SAVE::SAV.getActiveFile( ).m_pkmnTeam[ teamCnt - 1 ];
+            _followPkmnData        = &SAVE::CURRENT_FILE->m_pkmnTeam[ teamCnt - 1 ];
         } else {
             _followPkmnIsDisguised = false;
-            _followPkmnData        = &SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 0 ];
+            _followPkmnData        = &SAVE::CURRENT_FILE->m_pkmnTeam[ 0 ];
         }
 
         if( _followPkmnData == nullptr ) { return false; }
@@ -404,7 +404,7 @@ namespace MAP {
     void mapDrawer::spawnFollowPkmn( u16 p_globX, u16 p_globY, u8 p_z, direction p_direction ) {
         _followPkmn               = mapObject( );
         _followPkmnDisguiseBusted = false;
-        if( SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) && updateFollowPkmn( ) ) {
+        if( SAVE::CURRENT_FILE->getTeamPkmnCount( ) && updateFollowPkmn( ) ) {
             _followPkmn.m_pos          = { p_globX, p_globY, p_z };
             _followPkmn.m_movement     = NO_MOVEMENT;
             _followPkmn.m_direction    = p_direction;
@@ -434,8 +434,8 @@ namespace MAP {
             _followPkmnData        = nullptr;
             _followPkmnSpeciesData = nullptr;
 
-            u16 ox = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX - dir[ _lastPlayerMove ][ 0 ];
-            u16 oy = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY - dir[ _lastPlayerMove ][ 1 ];
+            u16 ox = SAVE::CURRENT_FILE->m_player.m_pos.m_posX - dir[ _lastPlayerMove ][ 0 ];
+            u16 oy = SAVE::CURRENT_FILE->m_player.m_pos.m_posY - dir[ _lastPlayerMove ][ 1 ];
             stepOff( ox, oy, false, _lastFollowPkmnMove, _followPkmn.m_direction );
         }
     }
@@ -489,14 +489,14 @@ namespace MAP {
     }
 
     void mapDrawer::usePkmn( const pkmnSpriteInfo& p_pkmn ) {
-        u8 basePic = SAVE::SAV.getActiveFile( ).m_player.m_picNum / 10 * 10;
-        SAVE::SAV.getActiveFile( ).m_player.m_picNum = basePic + 5;
-        auto mmode = SAVE::SAV.getActiveFile( ).m_player.m_movement;
+        u8 basePic                            = SAVE::CURRENT_FILE->m_player.m_picNum / 10 * 10;
+        SAVE::CURRENT_FILE->m_player.m_picNum = basePic + 5;
+        auto mmode                            = SAVE::CURRENT_FILE->m_player.m_movement;
 
-        u16 curx      = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury      = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16 curx      = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16 cury      = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         _playerSprite = _mapSprites.loadSprite( curx, cury, mapSpriteManager::SPTYPE_PLAYER,
-                                                SAVE::SAV.getActiveFile( ).m_player.sprite( ) );
+                                                SAVE::CURRENT_FILE->m_player.sprite( ) );
         for( u8 i = 0; i < 5; ++i ) {
             _mapSprites.drawFrame( _playerSprite, i, false, true );
             for( u8 j = 0; j < 5; ++j ) swiWaitForVBlank( );
@@ -518,7 +518,7 @@ namespace MAP {
         if( !_pkmnFollowsPlayer || _followPkmnData == nullptr ) { return false; }
 
         // store direction the player is currently facing
-        direction olddir = SAVE::SAV.getActiveFile( ).m_player.m_direction;
+        direction olddir = SAVE::CURRENT_FILE->m_player.m_direction;
 
         // make one step in the opposite direction of the last player move, this shoul
         // make the follow pkmn and the player switch places
@@ -538,17 +538,14 @@ namespace MAP {
     }
 
     void mapDrawer::awardBadge( u8 p_type, u8 p_badge ) {
-        if( p_type == 0
-            && ( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << ( p_badge - 1 ) ) ) ) {
+        if( p_type == 0 && ( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << ( p_badge - 1 ) ) ) ) {
             // player already has this badge/symbol.
             return;
         } else if( p_type == 1 ) {
             auto sym = ( p_badge / 10 ) - 1;
             auto tp  = ( p_badge % 10 ) - 1;
 
-            if( SAVE::SAV.getActiveFile( ).m_FRONTIER_Badges & ( 1 << ( 7 * tp + sym ) ) ) {
-                return;
-            }
+            if( SAVE::CURRENT_FILE->m_FRONTIER_Badges & ( 1 << ( 7 * tp + sym ) ) ) { return; }
         }
 
         ANIMATE_MAP = false;
@@ -589,8 +586,8 @@ namespace MAP {
         if( p_type == 0 ) { // Hoenn badge
             IO::loadUIIconB( IO::BADGE_ICON_START[ p_badge - 1 ], SPR_PKMN_OAM, SPR_PKMN_GFX, 96,
                              64, 64, 64, false, false, false, OBJPRIORITY_0, false );
-            SAVE::SAV.getActiveFile( ).m_lastAchievementEvent = p_badge;
-            SAVE::SAV.getActiveFile( ).m_HOENN_Badges |= ( 1 << ( p_badge - 1 ) );
+            SAVE::CURRENT_FILE->m_lastAchievementEvent = p_badge;
+            SAVE::CURRENT_FILE->m_HOENN_Badges |= ( 1 << ( p_badge - 1 ) );
         } else if( p_type == 1 ) { // Frontier symbol
             auto sym = ( p_badge / 10 ) - 1;
             auto tp  = ( p_badge % 10 ) - 1;
@@ -603,11 +600,11 @@ namespace MAP {
                                  64, 64, 64, false, false, false, OBJPRIORITY_0, false );
             }
 
-            SAVE::SAV.getActiveFile( ).m_lastAchievementEvent = 10 + 2 * sym + tp;
-            SAVE::SAV.getActiveFile( ).m_FRONTIER_Badges |= ( 1 << ( 7 * tp + sym ) );
+            SAVE::CURRENT_FILE->m_lastAchievementEvent = 10 + 2 * sym + tp;
+            SAVE::CURRENT_FILE->m_FRONTIER_Badges |= ( 1 << ( 7 * tp + sym ) );
         }
 
-        SAVE::SAV.getActiveFile( ).m_lastAchievementDate = SAVE::CURRENT_DATE;
+        SAVE::CURRENT_FILE->m_lastAchievementDate = SAVE::CURRENT_DATE;
 
         IO::updateOAM( false );
         for( u16 i = 0; i < 330; ++i ) swiWaitForVBlank( );
@@ -620,7 +617,7 @@ namespace MAP {
         IO::updateOAM( false );
 
         char buffer[ 140 ];
-        snprintf( buffer, 139, GET_STRING( 436 ), SAVE::SAV.getActiveFile( ).m_playername,
+        snprintf( buffer, 139, GET_STRING( 436 ), SAVE::CURRENT_FILE->m_playername,
                   getBadgeName( p_type, p_badge ) );
         IO::printMessage( buffer, MSG_INFO );
         SOUND::restartBGM( );
@@ -650,9 +647,9 @@ namespace MAP {
             if( curMode == 0 ) {
                 IO::buyItem( p_offeredItems, p_paymentMethod );
             } else if( p_allowItemSell && curMode == 1 ) {
-                BAG::bagViewer bv = BAG::bagViewer( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                                    BAG::bagViewer::SELL_ITEM );
-                ANIMATE_MAP       = false;
+                BAG::bagViewer bv
+                    = BAG::bagViewer( SAVE::CURRENT_FILE->m_pkmnTeam, BAG::bagViewer::SELL_ITEM );
+                ANIMATE_MAP = false;
                 SOUND::dimVolume( );
 
                 IO::clearScreen( false );
@@ -682,9 +679,9 @@ namespace MAP {
     void mapDrawer::resetMapSprites( ) {
         for( u16 i = 0; i < 20; ++i ) { swiWaitForVBlank( ); }
         for( u16 i = 0; i < SAVE::MAX_MAPOBJECT; ++i ) {
-            SAVE::SAV.getActiveFile( ).m_mapObjects[ i ] = { UNUSED_MAPOBJECT, mapObject( ) };
+            SAVE::CURRENT_FILE->m_mapObjects[ i ] = { UNUSED_MAPOBJECT, mapObject( ) };
         }
-        SAVE::SAV.getActiveFile( ).m_mapObjectCount = 0;
+        SAVE::CURRENT_FILE->m_mapObjectCount = 0;
         unfixMapObject( );
         _mapSprites.reset( );
     }
@@ -694,8 +691,8 @@ namespace MAP {
         bool oa     = ANIMATE_MAP;
         ANIMATE_MAP = false;
         std::vector<std::pair<u8, mapObject>> res;
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16                                   curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16                                   cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
 
         std::set<position> eventPositions;
 
@@ -706,22 +703,20 @@ namespace MAP {
                               .c_str( ) );
 #endif
         // check old objects and purge them if they are not visible anymore
-        for( u8 i = _fixedObjectCount; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-            auto o = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+        for( u8 i = _fixedObjectCount; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+            auto o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
             if( o.first == UNUSED_MAPOBJECT ) { continue; }
 
             if( dist( o.second.m_pos.m_posX, o.second.m_pos.m_posY, curx, cury ) > 10 ) {
                 _mapSprites.destroySprite( o.first, false );
             } else if( o.second.m_event.m_activateFlag
-                       && !SAVE::SAV.getActiveFile( ).checkFlag(
-                           o.second.m_event.m_activateFlag ) ) {
+                       && !SAVE::CURRENT_FILE->checkFlag( o.second.m_event.m_activateFlag ) ) {
                 _mapSprites.destroySprite( o.first, false );
             } else if( o.second.m_event.m_deactivateFlag
-                       && SAVE::SAV.getActiveFile( ).checkFlag(
-                           o.second.m_event.m_deactivateFlag ) ) {
+                       && SAVE::CURRENT_FILE->checkFlag( o.second.m_event.m_deactivateFlag ) ) {
                 _mapSprites.destroySprite( o.first, false );
             } else if( ( o.second.m_event.m_route )
-                       && o.second.m_event.m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                       && o.second.m_event.m_route != SAVE::CURRENT_FILE->m_route ) {
                 continue;
             } else {
                 if( o.first != 255 ) {
@@ -737,15 +732,15 @@ namespace MAP {
         // add new objects
         for( u8 i = 0; i < MAX_EVENTS_PER_SLICE; ++i ) {
             if( p_data.m_events[ i ].m_activateFlag
-                && !SAVE::SAV.getActiveFile( ).checkFlag( p_data.m_events[ i ].m_activateFlag ) ) {
+                && !SAVE::CURRENT_FILE->checkFlag( p_data.m_events[ i ].m_activateFlag ) ) {
                 continue;
             }
             if( p_data.m_events[ i ].m_deactivateFlag
-                && SAVE::SAV.getActiveFile( ).checkFlag( p_data.m_events[ i ].m_deactivateFlag ) ) {
+                && SAVE::CURRENT_FILE->checkFlag( p_data.m_events[ i ].m_deactivateFlag ) ) {
                 continue;
             }
             if( ( p_data.m_events[ i ].m_route )
-                && p_data.m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                && p_data.m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                 continue;
             }
 
@@ -759,11 +754,11 @@ namespace MAP {
             if( p_data.m_events[ i ].m_type == EVENT_NPC_MESSAGE
                 || p_data.m_events[ i ].m_type == EVENT_NPC ) {
                 if( p_data.m_events[ i ].m_data.m_npc.m_scriptType == 11
-                    && SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
+                    && SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
                     continue;
                 }
                 if( p_data.m_events[ i ].m_data.m_npc.m_scriptType == 10
-                    && !SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
+                    && !SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
                     continue;
                 }
             }
@@ -785,9 +780,9 @@ namespace MAP {
                 break;
             }
             case EVENT_BERRYTREE: {
-                if( !SAVE::SAV.getActiveFile( ).berryIsAlive(
+                if( !SAVE::CURRENT_FILE->berryIsAlive(
                         p_data.m_events[ i ].m_data.m_berryTree.m_treeIdx ) ) {
-                    SAVE::SAV.getActiveFile( ).harvestBerry(
+                    SAVE::CURRENT_FILE->harvestBerry(
                         p_data.m_events[ i ].m_data.m_berryTree.m_treeIdx );
                     continue;
                 } else {
@@ -845,7 +840,7 @@ namespace MAP {
                 obj.m_picNum   = p_data.m_events[ i ].m_data.m_owPkmn.m_speciesId + PKMN_SPRITE;
                 obj.m_movement = NO_MOVEMENT;
                 obj.m_range    = ( ( p_data.m_events[ i ].m_data.m_owPkmn.m_forme & 0x3f ) << 1 )
-                              | ( ( p_data.m_events[ i ].m_data.m_owPkmn.m_shiny & 0x3f ) == 2 );
+                                 | ( ( p_data.m_events[ i ].m_data.m_owPkmn.m_shiny & 0x3f ) == 2 );
                 obj.m_direction = DOWN;
                 obj.m_event     = p_data.m_events[ i ];
 
@@ -875,9 +870,9 @@ namespace MAP {
             if( loadMapObject( cur ) ) { res.push_back( cur ); }
         }
 
-        SAVE::SAV.getActiveFile( ).m_mapObjectCount = res.size( ) + _fixedObjectCount;
+        SAVE::CURRENT_FILE->m_mapObjectCount = res.size( ) + _fixedObjectCount;
         for( u8 i = 0; i < res.size( ); ++i ) {
-            SAVE::SAV.getActiveFile( ).m_mapObjects[ i + _fixedObjectCount ] = res[ i ];
+            SAVE::CURRENT_FILE->m_mapObjects[ i + _fixedObjectCount ] = res[ i ];
         }
 
         // force an update
@@ -887,8 +882,8 @@ namespace MAP {
     }
 
     void mapDrawer::destroyHMObject( u16 p_globX, u16 p_globY ) {
-        for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-            auto& o = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+        for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+            auto& o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
 
             if( o.second.m_pos.m_posX != p_globX || o.second.m_pos.m_posY != p_globY ) { continue; }
             if( o.second.m_event.m_type == MAP::EVENT_HMOBJECT ) {

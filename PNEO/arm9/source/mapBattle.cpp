@@ -47,11 +47,11 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MAP {
     void mapDrawer::disablePkmn( s16 p_steps ) {
-        SAVE::SAV.getActiveFile( ).m_repelSteps = p_steps;
+        SAVE::CURRENT_FILE->m_repelSteps = p_steps;
     }
 
     void mapDrawer::enablePkmn( ) {
-        SAVE::SAV.getActiveFile( ).m_repelSteps = 0;
+        SAVE::CURRENT_FILE->m_repelSteps = 0;
     }
 
     void mapDrawer::handleWildPkmn( u16 p_globX, u16 p_globY ) {
@@ -70,7 +70,7 @@ namespace MAP {
             }
         }
 
-        if( SAVE::SAV.getActiveFile( ).m_repelSteps ) { return; }
+        if( SAVE::CURRENT_FILE->m_repelSteps ) { return; }
         // handle Pkmn stuff
         if( moveData == MVD_SURF && behave != BEH_WATERFALL ) {
             handleWildPkmn( WATER );
@@ -96,30 +96,31 @@ namespace MAP {
             tier = 1;
         else
             tier = 0;
-        return SAVE::SAV.getActiveFile( ).getEncounterLevel( tier );
+        return SAVE::CURRENT_FILE->getEncounterLevel( tier );
     }
 
     bool mapDrawer::getWildPkmnSpecies( wildPkmnType p_type, u16& p_pkmnId, u8& p_pkmnForme ) {
         p_pkmnId    = 0;
         p_pkmnForme = 0;
 
-        s8 availmod = ( SAVE::SAV.getActiveFile( ).m_options.getDifficulty( ) - 3 ) / 3;
+        s8 availmod = ( SAVE::CURRENT_FILE->m_options.getDifficulty( ) - 3 ) / 3;
+
+        const auto& cD = currentData( );
 
         u8 total = 0;
         for( u8 i = 0; i < MAX_PKMN_PER_SLICE; ++i ) {
-            if( !currentData( ).m_pokemon[ i ].m_speciesId ) { continue; }
+            if( !cD.m_pokemon[ i ].m_speciesId ) { continue; }
 
-            if( currentData( ).m_pokemon[ i ].m_encounterType == p_type
-                || ( p_type == GRASS
-                     && currentData( ).m_pokemon[ i ].m_encounterType == INFINITY_CAVE ) ) {
+            if( cD.m_pokemon[ i ].m_encounterType == p_type
+                || ( p_type == GRASS && cD.m_pokemon[ i ].m_encounterType == INFINITY_CAVE ) ) {
 
-                s8 ownedbadge = SAVE::SAV.getActiveFile( ).getBadgeCount( ) + availmod;
+                s8 ownedbadge = SAVE::CURRENT_FILE->getBadgeCount( ) + availmod;
                 if( ownedbadge < 0 ) { ownedbadge = 0; }
-                if( currentData( ).m_pokemon[ i ].m_encounterType == INFINITY_CAVE
-                    || ( ownedbadge >= currentData( ).m_pokemon[ i ].m_slot
-                         && ( currentData( ).m_pokemon[ i ].m_daytime
+                if( cD.m_pokemon[ i ].m_encounterType == INFINITY_CAVE
+                    || ( ownedbadge >= cD.m_pokemon[ i ].m_slot
+                         && ( cD.m_pokemon[ i ].m_daytime
                               & ( 1 << ( getCurrentDaytime( ) % 4 ) ) ) ) ) {
-                    total += currentData( ).m_pokemon[ i ].m_encounterRate;
+                    total += cD.m_pokemon[ i ].m_encounterRate;
                 }
             }
         }
@@ -134,35 +135,33 @@ namespace MAP {
         u8 res = rand( ) % total;
         total  = 0;
         for( u8 i = 0; i < MAX_PKMN_PER_SLICE; ++i ) {
-            if( !currentData( ).m_pokemon[ i ].m_speciesId ) { continue; }
+            if( !cD.m_pokemon[ i ].m_speciesId ) { continue; }
 
-            if( currentData( ).m_pokemon[ i ].m_encounterType == p_type
-                || ( p_type == GRASS
-                     && currentData( ).m_pokemon[ i ].m_encounterType == INFINITY_CAVE ) ) {
+            if( cD.m_pokemon[ i ].m_encounterType == p_type
+                || ( p_type == GRASS && cD.m_pokemon[ i ].m_encounterType == INFINITY_CAVE ) ) {
 
-                s8 ownedbadge = SAVE::SAV.getActiveFile( ).getBadgeCount( ) + availmod;
+                s8 ownedbadge = SAVE::CURRENT_FILE->getBadgeCount( ) + availmod;
                 if( ownedbadge < 0 ) { ownedbadge = 0; }
 
-                if( currentData( ).m_pokemon[ i ].m_encounterType == INFINITY_CAVE
-                    || ( ownedbadge >= currentData( ).m_pokemon[ i ].m_slot
-                         && ( currentData( ).m_pokemon[ i ].m_daytime
+                if( cD.m_pokemon[ i ].m_encounterType == INFINITY_CAVE
+                    || ( ownedbadge >= cD.m_pokemon[ i ].m_slot
+                         && ( cD.m_pokemon[ i ].m_daytime
                               & ( 1 << ( getCurrentDaytime( ) % 4 ) ) ) ) ) {
-                    total += currentData( ).m_pokemon[ i ].m_encounterRate;
+                    total += cD.m_pokemon[ i ].m_encounterRate;
 
                     // if the player hasn't obtained the nat dex yet, they should only see
                     // pkmn that are in the local dex
-                    if( SAVE::SAV.getActiveFile( ).getPkmnDisplayDexId(
-                            currentData( ).m_pokemon[ i ].m_speciesId )
+                    if( SAVE::CURRENT_FILE->getPkmnDisplayDexId( cD.m_pokemon[ i ].m_speciesId )
                         != u16( -1 ) ) {
-                        backup      = currentData( ).m_pokemon[ i ].m_speciesId;
-                        backupForme = currentData( ).m_pokemon[ i ].m_forme;
+                        backup      = cD.m_pokemon[ i ].m_speciesId;
+                        backupForme = cD.m_pokemon[ i ].m_forme;
                     } else {
                         continue;
                     }
 
                     if( total > res ) {
-                        p_pkmnId    = currentData( ).m_pokemon[ i ].m_speciesId;
-                        p_pkmnForme = currentData( ).m_pokemon[ i ].m_forme;
+                        p_pkmnId    = cD.m_pokemon[ i ].m_speciesId;
+                        p_pkmnForme = cD.m_pokemon[ i ].m_forme;
                         break;
                     }
                 }
@@ -195,7 +194,7 @@ namespace MAP {
         }
         _playerIsFast = false;
         _fastBike     = false;
-        _mapSprites.setFrameD( _playerSprite, SAVE::SAV.getActiveFile( ).m_player.m_direction );
+        _mapSprites.setFrameD( _playerSprite, SAVE::CURRENT_FILE->m_player.m_direction );
 
         IO::fadeScreen( IO::BATTLE );
         IO::BG_PAL( true )[ 0 ] = 0;
@@ -205,23 +204,24 @@ namespace MAP {
     }
 
     BATTLE::battle::battleEndReason mapDrawer::battleWildPkmn( wildPkmnType p_type ) {
-        u8 platform = 0, plat2 = 0;
-        u8 battleBack = p_type == WATER ? currentData( ).m_surfBattleBG : currentData( ).m_battleBG;
+        u8          platform = 0, plat2 = 0;
+        const auto& cD         = currentData( );
+        u8          battleBack = p_type == WATER ? cD.m_surfBattleBG : cD.m_battleBG;
         switch( p_type ) {
         case WATER:
-            platform = currentData( ).m_surfBattlePlat1;
-            plat2    = currentData( ).m_surfBattlePlat2;
+            platform = cD.m_surfBattlePlat1;
+            plat2    = cD.m_surfBattlePlat2;
             break;
         case OLD_ROD:
         case GOOD_ROD:
         case SUPER_ROD:
-            platform = currentData( ).m_battlePlat1;
-            plat2    = currentData( ).m_surfBattlePlat2;
+            platform = cD.m_battlePlat1;
+            plat2    = cD.m_surfBattlePlat2;
             break;
 
         default:
-            platform = currentData( ).m_battlePlat1;
-            plat2    = currentData( ).m_battlePlat2;
+            platform = cD.m_battlePlat1;
+            plat2    = cD.m_battlePlat2;
             break;
         }
 
@@ -229,9 +229,9 @@ namespace MAP {
         DRAW_TIME       = false;
         auto playerPrio = _mapSprites.getPriority( _playerSprite );
         swiWaitForVBlank( );
-        auto result = BATTLE::battle( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                      SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ), WILD_PKMN,
-                                      platform, plat2, battleBack, getBattlePolicy( true ) )
+        auto result = BATTLE::battle( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                      SAVE::CURRENT_FILE->getTeamPkmnCount( ), WILD_PKMN, platform,
+                                      plat2, battleBack, getBattlePolicy( true ) )
                           .start( _pkmnFollowsPlayer );
 
         if( _tracerChain ) {
@@ -248,8 +248,7 @@ namespace MAP {
         SOUND::restartBGM( );
         FADE_TOP_DARK( );
         draw( playerPrio );
-        _mapSprites.setPriority( _playerSprite,
-                                 SAVE::SAV.getActiveFile( ).m_playerPriority = playerPrio );
+        _mapSprites.setPriority( _playerSprite, SAVE::CURRENT_FILE->m_playerPriority = playerPrio );
         IO::init( );
 
         ANIMATE_MAP = true;
@@ -269,8 +268,7 @@ namespace MAP {
 
     bool mapDrawer::handleTracerPkmn( u8 p_tracerSlot ) {
         if( !_tracerSpecies ) { return false; }
-        u16 rn
-            = rand( ) % ( 512 + 3 * SAVE::SAV.getActiveFile( ).m_options.m_encounterRateModifier );
+        u16 rn = rand( ) % ( 512 + 3 * SAVE::CURRENT_FILE->m_options.m_encounterRateModifier );
         rn %= 40;
         u8 level = getWildPkmnLevel( rn );
 
@@ -285,8 +283,7 @@ namespace MAP {
     }
 
     bool mapDrawer::handleWildPkmn( wildPkmnType p_type, bool p_forceEncounter ) {
-        u16 rn
-            = rand( ) % ( 512 + 3 * SAVE::SAV.getActiveFile( ).m_options.m_encounterRateModifier );
+        u16 rn = rand( ) % ( 512 + 3 * SAVE::CURRENT_FILE->m_options.m_encounterRateModifier );
         if( p_type == OLD_ROD || p_type == GOOD_ROD || p_type == SUPER_ROD ) rn /= 8;
         if( p_forceEncounter ) rn %= 40;
 
@@ -317,16 +314,16 @@ namespace MAP {
         if( p_type == OLD_ROD || p_type == GOOD_ROD || p_type == SUPER_ROD ) {
             _playerIsFast = false;
             IO::printMessage( GET_STRING( IO::STR_MAP_FISH_SUCCESSS_PKMN ) );
-        } else if( SAVE::SAV.getActiveFile( ).m_repelSteps && !p_forceEncounter ) {
+        } else if( SAVE::CURRENT_FILE->m_repelSteps && !p_forceEncounter ) {
             return false;
         }
 
-        bool luckyenc = SAVE::SAV.getActiveFile( ).m_bag.count(
-                            BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_WISHING_CHARM )
+        bool luckyenc = SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                         I_WISHING_CHARM )
                             ? !( rand( ) & 127 )
                             : !( rand( ) & 2047 );
-        bool charm    = SAVE::SAV.getActiveFile( ).m_bag.count(
-            BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_SHINY_CHARM );
+        bool charm    = SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                         I_SHINY_CHARM );
 
         resetTracerChain( );
         prepareBattleWildPkmn( p_type, pkmnId, luckyenc );
@@ -345,7 +342,7 @@ namespace MAP {
                                       : BATTLE::battlePolicy( BATTLE::FACILITY_TRAINER_POLICY ) );
 
         res.m_mode               = p_mode;
-        res.m_allowMegaEvolution = SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_MEGA_EVOLUTION );
+        res.m_allowMegaEvolution = SAVE::CURRENT_FILE->checkFlag( SAVE::F_MEGA_EVOLUTION );
 
         res.m_weather = BATTLE::WE_NONE;
         switch( getWeather( ) ) {
@@ -365,15 +362,15 @@ namespace MAP {
     }
 
     bool mapDrawer::requestWildPkmn( bool p_forceHighGrass ) {
-        u8 moveData = atom( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                            SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+        u8 moveData = atom( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                            SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                           .m_movedata;
-        u8 behave   = at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                          SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+        u8 behave   = at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                          SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                           .m_bottombehave;
 
-        u8 tracerSlot = getTracerPkmn( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                       SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY );
+        u8 tracerSlot = getTracerPkmn( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                       SAVE::CURRENT_FILE->m_player.m_pos.m_posY );
 
         if( tracerSlot != NO_TRACER_PKMN ) {
             return handleTracerPkmn( tracerSlot );
@@ -443,7 +440,7 @@ namespace MAP {
     bool mapDrawer::updateTracerChain( direction p_dir ) {
         if( ++_tracerCharge > TRACER_CHARGED ) { _tracerCharge = TRACER_CHARGED; }
         if( !_tracerChain ) { return false; }
-        if( !tracerUsable( SAVE::SAV.getActiveFile( ).m_player.m_pos ) ) {
+        if( !tracerUsable( SAVE::CURRENT_FILE->m_player.m_pos ) ) {
             // player stepped outside of the grass, breaking the chain
             return false;
         }
@@ -483,10 +480,9 @@ namespace MAP {
     }
 
     bool mapDrawer::continueTracerChain( ) {
-        printf( "HERE\n" );
         // store current position
         std::memset( _tracerPositions, 0, sizeof( _tracerPositions ) );
-        _tracerLastPos    = SAVE::SAV.getActiveFile( ).m_player.m_pos;
+        _tracerLastPos    = SAVE::CURRENT_FILE->m_player.m_pos;
         _tracerLuckyShiny = 0;
 
         ++_tracerChain;
@@ -497,13 +493,13 @@ namespace MAP {
 #endif
         if( _tracerChain > 40 ) { _tracerChain = 39; }
 
-        u8 luckyMod    = SAVE::SAV.getActiveFile( ).m_bag.count(
-                             BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_WISHING_CHARM )
+        u8 luckyMod    = SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                          I_WISHING_CHARM )
                              ? 5
                              : 10;
         u8 shinyFactor = 75;
-        if( SAVE::SAV.getActiveFile( ).m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
-                                                    I_SHINY_CHARM ) ) {
+        if( SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                             I_SHINY_CHARM ) ) {
             shinyFactor = 125;
         }
 

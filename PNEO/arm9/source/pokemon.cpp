@@ -426,7 +426,7 @@ u8 pokemon::canEvolve( u16 p_item, evolutionMethod p_method, pkmnEvolveData* p_e
         }
 
         case EVOLUTION_SPECIAL: {
-            auto teamcnt = SAVE::SAV.getActiveFile( ).getTeamPkmnCount( );
+            auto teamcnt = SAVE::CURRENT_FILE->getTeamPkmnCount( );
             if( p_method != EVOMETHOD_LEVEL_UP ) { break; }
             switch( getSpecies( ) ) {
             case PKMN_TYROGUE:
@@ -453,7 +453,7 @@ u8 pokemon::canEvolve( u16 p_item, evolutionMethod p_method, pkmnEvolveData* p_e
             case PKMN_MANTYKE:
                 // Check for a Remoraid in the party
                 for( u8 q = 0; q < teamcnt; ++q ) {
-                    const auto pkmn = SAVE::SAV.getActiveFile( ).getTeamPkmn( q );
+                    const auto pkmn = SAVE::CURRENT_FILE->getTeamPkmn( q );
                     if( pkmn == nullptr ) [[unlikely]] { continue; }
                     if( pkmn->getSpecies( ) == PKMN_REMORAID ) { return i + 1; }
                 }
@@ -461,7 +461,7 @@ u8 pokemon::canEvolve( u16 p_item, evolutionMethod p_method, pkmnEvolveData* p_e
             case PKMN_PANCHAM:
                 // Check for dark-type pkmn
                 for( u8 q = 0; q < teamcnt; ++q ) {
-                    const auto pkmn = SAVE::SAV.getActiveFile( ).getTeamPkmn( q );
+                    const auto pkmn = SAVE::CURRENT_FILE->getTeamPkmn( q );
                     if( pkmn == nullptr ) [[unlikely]] { continue; }
                     auto dt = FS::getPkmnData( pkmn->getSpecies( ), pkmn->getForme( ) );
                     if( dt.m_baseForme.m_types[ 0 ] == BATTLE::TYPE_DARKNESS
@@ -509,7 +509,8 @@ u8 pokemon::canEvolve( u16 p_item, evolutionMethod p_method, pkmnEvolveData* p_e
             }
         }
 
-            [[unlikely]] default : break;
+        [[unlikely]] default:
+            break;
         }
     }
 
@@ -537,14 +538,14 @@ void pokemon::evolve( u16 p_item, evolutionMethod p_method ) {
         takeItem( );
     }
 
-    SAVE::SAV.getActiveFile( ).registerCaughtPkmn( edata.m_evolutions[ tg ].m_target );
+    SAVE::CURRENT_FILE->registerCaughtPkmn( edata.m_evolutions[ tg ].m_target );
 
     // check for shedinja
 
     if( getSpecies( ) == PKMN_NINJASK ) {
-        if( SAVE::SAV.getActiveFile( ).m_bag.count( BAG::toBagType( BAG::ITEMTYPE_POKEBALL ),
-                                                    I_POKE_BALL ) ) {
-            if( SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) < 6 ) {
+        if( SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_POKEBALL ),
+                                             I_POKE_BALL ) ) {
+            if( SAVE::CURRENT_FILE->getTeamPkmnCount( ) < 6 ) {
                 // Create a Shedinja
                 auto shed = pokemon( *this );
 
@@ -554,12 +555,11 @@ void pokemon::evolve( u16 p_item, evolutionMethod p_method ) {
                 shed.takeItem( );
                 strncpy( shed.m_boxdata.m_name, FS::getDisplayName( PKMN_SHEDINJA ).c_str( ), 10 );
 
-                SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_POKEBALL ),
-                                                        I_POKE_BALL, 1 );
-                SAVE::SAV.getActiveFile( ).setTeamPkmn(
-                    SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ), &shed );
+                SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( BAG::ITEMTYPE_POKEBALL ),
+                                                 I_POKE_BALL, 1 );
+                SAVE::CURRENT_FILE->setTeamPkmn( SAVE::CURRENT_FILE->getTeamPkmnCount( ), &shed );
 
-                SAVE::SAV.getActiveFile( ).registerCaughtPkmn( PKMN_SHEDINJA );
+                SAVE::CURRENT_FILE->registerCaughtPkmn( PKMN_SHEDINJA );
             }
         }
     }

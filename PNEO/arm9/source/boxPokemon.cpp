@@ -41,11 +41,10 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 boxPokemon::boxPokemon( u16 p_pkmnId, u16 p_level, u8 p_forme, const char* p_name, u8 p_shiny,
                         bool p_hiddenAbility, bool p_isEgg, u8 p_ball, u8 p_pokerus,
                         bool p_fatefulEncounter, pkmnData* p_data )
-    : boxPokemon::boxPokemon( nullptr, p_pkmnId, p_name, p_level, SAVE::SAV.getActiveFile( ).m_id,
-                              SAVE::SAV.getActiveFile( ).m_sid,
-                              SAVE::SAV.getActiveFile( ).m_playername, p_shiny, p_hiddenAbility,
-                              p_fatefulEncounter, p_isEgg, MAP::curMap->getCurrentLocationId( ),
-                              p_ball, p_pokerus, p_forme, p_data ) {
+    : boxPokemon::boxPokemon(
+          nullptr, p_pkmnId, p_name, p_level, SAVE::CURRENT_FILE->m_id, SAVE::CURRENT_FILE->m_sid,
+          SAVE::CURRENT_FILE->m_playername, p_shiny, p_hiddenAbility, p_fatefulEncounter, p_isEgg,
+          MAP::curMap->getCurrentLocationId( ), p_ball, p_pokerus, p_forme, p_data ) {
 }
 
 boxPokemon::boxPokemon( u16* p_moves, u16 p_pkmnId, const char* p_name, u16 p_level, u16 p_id,
@@ -75,8 +74,8 @@ boxPokemon::boxPokemon( u16* p_moves, u16 p_pkmnId, const char* p_name, u16 p_le
             m_pid       = rand( );
             m_shinyType = 1;
         }
-        if( SAVE::SAV.getActiveFile( ).m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
-                                                    I_SHINY_CHARM ) ) {
+        if( SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                             I_SHINY_CHARM ) ) {
             for( u8 i = 0; i < p_shiny - 2 && !isShiny( ); ++i ) {
                 m_pid       = rand( );
                 m_shinyType = 1;
@@ -151,9 +150,9 @@ boxPokemon::boxPokemon( u16* p_moves, u16 p_pkmnId, const char* p_name, u16 p_le
     if( p_oT && p_oT[ 0 ] ) {
         memcpy( m_oT, p_oT, OTLENGTH );
     } else {
-        m_oTId  = SAVE::SAV.getActiveFile( ).m_id;
-        m_oTSid = SAVE::SAV.getActiveFile( ).m_sid;
-        memcpy( m_oT, SAVE::SAV.getActiveFile( ).m_playername, OTLENGTH );
+        m_oTId  = SAVE::CURRENT_FILE->m_id;
+        m_oTSid = SAVE::CURRENT_FILE->m_sid;
+        memcpy( m_oT, SAVE::CURRENT_FILE->m_playername, OTLENGTH );
     }
     m_pokerus  = p_pokerus;
     m_ball     = p_ball;
@@ -549,9 +548,9 @@ bool boxPokemon::breed( const boxPokemon& p_other, boxPokemon& p_result ) const 
 }
 
 bool boxPokemon::isForeign( ) const {
-    if( std::strcmp( m_oT, SAVE::SAV.getActiveFile( ).m_playername ) ) { return true; }
-    if( m_oTId != SAVE::SAV.getActiveFile( ).m_id ) { return true; }
-    if( m_oTSid != SAVE::SAV.getActiveFile( ).m_sid ) { return true; }
+    if( std::strcmp( m_oT, SAVE::CURRENT_FILE->m_playername ) ) { return true; }
+    if( m_oTId != SAVE::CURRENT_FILE->m_id ) { return true; }
+    if( m_oTSid != SAVE::CURRENT_FILE->m_sid ) { return true; }
     return false;
 }
 
@@ -675,9 +674,9 @@ void boxPokemon::hatch( ) {
     m_hatchDate[ 1 ] = SAVE::CURRENT_DATE.m_month;
     m_hatchDate[ 2 ] = SAVE::CURRENT_DATE.m_year % 100;
 
-    m_oTId  = SAVE::SAV.getActiveFile( ).m_id;
-    m_oTSid = SAVE::SAV.getActiveFile( ).m_sid;
-    strcpy( m_oT, SAVE::SAV.getActiveFile( ).m_playername );
+    m_oTId  = SAVE::CURRENT_FILE->m_id;
+    m_oTSid = SAVE::CURRENT_FILE->m_sid;
+    strcpy( m_oT, SAVE::CURRENT_FILE->m_playername );
 }
 
 bool boxPokemon::learnMove( u16 p_move, std::function<void( const char* )> p_message,

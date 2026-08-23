@@ -52,7 +52,7 @@ namespace MAP {
         if( _followPkmnData == nullptr ) { return; }
 
         // rotate pkmn sprite to face player
-        direction d = direction( ( SAVE::SAV.getActiveFile( ).m_player.m_direction + 2 ) % 4 );
+        direction d = direction( ( SAVE::CURRENT_FILE->m_player.m_direction + 2 ) % 4 );
         _mapSprites.setFrameD( _playerFollowPkmnSprite, d );
 
         // if follow pkmn is disguised, undisguise it
@@ -223,10 +223,10 @@ namespace MAP {
     }
 
     void mapDrawer::interact( ) {
-        u16  px = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16  py = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
-        u16  pz = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ;
-        auto d  = SAVE::SAV.getActiveFile( ).m_player.m_direction;
+        u16  px = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16  py = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+        u16  pz = SAVE::CURRENT_FILE->m_player.m_pos.m_posZ;
+        auto d  = SAVE::CURRENT_FILE->m_player.m_direction;
         u16  tx = px + dir[ d ][ 0 ];
         u16  ty = py + dir[ d ][ 1 ];
 
@@ -325,7 +325,8 @@ namespace MAP {
             handleEvents( tx, ty, pz, d );
             return;
         }
-            [[likely]] default : break;
+        [[likely]] default:
+            break;
         }
         handleEvents( px, py, pz, d );
     }

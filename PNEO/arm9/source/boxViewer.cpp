@@ -25,9 +25,9 @@ You should have received a copy of the GNU General Public License
 along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "box/boxViewer.h"
 #include "bag/bagViewer.h"
 #include "box/boxUI.h"
+#include "box/boxViewer.h"
 #include "fs/data.h"
 #include "io/keyboard.h"
 #include "io/uio.h"
@@ -46,7 +46,7 @@ namespace BOX {
         _boxUI = boxUI( );
         _boxUI.init( );
 
-        _boxUI.draw( SAVE::SAV.getActiveFile( ).getCurrentBox( ) );
+        _boxUI.draw( SAVE::CURRENT_FILE->getCurrentBox( ) );
 
         _selectedIdx = (u8) -1;
         memset( &_heldPkmn, 0, sizeof( pokemon ) );
@@ -83,17 +83,16 @@ namespace BOX {
 
             if( GET_KEY_COOLDOWN( KEY_L ) ) {
                 // previous box
-                SAVE::SAV.getActiveFile( ).m_curBox
-                    = ( SAVE::SAV.getActiveFile( ).m_curBox + SAVE::MAX_BOXES - 1 )
-                      % SAVE::MAX_BOXES;
-                _boxUI.draw( SAVE::SAV.getActiveFile( ).getCurrentBox( ) );
+                SAVE::CURRENT_FILE->m_curBox
+                    = ( SAVE::CURRENT_FILE->m_curBox + SAVE::MAX_BOXES - 1 ) % SAVE::MAX_BOXES;
+                _boxUI.draw( SAVE::CURRENT_FILE->getCurrentBox( ) );
                 select( _selectedIdx );
                 cooldown = COOLDOWN_COUNT;
             } else if( GET_KEY_COOLDOWN( KEY_R ) ) {
                 // next box
-                SAVE::SAV.getActiveFile( ).m_curBox
-                    = ( SAVE::SAV.getActiveFile( ).m_curBox + 1 ) % SAVE::MAX_BOXES;
-                _boxUI.draw( SAVE::SAV.getActiveFile( ).getCurrentBox( ) );
+                SAVE::CURRENT_FILE->m_curBox
+                    = ( SAVE::CURRENT_FILE->m_curBox + 1 ) % SAVE::MAX_BOXES;
+                _boxUI.draw( SAVE::CURRENT_FILE->getCurrentBox( ) );
                 select( _selectedIdx );
                 cooldown = COOLDOWN_COUNT;
             } else if( GET_KEY_COOLDOWN( KEY_DOWN ) ) {
@@ -133,9 +132,9 @@ namespace BOX {
                     select( ( _selectedIdx + 1 ) % MAX_PKMN_PER_BOX );
                 } else if( _selectedIdx == BOXNAME_BUTTON ) {
                     // switch to next box
-                    SAVE::SAV.getActiveFile( ).m_curBox
-                        = ( SAVE::SAV.getActiveFile( ).m_curBox + 1 ) % SAVE::MAX_BOXES;
-                    _boxUI.draw( SAVE::SAV.getActiveFile( ).getCurrentBox( ) );
+                    SAVE::CURRENT_FILE->m_curBox
+                        = ( SAVE::CURRENT_FILE->m_curBox + 1 ) % SAVE::MAX_BOXES;
+                    _boxUI.draw( SAVE::CURRENT_FILE->getCurrentBox( ) );
                 }
                 cooldown = COOLDOWN_COUNT;
             } else if( GET_KEY_COOLDOWN( KEY_LEFT ) ) {
@@ -146,10 +145,9 @@ namespace BOX {
                     select( ( _selectedIdx + MAX_PKMN_PER_BOX - 1 ) % MAX_PKMN_PER_BOX );
                 } else if( _selectedIdx == BOXNAME_BUTTON ) {
                     // switch to prev box
-                    SAVE::SAV.getActiveFile( ).m_curBox
-                        = ( SAVE::SAV.getActiveFile( ).m_curBox + SAVE::MAX_BOXES - 1 )
-                          % SAVE::MAX_BOXES;
-                    _boxUI.draw( SAVE::SAV.getActiveFile( ).getCurrentBox( ) );
+                    SAVE::CURRENT_FILE->m_curBox
+                        = ( SAVE::CURRENT_FILE->m_curBox + SAVE::MAX_BOXES - 1 ) % SAVE::MAX_BOXES;
+                    _boxUI.draw( SAVE::CURRENT_FILE->getCurrentBox( ) );
                 }
                 cooldown = COOLDOWN_COUNT;
             } else if( pressed & KEY_A ) {
@@ -238,7 +236,7 @@ namespace BOX {
             tmp = pokemon( *getPkmn( p_index ) );
         } else {
             if( p_index >= MAX_PKMN_PER_BOX + 6 ) { return; }
-            auto ptmp = SAVE::SAV.getActiveFile( ).getTeamPkmn( p_index - MAX_PKMN_PER_BOX );
+            auto ptmp = SAVE::CURRENT_FILE->getTeamPkmn( p_index - MAX_PKMN_PER_BOX );
             if( ptmp == nullptr ) { // slot is empty
                 std::memset( &tmp, 0, sizeof( pokemon ) );
             } else {
@@ -251,8 +249,7 @@ namespace BOX {
                 // Make sure that we disallow picking up the players last pkmn
                 if( p_index < MAX_PKMN_PER_BOX
                     || ( p_index < MAX_PKMN_PER_BOX + 6
-                         && ( SAVE::SAV.getActiveFile( ).countAlivePkmn( ) > 1
-                              || !tmp.canBattle( ) ) ) ) {
+                         && ( SAVE::CURRENT_FILE->countAlivePkmn( ) > 1 || !tmp.canBattle( ) ) ) ) {
                     // Swap pkmn
                     std::swap( tmp, _heldPkmn );
                     setPkmn( p_index, &tmp );
@@ -268,14 +265,12 @@ namespace BOX {
                 // Make sure that we disallow picking up the players last pkmn
                 if( p_index < MAX_PKMN_PER_BOX
                     || ( p_index < MAX_PKMN_PER_BOX + 6
-                         && ( SAVE::SAV.getActiveFile( ).countAlivePkmn( ) > 1
-                              || !tmp.canBattle( ) ) ) ) {
+                         && ( SAVE::CURRENT_FILE->countAlivePkmn( ) > 1 || !tmp.canBattle( ) ) ) ) {
                     // Pick up pkmn
                     _heldPkmn = tmp;
                     setPkmn( p_index, (pokemon*) nullptr );
                     _boxUI.updatePkmn( getPkmn( p_index ), p_index );
-                    _heldPkmnPos
-                        = std::pair<u8, u8>( SAVE::SAV.getActiveFile( ).m_curBox, p_index );
+                    _heldPkmnPos = std::pair<u8, u8>( SAVE::CURRENT_FILE->m_curBox, p_index );
                     _boxUI.setNewHeldPkmn( &_heldPkmn.m_boxdata, p_index );
                 } else {
                     memset( &_heldPkmn, 0, sizeof( pokemon ) );
@@ -288,7 +283,7 @@ namespace BOX {
         } else {
             // put down pkmn
             setPkmn( p_index, &_heldPkmn );
-            u8 st = SAVE::SAV.getActiveFile( ).consolidatePkmn( );
+            u8 st = SAVE::CURRENT_FILE->consolidatePkmn( );
             if( p_index < MAX_PKMN_PER_BOX ) {
                 _boxUI.updatePkmn( getPkmn( p_index ), p_index );
             } else {
@@ -311,7 +306,7 @@ namespace BOX {
 
     boxPokemon* boxViewer::getPkmn( u8 p_position ) {
         if( p_position < MAX_PKMN_PER_BOX ) {
-            return &( *SAVE::SAV.getActiveFile( ).getCurrentBox( ) )[ p_position ];
+            return &( *SAVE::CURRENT_FILE->getCurrentBox( ) )[ p_position ];
         } else if( p_position < MAX_PKMN_PER_BOX + 6 ) {
             return &SAVE::SAV.getActiveFile( )
                         .getTeamPkmn( p_position - MAX_PKMN_PER_BOX )
@@ -340,7 +335,7 @@ namespace BOX {
                 std::memset( getPkmn( p_position ), 0, sizeof( boxPokemon ) );
             }
         } else if( p_position < MAX_PKMN_PER_BOX + 6 ) {
-            SAVE::SAV.getActiveFile( ).setTeamPkmn( p_position - MAX_PKMN_PER_BOX, p_pokemon );
+            SAVE::CURRENT_FILE->setTeamPkmn( p_position - MAX_PKMN_PER_BOX, p_pokemon );
         }
     }
 
@@ -353,7 +348,7 @@ namespace BOX {
                 if( pkmn != nullptr ) [[likely]] { std::memset( pkmn, 0, sizeof( boxPokemon ) ); }
             }
         } else if( p_position < MAX_PKMN_PER_BOX + 6 ) {
-            SAVE::SAV.getActiveFile( ).setTeamPkmn( p_position - MAX_PKMN_PER_BOX, p_pokemon );
+            SAVE::CURRENT_FILE->setTeamPkmn( p_position - MAX_PKMN_PER_BOX, p_pokemon );
         }
     }
 
@@ -365,8 +360,7 @@ namespace BOX {
                 std::memset( getPkmn( p_position ), 0, sizeof( boxPokemon ) );
             }
         } else if( p_position.second < MAX_PKMN_PER_BOX + 6 ) {
-            SAVE::SAV.getActiveFile( ).setTeamPkmn( p_position.second - MAX_PKMN_PER_BOX,
-                                                    p_pokemon );
+            SAVE::CURRENT_FILE->setTeamPkmn( p_position.second - MAX_PKMN_PER_BOX, p_pokemon );
         }
     }
 
@@ -378,8 +372,7 @@ namespace BOX {
                 std::memset( getPkmn( p_position ), 0, sizeof( boxPokemon ) );
             }
         } else if( p_position.second < MAX_PKMN_PER_BOX + 6 ) {
-            SAVE::SAV.getActiveFile( ).setTeamPkmn( p_position.second - MAX_PKMN_PER_BOX,
-                                                    p_pokemon );
+            SAVE::CURRENT_FILE->setTeamPkmn( p_position.second - MAX_PKMN_PER_BOX, p_pokemon );
         }
     }
 
@@ -388,7 +381,7 @@ namespace BOX {
         setPkmn( _heldPkmnPos, &_heldPkmn );
         std::memset( &_heldPkmn, 0, sizeof( pokemon ) );
 
-        if( _heldPkmnPos.first == SAVE::SAV.getActiveFile( ).m_curBox ) {
+        if( _heldPkmnPos.first == SAVE::CURRENT_FILE->m_curBox ) {
             _boxUI.setNewHeldPkmn( nullptr, _heldPkmnPos.second );
             _boxUI.updatePkmn( getPkmn( _heldPkmnPos.second ), _heldPkmnPos.second );
         } else {
@@ -399,9 +392,8 @@ namespace BOX {
     }
 
     bool boxViewer::runParty( ) {
-        _boxUI.showParty( SAVE::SAV.getActiveFile( ).getCurrentBox( ),
-                          SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                          SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) );
+        _boxUI.showParty( SAVE::CURRENT_FILE->getCurrentBox( ), SAVE::CURRENT_FILE->m_pkmnTeam,
+                          SAVE::CURRENT_FILE->getTeamPkmnCount( ) );
         _selectedIdx = MAX_PKMN_PER_BOX;
         select( MAX_PKMN_PER_BOX );
 
@@ -438,11 +430,9 @@ namespace BOX {
                     select( 0 );
                 } else if( !_heldPkmn.getSpecies( )
                            && _selectedIdx + 2
-                                  >= MAX_PKMN_PER_BOX
-                                         + SAVE::SAV.getActiveFile( ).getTeamPkmnCount( )
+                                  >= MAX_PKMN_PER_BOX + SAVE::CURRENT_FILE->getTeamPkmnCount( )
                            && _selectedIdx
-                                  < MAX_PKMN_PER_BOX
-                                        + SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) ) {
+                                  < MAX_PKMN_PER_BOX + SAVE::CURRENT_FILE->getTeamPkmnCount( ) ) {
                     select( PARTY_BUTTON );
                 } else if( _heldPkmn.getSpecies( ) && _selectedIdx + 2 >= MAX_PKMN_PER_BOX + 6
                            && _selectedIdx < MAX_PKMN_PER_BOX + 6 ) {
@@ -460,7 +450,7 @@ namespace BOX {
                 } else if( _selectedIdx < MAX_PKMN_PER_BOX + 2 ) {
                     select( PARTY_BUTTON );
                 } else if( !_heldPkmn.getSpecies( ) && _selectedIdx == PARTY_BUTTON ) {
-                    select( MAX_PKMN_PER_BOX + SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) - 1 );
+                    select( MAX_PKMN_PER_BOX + SAVE::CURRENT_FILE->getTeamPkmnCount( ) - 1 );
                 } else if( _heldPkmn.getSpecies( ) && _selectedIdx == PARTY_BUTTON ) {
                     select( MAX_PKMN_PER_BOX + 5 );
                 } else {
@@ -474,7 +464,7 @@ namespace BOX {
                 } else if( !_heldPkmn.getSpecies( ) && _selectedIdx < MAX_PKMN_PER_BOX + 6 ) {
                     select( MAX_PKMN_PER_BOX
                             + ( _selectedIdx - MAX_PKMN_PER_BOX + 1 )
-                                  % SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) );
+                                  % SAVE::CURRENT_FILE->getTeamPkmnCount( ) );
                 } else if( _heldPkmn.getSpecies( ) && _selectedIdx < MAX_PKMN_PER_BOX + 6 ) {
                     select( MAX_PKMN_PER_BOX + ( _selectedIdx - MAX_PKMN_PER_BOX + 1 ) % 6 );
                 }
@@ -486,8 +476,8 @@ namespace BOX {
                 } else if( !_heldPkmn.getSpecies( ) && _selectedIdx < MAX_PKMN_PER_BOX + 6 ) {
                     select( MAX_PKMN_PER_BOX
                             + ( _selectedIdx - MAX_PKMN_PER_BOX
-                                + SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) - 1 )
-                                  % SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) );
+                                + SAVE::CURRENT_FILE->getTeamPkmnCount( ) - 1 )
+                                  % SAVE::CURRENT_FILE->getTeamPkmnCount( ) );
                 } else if( _heldPkmn.getSpecies( ) && _selectedIdx < MAX_PKMN_PER_BOX + 6 ) {
                     select( MAX_PKMN_PER_BOX + ( _selectedIdx - MAX_PKMN_PER_BOX + 5 ) % 6 );
                 }
@@ -503,9 +493,9 @@ namespace BOX {
                             u8 res = runStatusChoice( );
                             if( !res ) {
                                 cooldown = COOLDOWN_COUNT;
-                                _boxUI.showParty( SAVE::SAV.getActiveFile( ).getCurrentBox( ),
-                                                  SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                                  SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) );
+                                _boxUI.showParty( SAVE::CURRENT_FILE->getCurrentBox( ),
+                                                  SAVE::CURRENT_FILE->m_pkmnTeam,
+                                                  SAVE::CURRENT_FILE->getTeamPkmnCount( ) );
                                 continue;
                             }
                             if( res == 255 ) { // player pressed X
@@ -521,7 +511,7 @@ namespace BOX {
             }
             swiWaitForVBlank( );
         }
-        _boxUI.hideParty( SAVE::SAV.getActiveFile( ).getCurrentBox( ) );
+        _boxUI.hideParty( SAVE::CURRENT_FILE->getCurrentBox( ) );
         select( 0 );
         return false;
     }
@@ -532,7 +522,7 @@ namespace BOX {
         if( _selectedIdx < MAX_PKMN_PER_BOX && tmp != nullptr ) {
             curSel = pokemon( *tmp );
         } else if( _selectedIdx < MAX_PKMN_PER_BOX + 6 && tmp != nullptr ) {
-            auto ptmp = SAVE::SAV.getActiveFile( ).getTeamPkmn( _selectedIdx - MAX_PKMN_PER_BOX );
+            auto ptmp = SAVE::CURRENT_FILE->getTeamPkmn( _selectedIdx - MAX_PKMN_PER_BOX );
             if( ptmp != nullptr ) { curSel = *ptmp; }
         } else {
             _boxUI.selectPkmn( nullptr, 0 );
@@ -590,7 +580,7 @@ namespace BOX {
                     u8                        curStsPage = 0;
 
                     if( _selectedIdx < MAX_PKMN_PER_BOX ) {
-                        u8 curBoxPkmnCnt = SAVE::SAV.getActiveFile( ).getCurrentBox( )->count( );
+                        u8 curBoxPkmnCnt = SAVE::CURRENT_FILE->getCurrentBox( )->count( );
 
                         do {
                             STS::statusScreen sts = STS::statusScreen( &curSel, curBoxPkmnCnt > 1,
@@ -601,19 +591,19 @@ namespace BOX {
                                 _selectedIdx = SAVE::SAV.getActiveFile( )
                                                    .getCurrentBox( )
                                                    ->getNextFilledSpot( _selectedIdx );
-                                tmp = getPkmn( _selectedIdx );
+                                tmp          = getPkmn( _selectedIdx );
                                 if( tmp != nullptr ) { curSel = pokemon( *tmp ); }
                             } else if( stsres == STS::statusScreen::PREV_PKMN ) {
                                 _selectedIdx = SAVE::SAV.getActiveFile( )
                                                    .getCurrentBox( )
                                                    ->getPrevFilledSpot( _selectedIdx );
-                                tmp = getPkmn( _selectedIdx );
+                                tmp          = getPkmn( _selectedIdx );
                                 if( tmp != nullptr ) { curSel = pokemon( *tmp ); }
                             }
                         } while( stsres != STS::statusScreen::BACK
                                  && stsres != STS::statusScreen::EXIT );
                     } else if( _selectedIdx < MAX_PKMN_PER_BOX + 6 ) {
-                        u8 curBoxPkmnCnt = SAVE::SAV.getActiveFile( ).getTeamPkmnCount( );
+                        u8 curBoxPkmnCnt = SAVE::CURRENT_FILE->getTeamPkmnCount( );
 
                         do {
                             STS::statusScreen sts = STS::statusScreen( &curSel, curBoxPkmnCnt > 1,
@@ -624,16 +614,16 @@ namespace BOX {
                                 _selectedIdx
                                     = MAX_PKMN_PER_BOX
                                       + ( _selectedIdx - MAX_PKMN_PER_BOX + 1 ) % curBoxPkmnCnt;
-                                auto ptmp = SAVE::SAV.getActiveFile( ).getTeamPkmn(
-                                    _selectedIdx - MAX_PKMN_PER_BOX );
+                                auto ptmp = SAVE::CURRENT_FILE->getTeamPkmn( _selectedIdx
+                                                                             - MAX_PKMN_PER_BOX );
                                 if( ptmp != nullptr ) { curSel = *ptmp; }
                             } else if( stsres == STS::statusScreen::PREV_PKMN ) {
                                 _selectedIdx
                                     = MAX_PKMN_PER_BOX
                                       + ( _selectedIdx - MAX_PKMN_PER_BOX + curBoxPkmnCnt - 1 )
                                             % curBoxPkmnCnt;
-                                auto ptmp = SAVE::SAV.getActiveFile( ).getTeamPkmn(
-                                    _selectedIdx - MAX_PKMN_PER_BOX );
+                                auto ptmp = SAVE::CURRENT_FILE->getTeamPkmn( _selectedIdx
+                                                                             - MAX_PKMN_PER_BOX );
                                 if( ptmp != nullptr ) { curSel = *ptmp; }
                             }
                         } while( stsres != STS::statusScreen::BACK
@@ -642,7 +632,7 @@ namespace BOX {
 
                     if( stsres == STS::statusScreen::EXIT ) { return 255; }
                     _boxUI.init( );
-                    _boxUI.draw( SAVE::SAV.getActiveFile( ).getCurrentBox( ) );
+                    _boxUI.draw( SAVE::CURRENT_FILE->getCurrentBox( ) );
                     _boxUI.hoverPkmn( getPkmn( _selectedIdx ), _selectedIdx );
                     break;
                 }
@@ -654,12 +644,12 @@ namespace BOX {
                         _boxUI.selectPkmn( nullptr, 0 );
                         _boxUI.hoverPkmn( nullptr, _selectedIdx );
                     } else if( _selectedIdx < MAX_PKMN_PER_BOX + 6 ) {
-                        if( SAVE::SAV.getActiveFile( ).countAlivePkmn( ) > 1
+                        if( SAVE::CURRENT_FILE->countAlivePkmn( ) > 1
                             || !SAVE::SAV.getActiveFile( )
                                     .getTeamPkmn( _selectedIdx - MAX_PKMN_PER_BOX )
                                     ->canBattle( ) ) {
                             setPkmn( _selectedIdx, (pokemon*) nullptr );
-                            u8 st = SAVE::SAV.getActiveFile( ).consolidatePkmn( );
+                            u8 st = SAVE::CURRENT_FILE->consolidatePkmn( );
                             if( st == u8( -1 ) ) {
                                 _boxUI.updatePkmn( getPkmn( _selectedIdx ), _selectedIdx );
                             } else {
@@ -675,20 +665,20 @@ namespace BOX {
                     return 0;
                 }
                 case boxUI::BUTTON_PKMN_GIVE_ITEM: {
-                    BAG::bagViewer bv  = BAG::bagViewer( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
+                    BAG::bagViewer bv  = BAG::bagViewer( SAVE::CURRENT_FILE->m_pkmnTeam,
                                                          BAG::bagViewer::GIVE_TO_PKMN );
                     u16            itm = bv.getItem( );
                     if( itm ) {
                         if( curSel.getItem( ) ) {
                             auto curItm = curSel.getItem( );
-                            SAVE::SAV.getActiveFile( ).m_bag.insert(
+                            SAVE::CURRENT_FILE->m_bag.insert(
                                 BAG::toBagType( FS::getItemData( curItm ).m_itemType ), curItm, 1 );
                         }
                         tmp = getPkmn( _selectedIdx );
                         if( tmp != nullptr ) { tmp->giveItem( itm ); }
                     }
                     _boxUI.init( );
-                    _boxUI.draw( SAVE::SAV.getActiveFile( ).getCurrentBox( ) );
+                    _boxUI.draw( SAVE::CURRENT_FILE->getCurrentBox( ) );
                     _boxUI.hoverPkmn( getPkmn( _selectedIdx ), _selectedIdx );
                     break;
                 }
@@ -696,7 +686,7 @@ namespace BOX {
                     tmp = getPkmn( _selectedIdx );
                     if( tmp != nullptr ) {
                         u16 acI = tmp->takeItem( );
-                        SAVE::SAV.getActiveFile( ).m_bag.insert(
+                        SAVE::CURRENT_FILE->m_bag.insert(
                             BAG::toBagType( FS::getItemData( acI ).m_itemType ), acI, 1 );
 
                         _boxUI.updatePkmn( getPkmn( _selectedIdx ), _selectedIdx );

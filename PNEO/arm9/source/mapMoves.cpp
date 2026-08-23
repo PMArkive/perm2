@@ -68,11 +68,11 @@ namespace BATTLE {
             switch( p_moveId ) {
             case M_DIVE: {
                 // dive up
-                if( SAVE::SAV.getActiveFile( ).m_player.m_movement != MAP::DIVE ) { return false; }
-                if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 6 ) ) ) { return false; }
+                if( SAVE::CURRENT_FILE->m_player.m_movement != MAP::DIVE ) { return false; }
+                if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 6 ) ) ) { return false; }
                 u8 curBehave = MAP::curMap
-                                   ->at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                         SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                                   ->at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                         SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                                    .m_bottombehave;
                 return MAP::mapDrawer::canResurface( curBehave );
             }
@@ -80,18 +80,18 @@ namespace BATTLE {
             }
         }
 
-        u16 tx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX
-                 + MAP::dir[ SAVE::SAV.getActiveFile( ).m_player.m_direction ][ 0 ];
-        u16 ty = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY
-                 + MAP::dir[ SAVE::SAV.getActiveFile( ).m_player.m_direction ][ 1 ];
+        u16 tx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX
+                 + MAP::dir[ SAVE::CURRENT_FILE->m_player.m_direction ][ 0 ];
+        u16 ty = SAVE::CURRENT_FILE->m_player.m_pos.m_posY
+                 + MAP::dir[ SAVE::CURRENT_FILE->m_player.m_direction ][ 1 ];
 
         switch( p_moveId ) {
         case M_CUT: {
             // Check for badge 1
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 0 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 0 ) ) ) { return false; }
 
-            for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-                auto o = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+            for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                auto o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
 
                 if( o.second.m_pos.m_posX != tx || o.second.m_pos.m_posY != ty ) { continue; }
                 if( o.second.m_event.m_type == MAP::EVENT_HMOBJECT
@@ -104,10 +104,10 @@ namespace BATTLE {
         }
         case M_ROCK_SMASH: {
             // Check for badge 3
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 2 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 2 ) ) ) { return false; }
 
-            for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-                auto o = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+            for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                auto o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
 
                 if( o.second.m_pos.m_posX != tx || o.second.m_pos.m_posY != ty ) { continue; }
                 if( o.second.m_event.m_type == MAP::EVENT_HMOBJECT
@@ -120,13 +120,13 @@ namespace BATTLE {
         }
         case M_STRENGTH: {
             // Check for badge 4
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 3 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 3 ) ) ) { return false; }
 
             // Check if strength has already been used
             if( MAP::curMap->strengthEnabled( ) ) { return false; }
 
-            for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-                auto o = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+            for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                auto o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
 
                 if( o.second.m_pos.m_posX != tx || o.second.m_pos.m_posY != ty ) { continue; }
                 if( o.second.m_event.m_type == MAP::EVENT_HMOBJECT
@@ -140,83 +140,83 @@ namespace BATTLE {
 
         case M_FLY: {
             // Check for badge 6
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 5 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 5 ) ) ) { return false; }
             // flying is always possible in the ow, so check if player is in ow
             if( MAP::curMap->currentData( ).m_mapType != MAP::OUTSIDE ) { return false; }
 
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::DIVE ) { return false; }
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::DIVE ) { return false; }
 
             // check if current outside map has flydata
-            return SAVE::SAV.getActiveFile( ).hasFlyPos( );
+            return SAVE::CURRENT_FILE->hasFlyPos( );
         }
         case M_FLASH: {
-            return SAVE::SAV.getActiveFile( ).m_currentMapWeather == MAP::DARK_FLASHABLE;
+            return SAVE::CURRENT_FILE->m_currentMapWeather == MAP::DARK_FLASHABLE;
         }
         case M_WHIRLPOOL: {
             // Check for badge 7
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 6 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 6 ) ) ) { return false; }
             return false;
         }
         case M_SURF: {
             // Check for badge 5
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 4 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 4 ) ) ) { return false; }
 
-            return ( SAVE::SAV.getActiveFile( ).m_player.m_movement != MAP::SURF )
+            return ( SAVE::CURRENT_FILE->m_player.m_movement != MAP::SURF )
                    && MAP::curMap->atom( tx, ty ).m_movedata == MAP::mapDrawer::MVD_SURF
                    && MAP::curMap
-                              ->atom( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                      SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                              ->atom( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                      SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                               .m_movedata
                           == MAP::mapDrawer::MVD_WALK;
         }
         case M_DIVE: {
             // Check for badge 7
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 6 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 6 ) ) ) { return false; }
 
-            //            if( SAVE::SAV.getActiveFile( ).m_player.m_movement != MAP::SURF ) { return
+            //            if( SAVE::CURRENT_FILE->m_player.m_movement != MAP::SURF ) { return
             //            false; }
 
             // check if current bank has underwater information
             // if( !MAP::curMap->currentBankHasUnderwater( ) ) { return false; }
 
             u8 curBehave = MAP::curMap
-                               ->at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                     SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                               ->at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                     SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                                .m_bottombehave;
             return MAP::mapDrawer::canDive( curBehave );
         }
         case M_DEFOG: {
             // Check for badge 6
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 5 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 5 ) ) ) { return false; }
             return false;
         }
         case M_ROCK_CLIMB: {
             // Check for badge 8
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 7 ) ) ) { return false; }
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 7 ) ) ) { return false; }
             return MAP::curMap->at( tx, ty ).m_bottombehave == MAP::mapDrawer::BEH_ROCK_CLIMB;
         }
         case M_WATERFALL: {
             // Check for badge 8
-            if( !( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << 7 ) ) ) { return false; }
-            return ( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::SURF )
+            if( !( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << 7 ) ) ) { return false; }
+            return ( SAVE::CURRENT_FILE->m_player.m_movement == MAP::SURF )
                    && MAP::curMap->at( tx, ty ).m_bottombehave == MAP::mapDrawer::BEH_WATERFALL;
         }
         case M_HEADBUTT: return false;
         case M_SWEET_SCENT: {
             u8 curBehave = MAP::curMap
-                               ->at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                     SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                               ->at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                     SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                                .m_bottombehave;
             return MAP::mapDrawer::isGrass( curBehave );
         }
         case M_TELEPORT:
             if( MAP::curMap->getCurrentLocationId( ) == L_POKEMON_CENTER ) { return false; }
-            return !!SAVE::SAV.getActiveFile( ).m_lastPokeCenter.first
-                   && SAVE::SAV.getActiveFile( ).m_lastPokeCenter.first != 255;
+            return !!SAVE::CURRENT_FILE->m_lastPokeCenter.first
+                   && SAVE::CURRENT_FILE->m_lastPokeCenter.first != 255;
         case M_DIG:
             if( !( MAP::curMap->currentData( ).m_mapType & MAP::CAVE ) ) { return false; }
-            return !!SAVE::SAV.getActiveFile( ).m_lastCaveEntry.first
-                   && SAVE::SAV.getActiveFile( ).m_lastCaveEntry.first != 255;
+            return !!SAVE::CURRENT_FILE->m_lastCaveEntry.first
+                   && SAVE::CURRENT_FILE->m_lastCaveEntry.first != 255;
         default: return false;
         }
     }
@@ -226,8 +226,8 @@ namespace BATTLE {
             switch( p_moveId ) {
             case M_DIVE: {
                 u8 curBehave = MAP::curMap
-                                   ->at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                         SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                                   ->at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                         SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                                    .m_bottombehave;
                 if( !MAP::mapDrawer::canResurface( curBehave ) ) { return; }
                 MAP::curMap->resurfacePlayer( );
@@ -237,10 +237,10 @@ namespace BATTLE {
             }
         }
 
-        u16 tx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX
-                 + MAP::dir[ SAVE::SAV.getActiveFile( ).m_player.m_direction ][ 0 ];
-        u16 ty = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY
-                 + MAP::dir[ SAVE::SAV.getActiveFile( ).m_player.m_direction ][ 1 ];
+        u16 tx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX
+                 + MAP::dir[ SAVE::CURRENT_FILE->m_player.m_direction ][ 0 ];
+        u16 ty = SAVE::CURRENT_FILE->m_player.m_pos.m_posY
+                 + MAP::dir[ SAVE::CURRENT_FILE->m_player.m_direction ][ 1 ];
 
         switch( p_moveId ) {
         case M_CUT:
@@ -248,7 +248,7 @@ namespace BATTLE {
         case M_STRENGTH: MAP::curMap->enableStrength( ); return;
         case M_FLY: return; // handled separately
         case M_FLASH: {
-            if( SAVE::SAV.getActiveFile( ).m_currentMapWeather == MAP::DARK_FLASHABLE ) {
+            if( SAVE::CURRENT_FILE->m_currentMapWeather == MAP::DARK_FLASHABLE ) {
                 bgSetScale( IO::bg3, 1 << 7 | 1 << 6 | 1 << 5, 1 << 7 | 1 << 6 | 1 << 5 );
                 bgSetScroll( IO::bg3, 112 - 96, 84 - 72 );
                 bgUpdate( );
@@ -260,13 +260,13 @@ namespace BATTLE {
                 bgSetScale( IO::bg3, 1 << 7, 1 << 7 );
                 bgSetScroll( IO::bg3, 64, 48 );
                 bgUpdate( );
-                SAVE::SAV.getActiveFile( ).m_currentMapWeather = MAP::DARK_FLASH_USED;
+                SAVE::CURRENT_FILE->m_currentMapWeather = MAP::DARK_FLASH_USED;
             }
             return;
         }
         case M_WHIRLPOOL: return;
         case M_SURF: {
-            MAP::direction d  = SAVE::SAV.getActiveFile( ).m_player.m_direction;
+            MAP::direction d  = SAVE::CURRENT_FILE->m_player.m_direction;
             MAP::direction fp = MAP::curMap->getFollowPkmnDirection( );
             MAP::curMap->sitDownPlayer( d, MAP::SURF );
             if( p_param == 2 ) {
@@ -283,8 +283,8 @@ namespace BATTLE {
             // if( !MAP::curMap->currentBankHasUnderwater( ) ) { return; }
 
             u8 curBehave = MAP::curMap
-                               ->at( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                     SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                               ->at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                     SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
 
                                .m_bottombehave;
 
@@ -294,7 +294,7 @@ namespace BATTLE {
         }
         case M_DEFOG: return;
         case M_ROCK_CLIMB: {
-            MAP::direction d  = SAVE::SAV.getActiveFile( ).m_player.m_direction;
+            MAP::direction d  = SAVE::CURRENT_FILE->m_player.m_direction;
             MAP::direction fp = MAP::curMap->getFollowPkmnDirection( );
 
             MAP::curMap->sitDownPlayer( d, MAP::ROCK_CLIMB );
@@ -307,24 +307,24 @@ namespace BATTLE {
             while( possible( M_ROCK_CLIMB, 0 ) ) MAP::curMap->walkPlayer( d );
             MAP::curMap->standUpPlayer( d );
             if( MAP::curMap
-                        ->atom( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                        ->atom( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                         .m_movedata
                     > 4
                 && MAP::curMap
-                           ->atom( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                   SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                           ->atom( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                   SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                            .m_movedata
                        != 0x3c
                 && MAP::curMap
-                           ->atom( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                   SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                           ->atom( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                   SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                            .m_movedata
                        != 0x0a ) {
-                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ
+                SAVE::CURRENT_FILE->m_player.m_pos.m_posZ
                     = MAP::curMap
-                          ->atom( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                                  SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY )
+                          ->atom( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                                  SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                           .m_movedata
                       / 4;
             }
@@ -333,8 +333,8 @@ namespace BATTLE {
         case M_WATERFALL:
             MAP::curMap->disablePkmn( );
             while( possible( M_WATERFALL, 0 ) )
-                MAP::curMap->walkPlayer( SAVE::SAV.getActiveFile( ).m_player.m_direction );
-            MAP::curMap->walkPlayer( SAVE::SAV.getActiveFile( ).m_player.m_direction );
+                MAP::curMap->walkPlayer( SAVE::CURRENT_FILE->m_player.m_direction );
+            MAP::curMap->walkPlayer( SAVE::CURRENT_FILE->m_player.m_direction );
             MAP::curMap->enablePkmn( );
             return;
         case M_HEADBUTT: return;
@@ -344,10 +344,10 @@ namespace BATTLE {
             }
             return;
         case M_TELEPORT:
-            MAP::curMap->warpPlayer( MAP::TELEPORT, SAVE::SAV.getActiveFile( ).m_lastPokeCenter );
+            MAP::curMap->warpPlayer( MAP::TELEPORT, SAVE::CURRENT_FILE->m_lastPokeCenter );
             return;
         case M_DIG:
-            MAP::curMap->warpPlayer( MAP::CAVE_ENTRY, SAVE::SAV.getActiveFile( ).m_lastCaveEntry );
+            MAP::curMap->warpPlayer( MAP::CAVE_ENTRY, SAVE::CURRENT_FILE->m_lastCaveEntry );
             return;
         default: return;
         }

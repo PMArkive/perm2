@@ -45,7 +45,9 @@
 #include "sound/sound.h"
 
 namespace SAVE {
-    saveGame   SAV;
+    saveGame              SAV;
+    saveGame::playerInfo* CURRENT_FILE;
+
     SAVE::date CURRENT_DATE;
     SAVE::time CURRENT_TIME;
 

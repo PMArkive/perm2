@@ -591,7 +591,7 @@ namespace BAG {
         if( getItemChar( p_data->m_itemType ) != getItemChar( ITEMTYPE_COLLECTIBLE )
             && toBagType( p_data->m_itemType ) == bag::bagType::ITEMS ) {
             IO::boldFont->printChar( getItemChar( p_data->m_itemType ), 236, y + 2, true );
-        } else if( p_itemId == SAVE::SAV.getActiveFile( ).m_registeredItem ) {
+        } else if( p_itemId == SAVE::CURRENT_FILE->m_registeredItem ) {
             IO::boldFont->printChar( 'Y', 238, y + 2, true );
         } else if( p_data->m_itemType == ITEMTYPE_TM && BATTLE::isFieldMove( p_data->m_param2 ) ) {
             IO::boldFont->setColor( IO::BLUE_IDX, 2 );

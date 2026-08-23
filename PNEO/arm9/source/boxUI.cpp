@@ -652,7 +652,7 @@ namespace BOX {
             IO::regularFont->setColor( 0, 2 );
             char buffer[ 50 ];
             // dex no
-            u16 dexno = SAVE::SAV.getActiveFile( ).getPkmnDisplayDexId( p_pokemon->getSpecies( ) );
+            u16 dexno = SAVE::CURRENT_FILE->getPkmnDisplayDexId( p_pokemon->getSpecies( ) );
 
             if( dexno != u16( -1 ) ) {
                 snprintf( buffer, 49, "%04hu", dexno );

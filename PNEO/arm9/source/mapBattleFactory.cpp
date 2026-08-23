@@ -266,8 +266,8 @@ namespace MAP {
                                     : ( p_rules.m_id == RSID_SINGLE_LV100
                                             ? SAVE::F_BATTLE_FACTORY_100_STREAK_ONGOING
                                             : SAVE::F_SLATEPORT_BATTLE_TENT_STREAK_ONGOING );
-        u16  currentStreak    = SAVE::SAV.getActiveFile( ).getVar( streakVar );
-        bool streakOngoing    = SAVE::SAV.getActiveFile( ).checkFlag( streakActiveFlag );
+        u16  currentStreak    = SAVE::CURRENT_FILE->getVar( streakVar );
+        bool streakOngoing    = SAVE::CURRENT_FILE->checkFlag( streakActiveFlag );
         auto battlePolicy     = getBattlePolicy( false, p_rules.m_battleMode, false );
 
         bool isTentMode = p_rules.m_id == RSID_SINGLE_LV30;
@@ -277,8 +277,8 @@ namespace MAP {
 
         if( !streakOngoing ) {
             currentStreak = 0;
-            SAVE::SAV.getActiveFile( ).setVar( streakVar, currentStreak );
-            SAVE::SAV.getActiveFile( ).setFlag( streakActiveFlag, true );
+            SAVE::CURRENT_FILE->setVar( streakVar, currentStreak );
+            SAVE::CURRENT_FILE->setFlag( streakActiveFlag, true );
         }
         auto numPokemon = p_rules.m_battleMode == BATTLE::BM_SINGLE ? 3 : 4;
 
@@ -337,7 +337,7 @@ namespace MAP {
                     movePlayer( RIGHT, false );
                     movePlayer( RIGHT, false );
                     // reset streak
-                    SAVE::SAV.getActiveFile( ).setFlag( streakActiveFlag, false );
+                    SAVE::CURRENT_FILE->setFlag( streakActiveFlag, false );
                     break;
                 }
                 IO::init( );
@@ -359,7 +359,7 @@ namespace MAP {
                 printMapMessage( GET_MAP_STRING( 869 ), MSG_NORMAL );
             } else {
                 if( !createNextOpponentTrainer( p_rules, streakfortier, true, isTentMode ) ) {
-                    SAVE::SAV.getActiveFile( ).setFlag( streakActiveFlag, false );
+                    SAVE::CURRENT_FILE->setFlag( streakActiveFlag, false );
                     break;
                 }
                 picnum = NEXT_OPPONENT.m_picnum;
@@ -459,7 +459,7 @@ namespace MAP {
 
                 if( res.getSelectedPkmn( ) == 255 ) {
                     // player aborted
-                    SAVE::SAV.getActiveFile( ).setFlag( streakActiveFlag, false );
+                    SAVE::CURRENT_FILE->setFlag( streakActiveFlag, false );
                     printMapMessage( GET_MAP_STRING( 532 ), MSG_NORMAL );
                     return;
                 }
@@ -488,8 +488,8 @@ namespace MAP {
             // walk in opponent
 
             // spawn opponent
-            u16       curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-            u16       cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+            u16       curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+            u16       cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
             u16       mapX = curx / SIZE, mapY = cury / SIZE;
             mapObject obj         = mapObject( );
             obj.m_pos             = { u16( mapX * SIZE + 16 ), u16( mapY * SIZE + 12 ), 3 };
@@ -503,13 +503,13 @@ namespace MAP {
             loadMapObject( cur );
 
             u8 found = 255;
-            for( u8 i = _fixedObjectCount; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-                if( SAVE::SAV.getActiveFile( ).m_mapObjects[ i ].first == UNUSED_MAPOBJECT ) {
+            for( u8 i = _fixedObjectCount; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                if( SAVE::CURRENT_FILE->m_mapObjects[ i ].first == UNUSED_MAPOBJECT ) {
                     found = i;
                     break;
                 }
             }
-            if( found == 255 ) { found = SAVE::SAV.getActiveFile( ).m_mapObjectCount++; }
+            if( found == 255 ) { found = SAVE::CURRENT_FILE->m_mapObjectCount++; }
 
             // walk down opponent
             movement m = { DOWN, 0 };
@@ -518,7 +518,7 @@ namespace MAP {
             for( u8 j = 0; j < 4; ++j ) {
                 for( u8 i = 0; i < 16; ++i ) {
                     moveMapObject( cur.second, cur.first, m, false,
-                                   SAVE::SAV.getActiveFile( ).m_player.m_direction );
+                                   SAVE::CURRENT_FILE->m_player.m_direction );
                     m.m_frame = ( m.m_frame + 1 ) & 15;
                     swiWaitForVBlank( );
                 }
@@ -527,7 +527,7 @@ namespace MAP {
             cur.second.m_currentMovement = { LEFT, 0 };
             cur.second.m_direction       = LEFT;
             _mapSprites.setFrameD( cur.first, LEFT );
-            SAVE::SAV.getActiveFile( ).m_mapObjects[ found ] = cur;
+            SAVE::CURRENT_FILE->m_mapObjects[ found ] = cur;
 
             // print pre-battle message
 
@@ -573,8 +573,8 @@ namespace MAP {
             IO::init( );
             draw( playerPrio );
             _mapSprites.setPriority( _playerSprite,
-                                     SAVE::SAV.getActiveFile( ).m_playerPriority = playerPrio );
-            cur = SAVE::SAV.getActiveFile( ).m_mapObjects[ found ];
+                                     SAVE::CURRENT_FILE->m_playerPriority = playerPrio );
+            cur = SAVE::CURRENT_FILE->m_mapObjects[ found ];
             _mapSprites.setFrameD( cur.first, LEFT );
             SOUND::restartBGM( );
             ANIMATE_MAP = true;
@@ -587,7 +587,7 @@ namespace MAP {
             for( u8 j = 0; j < 4; ++j ) {
                 for( u8 i = 0; i < 16; ++i ) {
                     moveMapObject( cur.second, cur.first, m, false,
-                                   SAVE::SAV.getActiveFile( ).m_player.m_direction );
+                                   SAVE::CURRENT_FILE->m_player.m_direction );
                     m.m_frame = ( m.m_frame + 1 ) & 15;
                     swiWaitForVBlank( );
                 }
@@ -595,7 +595,7 @@ namespace MAP {
 
             // remove map object
             _mapSprites.destroySprite( cur.first );
-            SAVE::SAV.getActiveFile( ).m_mapObjects[ found ] = { UNUSED_MAPOBJECT, mapObject( ) };
+            SAVE::CURRENT_FILE->m_mapObjects[ found ] = { UNUSED_MAPOBJECT, mapObject( ) };
 
             if( result == BATTLE::battle::BATTLE_PLAYER_WON ) {
                 // player won
@@ -611,13 +611,13 @@ namespace MAP {
                 }
 
                 currentStreak++;
-                SAVE::SAV.getActiveFile( ).setVar( streakVar, currentStreak );
+                SAVE::CURRENT_FILE->setVar( streakVar, currentStreak );
                 // move player to clerk
 
             } else {
                 // player lost
                 // reset streak
-                SAVE::SAV.getActiveFile( ).setFlag( streakActiveFlag, false );
+                SAVE::CURRENT_FILE->setFlag( streakActiveFlag, false );
                 break;
             }
         }
@@ -631,7 +631,7 @@ namespace MAP {
         printMapMessage( GET_MAP_STRING( 532 ), MSG_NORMAL );
 
         // check if chain is still active
-        if( SAVE::SAV.getActiveFile( ).checkFlag( streakActiveFlag ) ) {
+        if( SAVE::CURRENT_FILE->checkFlag( streakActiveFlag ) ) {
             // hand prize(s) to player, depending on the streak
             resultBP += ( currentStreak / 7 ) + 1;
 
@@ -646,8 +646,8 @@ namespace MAP {
                 snprintf( buffer, 99, GET_MAP_STRING( 873 ), resultBP );
                 SOUND::playSoundEffect( SFX_OBTAIN_ITEM );
                 printMapMessage( buffer, MSG_INFO );
-                SAVE::SAV.getActiveFile( ).m_battlePoints = std::min(
-                    u16( -1 ), u16( SAVE::SAV.getActiveFile( ).m_battlePoints + resultBP ) );
+                SAVE::CURRENT_FILE->m_battlePoints
+                    = std::min( u16( -1 ), u16( SAVE::CURRENT_FILE->m_battlePoints + resultBP ) );
             }
         }
     }

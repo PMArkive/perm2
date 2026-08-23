@@ -253,7 +253,7 @@ namespace IO::ANIM {
             IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
             waitForInteract( );
             SOUND::restartBGM( );
-            SAVE::SAV.getActiveFile( ).registerCaughtPkmn( p_endSpecies );
+            SAVE::CURRENT_FILE->registerCaughtPkmn( p_endSpecies );
             return true;
         }
     }
@@ -528,7 +528,7 @@ namespace IO::ANIM {
         IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
         for( u8 i = 0; i < 150; ++i ) { swiWaitForVBlank( ); }
         SOUND::restartBGM( );
-        SAVE::SAV.getActiveFile( ).registerCaughtPkmn( p_otherToMe.getSpecies( ) );
+        SAVE::CURRENT_FILE->registerCaughtPkmn( p_otherToMe.getSpecies( ) );
     }
 
     void hatchEgg( const pkmnSpriteInfo& p_pkmn ) {
@@ -597,7 +597,7 @@ namespace IO::ANIM {
         for( u8 i = 0; i < 50; ++i ) { swiWaitForVBlank( ); }
         waitForInteract( );
         SOUND::restartBGM( );
-        SAVE::SAV.getActiveFile( ).registerCaughtPkmn( p_pkmn.m_pkmnIdx );
+        SAVE::CURRENT_FILE->registerCaughtPkmn( p_pkmn.m_pkmnIdx );
     }
 
     void openingAnimation( ) {

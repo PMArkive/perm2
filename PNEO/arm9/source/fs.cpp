@@ -234,13 +234,13 @@ namespace FS {
 
     bool writeSave( const char* p_path, std::function<void( u16, u16 )> p_progress ) {
 
-        auto oldl = SAVE::SAV.getActiveFile( ).m_lastSaveLocation;
-        auto oldd = SAVE::SAV.getActiveFile( ).m_lastSaveDate;
-        auto oldt = SAVE::SAV.getActiveFile( ).m_lastSaveTime;
+        auto oldl = SAVE::CURRENT_FILE->m_lastSaveLocation;
+        auto oldd = SAVE::CURRENT_FILE->m_lastSaveDate;
+        auto oldt = SAVE::CURRENT_FILE->m_lastSaveTime;
 
-        SAVE::SAV.getActiveFile( ).m_lastSaveLocation = MAP::curMap->getCurrentLocationId( );
-        SAVE::SAV.getActiveFile( ).m_lastSaveDate     = SAVE::CURRENT_DATE;
-        SAVE::SAV.getActiveFile( ).m_lastSaveTime     = SAVE::CURRENT_TIME;
+        SAVE::CURRENT_FILE->m_lastSaveLocation = MAP::curMap->getCurrentLocationId( );
+        SAVE::CURRENT_FILE->m_lastSaveDate     = SAVE::CURRENT_DATE;
+        SAVE::CURRENT_FILE->m_lastSaveTime     = SAVE::CURRENT_TIME;
 
 #ifndef FLASHCARD
         if( CARD::writeData( reinterpret_cast<u8*>( &SAVE::SAV ), sizeof( SAVE::saveGame ),
@@ -257,9 +257,9 @@ namespace FS {
             FS::close( f );
             return true;
         }
-        SAVE::SAV.getActiveFile( ).m_lastSaveLocation = oldl;
-        SAVE::SAV.getActiveFile( ).m_lastSaveDate     = oldd;
-        SAVE::SAV.getActiveFile( ).m_lastSaveTime     = oldt;
+        SAVE::CURRENT_FILE->m_lastSaveLocation = oldl;
+        SAVE::CURRENT_FILE->m_lastSaveDate     = oldd;
+        SAVE::CURRENT_FILE->m_lastSaveTime     = oldt;
         return false;
     }
 } // namespace FS

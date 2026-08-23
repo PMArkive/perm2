@@ -58,8 +58,8 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #define SPR_LARGE_NPC_GFX( p_idx )       ( 32 + 16 * ( p_idx ) )
 #define SPR_EXTRA_LARGE_NPC_GFX( p_idx ) ( SPR_LARGE_NPC_GFX( 4 * ( p_idx ) + 1 ) )
 #define SPR_SMALL_NPC_GFX( p_idx )       ( SPR_LARGE_NPC_GFX( MAX_LARGE_NPC ) + 8 * ( p_idx ) )
-#define SPR_HM_GFX( p_idx )              ( SPR_SMALL_NPC_GFX( MAX_SMALL_NPC - 6 ) + 4 * ( ( p_idx ) - 1 ) )
-#define SPR_MAPTILE_GFX( p_idx )         ( SPR_HM_GFX( MAX_HM_PARTICLE_GFX_SLOTS ) + 4 * ( p_idx ) )
+#define SPR_HM_GFX( p_idx )      ( SPR_SMALL_NPC_GFX( MAX_SMALL_NPC - 6 ) + 4 * ( ( p_idx ) - 1 ) )
+#define SPR_MAPTILE_GFX( p_idx ) ( SPR_HM_GFX( MAX_HM_PARTICLE_GFX_SLOTS ) + 4 * ( p_idx ) )
 // #define SPR_DOOR_GFX               ( SPR_MAPTILE_GFX( MAX_TILE_ANIM_GFX_SLOTS ) )
 #define SPR_DOOR_GFX SPR_MAIN_PLAYER_PLAT_GFX
 
@@ -139,10 +139,10 @@ namespace MAP {
         } else {
             if( p_imageId == 250 ) {
                 // load player appearance
-                p_imageId = SAVE::SAV.getActiveFile( ).m_appearance;
+                p_imageId = SAVE::CURRENT_FILE->m_appearance;
             } else if( p_imageId == 251 ) {
                 // load rival's appearance
-                p_imageId = SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE );
+                p_imageId = SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE );
 
             } else {
                 p_imageId &= 255;

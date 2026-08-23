@@ -49,8 +49,8 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MAP {
     void mapDrawer::runEvent( mapData::event p_event, u8 p_objectId, s16 p_mapX, s16 p_mapY ) {
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         u16 mapX = curx / SIZE, mapY = cury / SIZE;
 
         auto oldforce = _forceNoFollow;
@@ -65,12 +65,12 @@ namespace MAP {
             if( tp == 10 || tp == 11 ) { tp = 0; }
             printMapMessage( GET_MAP_STRING( p_event.m_data.m_npc.m_scriptId ), (style) tp );
             if( p_event.m_data.m_npc.m_scriptType & 128 ) {
-                SAVE::SAV.getActiveFile( ).setFlag( p_event.m_deactivateFlag, true );
+                SAVE::CURRENT_FILE->setFlag( p_event.m_deactivateFlag, true );
             }
             break;
         }
         case EVENT_OW_PKMN: {
-            if( !SAVE::SAV.getActiveFile( ).checkFlag( p_event.m_deactivateFlag ) ) {
+            if( !SAVE::CURRENT_FILE->checkFlag( p_event.m_deactivateFlag ) ) {
                 ANIMATE_MAP = false;
                 DRAW_TIME   = false;
                 resetTracerChain( true );
@@ -88,15 +88,15 @@ namespace MAP {
                 swiWaitForVBlank( );
                 swiWaitForVBlank( );
 
-                bool luckyenc = SAVE::SAV.getActiveFile( ).m_bag.count(
+                bool luckyenc = SAVE::CURRENT_FILE->m_bag.count(
                                     BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_WISHING_CHARM )
                                     ? !( rand( ) & 127 )
                                     : !( rand( ) & 2047 );
-                bool charm    = SAVE::SAV.getActiveFile( ).m_bag.count(
+                bool charm    = SAVE::CURRENT_FILE->m_bag.count(
                     BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_SHINY_CHARM );
 
                 wildPkmnType btType
-                    = SAVE::SAV.getActiveFile( ).m_player.m_movement == SURF ? WATER : GRASS;
+                    = SAVE::CURRENT_FILE->m_player.m_movement == SURF ? WATER : GRASS;
 
                 prepareBattleWildPkmn( btType, pkmnIdx, luckyenc );
 
@@ -104,10 +104,10 @@ namespace MAP {
                                      shiny ? shiny : ( luckyenc ? 255 : ( charm ? 3 : 0 ) ),
                                      hiddenab || luckyenc, false, 0, 0, fateful || luckyenc );
 
-                SAVE::SAV.getActiveFile( ).setFlag( p_event.m_deactivateFlag, 1 );
+                SAVE::CURRENT_FILE->setFlag( p_event.m_deactivateFlag, 1 );
                 auto battleres = battleWildPkmn( btType );
                 if( battleres == BATTLE::battle::BATTLE_OPPONENT_WON ) {
-                    SAVE::SAV.getActiveFile( ).setFlag( p_event.m_deactivateFlag, 0 );
+                    SAVE::CURRENT_FILE->setFlag( p_event.m_deactivateFlag, 0 );
                     return;
                 }
                 if( battleres != BATTLE::battle::BATTLE_CAPTURE ) {
@@ -120,7 +120,7 @@ namespace MAP {
         }
         case EVENT_TRAINER: {
             auto tr = FS::getBattleTrainer( p_event.m_data.m_trainer.m_trainerId );
-            if( !SAVE::SAV.getActiveFile( ).checkFlag(
+            if( !SAVE::CURRENT_FILE->checkFlag(
                     SAVE::F_TRAINER_BATTLED( p_event.m_data.m_trainer.m_trainerId ) ) ) {
                 // player did not defeat the trainer yet
 
@@ -140,13 +140,13 @@ namespace MAP {
                 swiWaitForVBlank( );
 
                 BATTLE::battle bt
-                    = BATTLE::battle( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                      SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ), tr, policy );
+                    = BATTLE::battle( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                      SAVE::CURRENT_FILE->getTeamPkmnCount( ), tr, policy );
                 if( bt.start( ) == BATTLE::battle::BATTLE_OPPONENT_WON ) {
                     faintPlayer( );
                     return;
                 } else {
-                    SAVE::SAV.getActiveFile( ).setFlag(
+                    SAVE::CURRENT_FILE->setFlag(
                         SAVE::F_TRAINER_BATTLED( p_event.m_data.m_trainer.m_trainerId ), true );
                 }
                 FADE_TOP_DARK( );
@@ -188,7 +188,7 @@ namespace MAP {
         }
         case EVENT_ITEM: {
             IO::giveItemToPlayer( p_event.m_data.m_item.m_itemId, 1 );
-            SAVE::SAV.getActiveFile( ).setFlag( p_event.m_deactivateFlag, 1 );
+            SAVE::CURRENT_FILE->setFlag( p_event.m_deactivateFlag, 1 );
             constructAndAddNewMapObjects( currentData( ), mapX, mapY );
         }
         default: break;
@@ -209,23 +209,23 @@ namespace MAP {
                 continue;
             }
             if( mdata.m_events[ i ].m_activateFlag
-                && !SAVE::SAV.getActiveFile( ).checkFlag( mdata.m_events[ i ].m_activateFlag ) ) {
+                && !SAVE::CURRENT_FILE->checkFlag( mdata.m_events[ i ].m_activateFlag ) ) {
                 continue;
             }
             if( mdata.m_events[ i ].m_deactivateFlag
-                && SAVE::SAV.getActiveFile( ).checkFlag( mdata.m_events[ i ].m_deactivateFlag ) ) {
+                && SAVE::CURRENT_FILE->checkFlag( mdata.m_events[ i ].m_deactivateFlag ) ) {
                 continue;
             }
             if( ( mdata.m_events[ i ].m_route )
-                && mdata.m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                && mdata.m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                 continue;
             }
 
             if( mdata.m_events[ i ].m_type == EVENT_FLY_POS ) {
                 // register fly pos
-                SAVE::SAV.getActiveFile( ).registerFlyPos(
+                SAVE::CURRENT_FILE->registerFlyPos(
                     flyPos{ mdata.m_events[ i ].m_data.m_flyPos.m_location,
-                            SAVE::SAV.getActiveFile( ).m_currentMap, p_z, p_globX, p_globY } );
+                            SAVE::CURRENT_FILE->m_currentMap, p_z, p_globX, p_globY } );
                 continue;
             }
 
@@ -236,11 +236,11 @@ namespace MAP {
             }
             if( mdata.m_events[ i ].m_type == EVENT_GENERIC ) {
                 if( mdata.m_events[ i ].m_data.m_generic.m_scriptType == 11
-                    && SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
+                    && SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
                     continue;
                 }
                 if( mdata.m_events[ i ].m_data.m_generic.m_scriptType == 10
-                    && !SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
+                    && !SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
                     continue;
                 }
             }
@@ -251,12 +251,12 @@ namespace MAP {
 
         // check if player moved to different position; may need to check for events at
         // new position
-        if( p_globX != SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX
-            || p_globY != SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY
-            || p_z != SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ ) {
-            handleEvents( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                          SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY,
-                          SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ );
+        if( p_globX != SAVE::CURRENT_FILE->m_player.m_pos.m_posX
+            || p_globY != SAVE::CURRENT_FILE->m_player.m_pos.m_posY
+            || p_z != SAVE::CURRENT_FILE->m_player.m_pos.m_posZ ) {
+            handleEvents( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                          SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
+                          SAVE::CURRENT_FILE->m_player.m_pos.m_posZ );
         }
     }
 
@@ -278,15 +278,15 @@ namespace MAP {
                 continue;
             }
             if( mdata.m_events[ i ].m_activateFlag
-                && !SAVE::SAV.getActiveFile( ).checkFlag( mdata.m_events[ i ].m_activateFlag ) ) {
+                && !SAVE::CURRENT_FILE->checkFlag( mdata.m_events[ i ].m_activateFlag ) ) {
                 continue;
             }
             if( mdata.m_events[ i ].m_type != EVENT_TRAINER && mdata.m_events[ i ].m_deactivateFlag
-                && SAVE::SAV.getActiveFile( ).checkFlag( mdata.m_events[ i ].m_deactivateFlag ) ) {
+                && SAVE::CURRENT_FILE->checkFlag( mdata.m_events[ i ].m_deactivateFlag ) ) {
                 continue;
             }
             if( ( mdata.m_events[ i ].m_route )
-                && mdata.m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                && mdata.m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                 continue;
             }
 
@@ -298,13 +298,13 @@ namespace MAP {
             }
 
             if( mdata.m_events[ i ].m_type == EVENT_BERRYTREE ) {
-                if( !SAVE::SAV.getActiveFile( ).berryIsAlive(
+                if( !SAVE::CURRENT_FILE->berryIsAlive(
                         mdata.m_events[ i ].m_data.m_berryTree.m_treeIdx ) ) {
-                    SAVE::SAV.getActiveFile( ).harvestBerry(
+                    SAVE::CURRENT_FILE->harvestBerry(
                         mdata.m_events[ i ].m_data.m_berryTree.m_treeIdx );
                 }
 
-                u8 berryType = SAVE::SAV.getActiveFile( ).getBerry(
+                u8 berryType = SAVE::CURRENT_FILE->getBerry(
                     mdata.m_events[ i ].m_data.m_berryTree.m_treeIdx );
 
                 if( !berryType ) {
@@ -324,7 +324,7 @@ namespace MAP {
 
                         // Make player choose berry
                         SOUND::dimVolume( );
-                        BAG::bagViewer bv  = BAG::bagViewer( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
+                        BAG::bagViewer bv  = BAG::bagViewer( SAVE::CURRENT_FILE->m_pkmnTeam,
                                                              BAG::bagViewer::CHOOSE_BERRY );
                         u16            itm = bv.getItem( true );
 
@@ -336,16 +336,15 @@ namespace MAP {
 
                         if( itm ) {
                             // plant the berry
-                            SAVE::SAV.getActiveFile( ).plantBerry(
+                            SAVE::CURRENT_FILE->plantBerry(
                                 mdata.m_events[ i ].m_data.m_berryTree.m_treeIdx, itm );
                         }
 
                         FADE_TOP_DARK( );
                         IO::init( );
                         draw( playerPrio );
-                        _mapSprites.setPriority( _playerSprite,
-                                                 SAVE::SAV.getActiveFile( ).m_playerPriority
-                                                 = playerPrio );
+                        _mapSprites.setPriority( _playerSprite, SAVE::CURRENT_FILE->m_playerPriority
+                                                                = playerPrio );
                         SOUND::restartBGM( );
                         ANIMATE_MAP = true;
                         SOUND::restoreVolume( );
@@ -365,11 +364,11 @@ namespace MAP {
 
             if( mdata.m_events[ i ].m_type == EVENT_GENERIC ) {
                 if( mdata.m_events[ i ].m_data.m_generic.m_scriptType == 11
-                    && SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
+                    && SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
                     continue;
                 }
                 if( mdata.m_events[ i ].m_data.m_generic.m_scriptType == 10
-                    && !SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
+                    && !SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
                     continue;
                 }
             }
@@ -380,8 +379,8 @@ namespace MAP {
             }
         }
 
-        for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-            auto& o = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+        for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+            auto& o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
 
             if( o.second.m_pos.m_posX != p_globX || o.second.m_pos.m_posY != p_globY
                 || o.second.m_pos.m_posZ != z ) {
@@ -395,11 +394,11 @@ namespace MAP {
             auto old = o.second.m_movement;
 
             if( o.second.m_event.m_type == EVENT_BERRYTREE ) {
-                u8 stage = SAVE::SAV.getActiveFile( ).getBerryStage(
+                u8 stage = SAVE::CURRENT_FILE->getBerryStage(
                     o.second.m_event.m_data.m_berryTree.m_treeIdx );
-                u8 berryType = SAVE::SAV.getActiveFile( ).getBerry(
-                    o.second.m_event.m_data.m_berryTree.m_treeIdx );
-                u8 yield = SAVE::SAV.getActiveFile( ).getBerryYield(
+                u8 berryType
+                    = SAVE::CURRENT_FILE->getBerry( o.second.m_event.m_data.m_berryTree.m_treeIdx );
+                u8 yield = SAVE::CURRENT_FILE->getBerryYield(
                     o.second.m_event.m_data.m_berryTree.m_treeIdx );
 
                 if( !berryType ) {
@@ -430,7 +429,7 @@ namespace MAP {
                         == IO::yesNoBox::YES ) {
                         IO::init( );
                         IO::giveItemToPlayer( BAG::berryToItem( berryType ), yield );
-                        SAVE::SAV.getActiveFile( ).harvestBerry(
+                        SAVE::CURRENT_FILE->harvestBerry(
                             o.second.m_event.m_data.m_berryTree.m_treeIdx );
                         _mapSprites.destroySprite( o.first );
                         o.first = 255;
@@ -440,20 +439,20 @@ namespace MAP {
                 } else {
                     // Ask player if they want to water the berry
                     // (only if they have a watering can, though)
-                    if( SAVE::SAV.getActiveFile( ).m_bag.count(
-                            BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_SPRAYDUCK )
-                        + SAVE::SAV.getActiveFile( ).m_bag.count(
-                            BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_SPRINKLOTAD )
-                        + SAVE::SAV.getActiveFile( ).m_bag.count(
-                            BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_WAILMER_PAIL )
-                        + SAVE::SAV.getActiveFile( ).m_bag.count(
-                            BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_SQUIRT_BOTTLE ) ) {
+                    if( SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                         I_SPRAYDUCK )
+                        + SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                           I_SPRINKLOTAD )
+                        + SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                           I_WAILMER_PAIL )
+                        + SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                           I_SQUIRT_BOTTLE ) ) {
 
                         if( IO::yesNoBox( ).getResult( GET_STRING( 574 ), MSG_INFO_NOCLOSE )
                             == IO::yesNoBox::YES ) {
                             IO::init( );
                             IO::printMessage( GET_STRING( 573 ), MSG_INFO );
-                            SAVE::SAV.getActiveFile( ).waterBerry(
+                            SAVE::CURRENT_FILE->waterBerry(
                                 o.second.m_event.m_data.m_berryTree.m_treeIdx );
                         } else {
                             IO::init( );
@@ -474,7 +473,7 @@ namespace MAP {
             if( o.second.m_event.m_type == EVENT_TRAINER ) {
                 // Check for exclamation mark / music change
 
-                if( !SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_TRAINER_BATTLED(
+                if( !SAVE::CURRENT_FILE->checkFlag( SAVE::F_TRAINER_BATTLED(
                         o.second.m_event.m_data.m_trainer.m_trainerId ) ) ) {
                     // player did not defeat the trainer yet
                     showExclamationAboveMapObject( i );
@@ -483,12 +482,12 @@ namespace MAP {
                 }
             }
 
-            u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-            u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+            u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+            u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
 
             runEvent( o.second.m_event, i );
-            if( curx == SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX
-                && cury == SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY ) {
+            if( curx == SAVE::CURRENT_FILE->m_player.m_pos.m_posX
+                && cury == SAVE::CURRENT_FILE->m_player.m_pos.m_posY ) {
                 o.second.m_movement = old;
             }
         }
@@ -499,15 +498,15 @@ namespace MAP {
             if( m_events[ i ].m_posX == p_x && m_events[ i ].m_posY == p_y
                 && m_events[ i ].m_posZ == p_z && m_events[ i ].m_type == p_type ) {
                 if( m_events[ i ].m_activateFlag
-                    && !SAVE::SAV.getActiveFile( ).checkFlag( m_events[ i ].m_activateFlag ) ) {
+                    && !SAVE::CURRENT_FILE->checkFlag( m_events[ i ].m_activateFlag ) ) {
                     continue;
                 }
                 if( m_events[ i ].m_deactivateFlag
-                    && SAVE::SAV.getActiveFile( ).checkFlag( m_events[ i ].m_deactivateFlag ) ) {
+                    && SAVE::CURRENT_FILE->checkFlag( m_events[ i ].m_deactivateFlag ) ) {
                     continue;
                 }
                 if( ( m_events[ i ].m_route )
-                    && m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                    && m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                     continue;
                 }
 
@@ -522,15 +521,15 @@ namespace MAP {
             if( p_data.m_events[ i ].m_trigger != TRIGGER_ON_MAP_ENTER ) { continue; }
 
             if( p_data.m_events[ i ].m_activateFlag
-                && !SAVE::SAV.getActiveFile( ).checkFlag( p_data.m_events[ i ].m_activateFlag ) ) {
+                && !SAVE::CURRENT_FILE->checkFlag( p_data.m_events[ i ].m_activateFlag ) ) {
                 continue;
             }
             if( p_data.m_events[ i ].m_deactivateFlag
-                && SAVE::SAV.getActiveFile( ).checkFlag( p_data.m_events[ i ].m_deactivateFlag ) ) {
+                && SAVE::CURRENT_FILE->checkFlag( p_data.m_events[ i ].m_deactivateFlag ) ) {
                 continue;
             }
             if( ( p_data.m_events[ i ].m_route )
-                && p_data.m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                && p_data.m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                 continue;
             }
 
@@ -539,9 +538,9 @@ namespace MAP {
     }
 
     void mapDrawer::executeMoveTriggerScript( u16 p_move ) {
-        u16  curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16  cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
-        u16  curz = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ;
+        u16  curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16  cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+        u16  curz = SAVE::CURRENT_FILE->m_player.m_pos.m_posZ;
         auto data = currentData( curx, cury );
 
         auto mx = curx / SIZE;
@@ -557,17 +556,15 @@ namespace MAP {
                 && data.m_events[ i ].m_posZ == curz
                 && data.m_events[ i ].m_data.m_generic.m_triggerMove == p_move ) {
                 if( data.m_events[ i ].m_activateFlag
-                    && !SAVE::SAV.getActiveFile( ).checkFlag(
-                        data.m_events[ i ].m_activateFlag ) ) {
+                    && !SAVE::CURRENT_FILE->checkFlag( data.m_events[ i ].m_activateFlag ) ) {
                     continue;
                 }
                 if( data.m_events[ i ].m_deactivateFlag
-                    && SAVE::SAV.getActiveFile( ).checkFlag(
-                        data.m_events[ i ].m_deactivateFlag ) ) {
+                    && SAVE::CURRENT_FILE->checkFlag( data.m_events[ i ].m_deactivateFlag ) ) {
                     continue;
                 }
                 if( ( data.m_events[ i ].m_route )
-                    && data.m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                    && data.m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                     continue;
                 }
 
@@ -580,9 +577,9 @@ namespace MAP {
     std::vector<u16> mapDrawer::getTriggerMovesForCurPos( ) const {
         std::vector<u16> res{ };
 
-        u16  curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16  cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
-        u16  curz = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ;
+        u16  curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16  cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+        u16  curz = SAVE::CURRENT_FILE->m_player.m_pos.m_posZ;
         auto data = currentData( curx, cury );
 
         curx %= SIZE;
@@ -594,17 +591,15 @@ namespace MAP {
                 && data.m_events[ i ].m_posX == curx && data.m_events[ i ].m_posY == cury
                 && data.m_events[ i ].m_posZ == curz ) {
                 if( data.m_events[ i ].m_activateFlag
-                    && !SAVE::SAV.getActiveFile( ).checkFlag(
-                        data.m_events[ i ].m_activateFlag ) ) {
+                    && !SAVE::CURRENT_FILE->checkFlag( data.m_events[ i ].m_activateFlag ) ) {
                     continue;
                 }
                 if( data.m_events[ i ].m_deactivateFlag
-                    && SAVE::SAV.getActiveFile( ).checkFlag(
-                        data.m_events[ i ].m_deactivateFlag ) ) {
+                    && SAVE::CURRENT_FILE->checkFlag( data.m_events[ i ].m_deactivateFlag ) ) {
                     continue;
                 }
                 if( ( data.m_events[ i ].m_route )
-                    && data.m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                    && data.m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                     continue;
                 }
 
@@ -617,8 +612,8 @@ namespace MAP {
     std::vector<u16> mapDrawer::getTriggerBattleMovesForCurPos( ) const {
         std::vector<u16> res{ };
 
-        u16  curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16  cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16  curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16  cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         auto data = currentData( curx, cury );
 
         curx %= SIZE;
@@ -628,17 +623,15 @@ namespace MAP {
             if( data.m_events[ i ].m_type == EVENT_GENERIC
                 && data.m_events[ i ].m_trigger == TRIGGER_ON_MOVE_IN_BATTLE ) {
                 if( data.m_events[ i ].m_activateFlag
-                    && !SAVE::SAV.getActiveFile( ).checkFlag(
-                        data.m_events[ i ].m_activateFlag ) ) {
+                    && !SAVE::CURRENT_FILE->checkFlag( data.m_events[ i ].m_activateFlag ) ) {
                     continue;
                 }
                 if( data.m_events[ i ].m_deactivateFlag
-                    && SAVE::SAV.getActiveFile( ).checkFlag(
-                        data.m_events[ i ].m_deactivateFlag ) ) {
+                    && SAVE::CURRENT_FILE->checkFlag( data.m_events[ i ].m_deactivateFlag ) ) {
                     continue;
                 }
                 if( ( data.m_events[ i ].m_route )
-                    && data.m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                    && data.m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                     continue;
                 }
 
@@ -658,17 +651,15 @@ namespace MAP {
             if( data.m_events[ i ].m_type == EVENT_WARP && data.m_events[ i ].m_posX == p_globX
                 && data.m_events[ i ].m_posY == p_globY && data.m_events[ i ].m_posZ == p_z ) {
                 if( data.m_events[ i ].m_activateFlag
-                    && !SAVE::SAV.getActiveFile( ).checkFlag(
-                        data.m_events[ i ].m_activateFlag ) ) {
+                    && !SAVE::CURRENT_FILE->checkFlag( data.m_events[ i ].m_activateFlag ) ) {
                     continue;
                 }
                 if( data.m_events[ i ].m_deactivateFlag
-                    && SAVE::SAV.getActiveFile( ).checkFlag(
-                        data.m_events[ i ].m_deactivateFlag ) ) {
+                    && SAVE::CURRENT_FILE->checkFlag( data.m_events[ i ].m_deactivateFlag ) ) {
                     continue;
                 }
                 if( ( data.m_events[ i ].m_route )
-                    && data.m_events[ i ].m_route != SAVE::SAV.getActiveFile( ).m_route ) {
+                    && data.m_events[ i ].m_route != SAVE::CURRENT_FILE->m_route ) {
                     continue;
                 }
 
@@ -680,9 +671,9 @@ namespace MAP {
 
     void mapDrawer::handleWarp( warpType p_type, warpPos p_source ) {
         warpPos tg;
-        u16     curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16     cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
-        u16     curz = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ;
+        u16     curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16     cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+        u16     curz = SAVE::CURRENT_FILE->m_player.m_pos.m_posZ;
 
         auto wdata = getWarpData( curx, cury, curz );
         curx %= SIZE;
@@ -697,10 +688,10 @@ namespace MAP {
                     // warp script failed / didn't return
                     return;
                 }
-                if( p_type == LAST_VISITED ) { tg = SAVE::SAV.getActiveFile( ).m_lastCaveEntry; }
+                if( p_type == LAST_VISITED ) { tg = SAVE::CURRENT_FILE->m_lastCaveEntry; }
             } else {
                 if( wdata.second.m_warp.m_warpType == LAST_VISITED ) {
-                    tg = SAVE::SAV.getActiveFile( ).m_lastCaveEntry;
+                    tg = SAVE::CURRENT_FILE->m_lastCaveEntry;
                 } else {
                     tg = warpPos(
                         wdata.second.m_warp.m_bank,
@@ -711,22 +702,22 @@ namespace MAP {
             }
         }
 
-        if( tg.first == WARP_TO_LAST_ENTRY ) { tg = SAVE::SAV.getActiveFile( ).m_lastWarp; }
+        if( tg.first == WARP_TO_LAST_ENTRY ) { tg = SAVE::CURRENT_FILE->m_lastWarp; }
         if( !tg.first && !tg.second.m_posY && !tg.second.m_posZ && !tg.second.m_posX ) return;
 
-        SAVE::SAV.getActiveFile( ).m_lastWarp = p_source;
+        SAVE::CURRENT_FILE->m_lastWarp = p_source;
         warpPlayer( p_type, tg );
     }
 
     void mapDrawer::handleWarp( warpType p_type ) {
-        warpPos current = warpPos{ SAVE::SAV.getActiveFile( ).m_currentMap,
-                                   SAVE::SAV.getActiveFile( ).m_player.m_pos };
+        warpPos current
+            = warpPos{ SAVE::CURRENT_FILE->m_currentMap, SAVE::CURRENT_FILE->m_player.m_pos };
         if( p_type == LAST_VISITED ) {
-            warpPos target = SAVE::SAV.getActiveFile( ).m_lastCaveEntry;
+            warpPos target = SAVE::CURRENT_FILE->m_lastCaveEntry;
             if( !target.first && !target.second.m_posX && !target.second.m_posY
                 && !target.second.m_posZ )
                 return;
-            SAVE::SAV.getActiveFile( ).m_lastWarp = current;
+            SAVE::CURRENT_FILE->m_lastWarp = current;
 
             warpPlayer( p_type, target );
         } else {
@@ -735,8 +726,8 @@ namespace MAP {
     }
 
     bool mapDrawer::currentPosAllowsDirectFieldMove( ) const {
-        u16 gx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 gy = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16 gx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16 gy = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
 
         auto beh = at( gx, gy ).m_bottombehave;
 

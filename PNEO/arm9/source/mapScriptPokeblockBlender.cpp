@@ -41,8 +41,8 @@ namespace MAP {
 
         // check for pokeblock kit
 
-        if( !SAVE::SAV.getActiveFile( ).m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
-                                                     I_POKEBLOCK_CASE ) ) {
+        if( !SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                              I_POKEBLOCK_CASE ) ) {
             printMapMessage( GET_MAP_STRING( 735 ), MSG_INFO );
 
             ANIMATE_MAP = true;
@@ -67,7 +67,7 @@ namespace MAP {
                     == IO::yesNoBox( ).getResult( convertMapString( buffer, MSG_INFO ).c_str( ),
                                                   MSG_INFO_NOCLOSE, false ) ) {
 
-                    direction olddir = SAVE::SAV.getActiveFile( ).m_player.m_direction;
+                    direction olddir = SAVE::CURRENT_FILE->m_player.m_direction;
                     useFollowPkmn( );
                     removeFollowPkmn( );
                     walkPlayer( direction( ( _lastPlayerMove + 2 ) % 4 ), false );

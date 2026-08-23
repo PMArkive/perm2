@@ -57,7 +57,7 @@ namespace MAP {
         // if pkmn is following the player, make it come forward
         useFollowPkmn( );
 
-        auto pkmn = SAVE::SAV.getActiveFile( ).getTeamPkmn( 0 );
+        auto pkmn = SAVE::CURRENT_FILE->getTeamPkmn( 0 );
 
         // check if pkmn has an effort ribbon
         if( pkmn->m_boxdata.hasRibbon( RIBBON_EFFORT ) ) {
@@ -89,9 +89,9 @@ namespace MAP {
         printMapMessage( GET_MAP_STRING( 818 ), MSG_NORMAL );
 
         // select pkmn
-        STS::partyScreen sts = STS::partyScreen( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                                 SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ),
-                                                 false, false, false, 1, false, true );
+        STS::partyScreen sts = STS::partyScreen( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                                 SAVE::CURRENT_FILE->getTeamPkmnCount( ), false,
+                                                 false, false, 1, false, true );
         SOUND::dimVolume( );
 
         auto res = sts.run( );
@@ -110,14 +110,14 @@ namespace MAP {
 
         u8 selpkmn = res.getSelectedPkmn( );
 
-        if( selpkmn >= SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) ) {
+        if( selpkmn >= SAVE::CURRENT_FILE->getTeamPkmnCount( ) ) {
             // player aborted
             printMapMessage( GET_MAP_STRING( 822 ), MSG_NORMAL );
             ANIMATE_MAP = true;
             return;
         }
 
-        auto pkmn = SAVE::SAV.getActiveFile( ).getTeamPkmn( selpkmn );
+        auto pkmn = SAVE::CURRENT_FILE->getTeamPkmn( selpkmn );
         // check if player is OT
         if( pkmn->isForeign( ) ) {
             // no rename possible
@@ -168,7 +168,7 @@ namespace MAP {
         char buffer[ 200 ];
         ANIMATE_MAP = false;
 
-        if( !SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT ) ) {
+        if( !SAVE::CURRENT_FILE->checkFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT ) ) {
             printMapMessage( GET_MAP_STRING( IO::STR_MAP_MY_NEXT_VISIT ), MSG_NORMAL );
             return;
         } else {
@@ -176,8 +176,8 @@ namespace MAP {
         }
 
         for( u8 i = 0; i < SAVE::MAX_STORED_WC; ++i ) {
-            auto& wc = SAVE::SAV.getActiveFile( ).m_storedWonderCards[ i ];
-            if( !SAVE::SAV.getActiveFile( ).collectedWC( wc.m_id ) ) {
+            auto& wc = SAVE::CURRENT_FILE->m_storedWonderCards[ i ];
+            if( !SAVE::CURRENT_FILE->collectedWC( wc.m_id ) ) {
                 switch( wc.m_type ) {
                 case SAVE::WCTYPE_ITEM: {
                     // hand player the items
@@ -188,14 +188,14 @@ namespace MAP {
                                                   wc.m_data.m_item.m_itemCount[ j ] );
                         }
                     }
-                    SAVE::SAV.getActiveFile( ).registerCollectedWC( wc.m_id );
+                    SAVE::CURRENT_FILE->registerCollectedWC( wc.m_id );
                     break;
                 }
                 case SAVE::WCTYPE_PKMN: {
                     // check if there is an empty spot in the team left, hand over pkmn if
                     // there is
 
-                    if( SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) == 6 ) {
+                    if( SAVE::CURRENT_FILE->getTeamPkmnCount( ) == 6 ) {
                         // No space
                         printMapMessage( GET_MAP_STRING( IO::STR_MAP_MY_MAKE_SPACE ), MSG_NORMAL );
                         return;
@@ -224,19 +224,19 @@ namespace MAP {
                     }
                     if( ic ) { giftPkmn.giveItem( wc.m_data.m_pkmn.m_items[ rand( ) % ic ] ); }
 
-                    SAVE::SAV.getActiveFile( ).setTeamPkmn(
-                        SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ), &giftPkmn );
+                    SAVE::CURRENT_FILE->setTeamPkmn( SAVE::CURRENT_FILE->getTeamPkmnCount( ),
+                                                     &giftPkmn );
 
                     snprintf( buffer, 199, GET_MAP_STRING( IO::STR_MAP_MY_RECEIVE ),
                               FS::getDisplayName( wc.m_data.m_pkmn.m_species ).c_str( ) );
                     printMapMessage( buffer, MSG_INFO );
-                    SAVE::SAV.getActiveFile( ).registerCollectedWC( wc.m_id );
+                    SAVE::CURRENT_FILE->registerCollectedWC( wc.m_id );
 
                     break;
                 }
                 default:
                 case SAVE::WCTYPE_NONE: {
-                    SAVE::SAV.getActiveFile( ).registerCollectedWC( wc.m_id );
+                    SAVE::CURRENT_FILE->registerCollectedWC( wc.m_id );
                     break;
                 }
                 }
@@ -245,12 +245,12 @@ namespace MAP {
         }
 
         printMapMessage( GET_MAP_STRING( IO::STR_MAP_MY_NEXT_VISIT ), MSG_NORMAL );
-        SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT, 0 );
+        SAVE::CURRENT_FILE->setFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT, 0 );
 
         for( u8 i = 0; i < SAVE::MAX_STORED_WC; ++i ) {
-            auto& wc = SAVE::SAV.getActiveFile( ).m_storedWonderCards[ i ];
-            if( !SAVE::SAV.getActiveFile( ).collectedWC( wc.m_id ) ) {
-                SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT, 1 );
+            auto& wc = SAVE::CURRENT_FILE->m_storedWonderCards[ i ];
+            if( !SAVE::CURRENT_FILE->collectedWC( wc.m_id ) ) {
+                SAVE::CURRENT_FILE->setFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT, 1 );
             }
         }
         ANIMATE_MAP = true;

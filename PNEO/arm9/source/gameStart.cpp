@@ -109,8 +109,8 @@ namespace SAVE {
     }
 
     bool initNewGame( ) {
-        SAV.getActiveFile( ).initialize( );
-        SAV.getActiveFile( ).m_gameType = NORMAL;
+        CURRENT_FILE->initialize( );
+        CURRENT_FILE->m_gameType = NORMAL;
         IO::initOAMTable( true );
 
         // Initial text
@@ -273,11 +273,11 @@ namespace SAVE {
 
         // run chara creation
         do {
-            std::memcpy( SAV.getActiveFile( ).m_playername, "", OTLENGTH );
+            std::memcpy( CURRENT_FILE->m_playername, "", OTLENGTH );
             FS::readPictureData( bgGetGfxPtr( IO::bg3 ), "nitro:/PICS/", "tbg_t" );
             FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "tbg_s", 249 * 2,
                                  256 * 192, true );
-            SAV.getActiveFile( ).drawTrainersCard( false, true );
+            CURRENT_FILE->drawTrainersCard( false, true );
             dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
             IO::initOAMTable( true );
 
@@ -307,7 +307,7 @@ namespace SAVE {
             IO::choiceBox cb = IO::choiceBox( IO::choiceBox::MODE_LEFT_RIGHT );
 
             // make player pick an appearance
-            SAV.getActiveFile( ).m_appearance = cb.getResult(
+            CURRENT_FILE->m_appearance = cb.getResult(
                 [ & ]( u8 ) {
                     std::vector<std::pair<IO::inputTarget, u8>> res
                         = std::vector<std::pair<IO::inputTarget, u8>>( );
@@ -329,12 +329,11 @@ namespace SAVE {
                     IO::updateOAM( true );
                 } );
 
-            SAV.getActiveFile( ).setFlag( F_RIVAL_APPEARANCE,
-                                          1 - SAV.getActiveFile( ).m_appearance );
+            CURRENT_FILE->setFlag( F_RIVAL_APPEARANCE, 1 - CURRENT_FILE->m_appearance );
 
             FS::readPictureData( bgGetGfxPtr( IO::bg3 ), "nitro:/PICS/", "tbg_s" );
-            SAV.getActiveFile( ).drawTrainersCard( false, true );
-            IO::loadTrainerSprite( SAV.getActiveFile( ).m_appearance, 33, 45, 0, 0, 0, false );
+            CURRENT_FILE->drawTrainersCard( false, true );
+            IO::loadTrainerSprite( CURRENT_FILE->m_appearance, 33, 45, 0, 0, 0, false );
             IO::updateOAM( false );
 
             // make player pick a name
@@ -344,15 +343,15 @@ namespace SAVE {
 
             auto name = IO::keyboard( ).getText( 10 );
             if( name == "" ) {
-                name = GET_STRING( IO::STR_UI_INIT_GAME_DEFAULT_NAME0
-                                   + SAV.getActiveFile( ).m_appearance );
+                name
+                    = GET_STRING( IO::STR_UI_INIT_GAME_DEFAULT_NAME0 + CURRENT_FILE->m_appearance );
             }
-            std::memcpy( SAV.getActiveFile( ).m_playername, name.c_str( ), OTLENGTH );
+            std::memcpy( CURRENT_FILE->m_playername, name.c_str( ), OTLENGTH );
 
             FS::readPictureData( bgGetGfxPtr( IO::bg3 ), "nitro:/PICS/", "tbg_t" );
             FS::readPictureData( bgGetGfxPtr( IO::bg3sub ), "nitro:/PICS/", "tbg_s", 249 * 2,
                                  256 * 192, true );
-            SAV.getActiveFile( ).drawTrainersCard( false );
+            CURRENT_FILE->drawTrainersCard( false );
 
             IO::initOAMTable( true );
 
@@ -475,7 +474,7 @@ namespace SAVE {
         IO::fadeScreen( IO::fadeType::UNFADE, true, true );
 
         auto p1 = std::string( GET_STRING( IO::STR_UI_INIT_GAME_TEXT3 ) );
-        p1 += std::string( SAV.getActiveFile( ).m_playername );
+        p1 += std::string( CURRENT_FILE->m_playername );
         p1 += std::string( GET_STRING( IO::STR_UI_INIT_GAME_TEXT4 ) );
         printMBoxTextAndWait( p1.c_str( ) );
 
@@ -485,11 +484,11 @@ namespace SAVE {
 
         // initialize player data / send player to a reasonable start position on the map
 
-        SAV.getActiveFile( ).m_currentMap = 10;
-        SAV.getActiveFile( ).m_player     = MAP::mapPlayer(
-            { u16( 0xb4 + ( 9 * !!SAV.getActiveFile( ).m_appearance ) ), 0x15c, 3 },
-            u16( 10 * SAV.getActiveFile( ).m_appearance ), MAP::moveMode::WALK );
-        SAVE::SAV.getActiveFile( ).m_player.m_direction = MAP::RIGHT;
+        CURRENT_FILE->m_currentMap = 10;
+        CURRENT_FILE->m_player
+            = MAP::mapPlayer( { u16( 0xb4 + ( 9 * !!CURRENT_FILE->m_appearance ) ), 0x15c, 3 },
+                              u16( 10 * CURRENT_FILE->m_appearance ), MAP::moveMode::WALK );
+        SAVE::CURRENT_FILE->m_player.m_direction = MAP::RIGHT;
         IO::clearScreen( true, true, true );
         IO::fadeScreen( IO::fadeType::CLEAR_DARK, true, true );
         for( u8 i = 10; i; --i ) {
@@ -510,38 +509,37 @@ namespace SAVE {
         switch( p_episode ) {
         case 0:
             // Initialize character and send them to starting towm
-            std::memcpy( SAV.getActiveFile( ).m_playername, "Test", OTLENGTH );
-            SAV.getActiveFile( ).m_appearance = 1;
-            SAV.getActiveFile( ).setFlag( F_RIVAL_APPEARANCE,
-                                          1 - SAV.getActiveFile( ).m_appearance );
-            SAV.getActiveFile( ).m_currentMap = 10;
-            SAV.getActiveFile( ).m_player     = MAP::mapPlayer(
-                { u16( 0xb3 + ( 9 * !!SAV.getActiveFile( ).m_appearance ) ), 0x15c, 3 },
-                u16( 10 * SAV.getActiveFile( ).m_appearance ), MAP::moveMode::WALK );
-            SAVE::SAV.getActiveFile( ).m_player.m_direction = MAP::RIGHT;
+            std::memcpy( CURRENT_FILE->m_playername, "Test", OTLENGTH );
+            CURRENT_FILE->m_appearance = 1;
+            CURRENT_FILE->setFlag( F_RIVAL_APPEARANCE, 1 - CURRENT_FILE->m_appearance );
+            CURRENT_FILE->m_currentMap = 10;
+            CURRENT_FILE->m_player
+                = MAP::mapPlayer( { u16( 0xb3 + ( 9 * !!CURRENT_FILE->m_appearance ) ), 0x15c, 3 },
+                                  u16( 10 * CURRENT_FILE->m_appearance ), MAP::moveMode::WALK );
+            SAVE::CURRENT_FILE->m_player.m_direction = MAP::RIGHT;
 
             // Hand out badges
-            SAVE::SAV.getActiveFile( ).m_HOENN_Badges = 0b1111'1111;
+            SAVE::CURRENT_FILE->m_HOENN_Badges = 0b1111'1111;
 
             // hand out useful items
-            SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_MACH_BIKE, 1 );
-            SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_ACRO_BIKE, 1 );
-            SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_POKE_RADAR, 1 );
-            SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_EXP_ALL, 1 );
-            SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_SUPER_ROD, 1 );
-            SAV.getActiveFile( ).m_currentMap     = 10;
-            SAV.getActiveFile( ).m_registeredItem = I_MACH_BIKE;
+            CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_MACH_BIKE, 1 );
+            CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_ACRO_BIKE, 1 );
+            CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_POKE_RADAR, 1 );
+            CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_EXP_ALL, 1 );
+            CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_SUPER_ROD, 1 );
+            CURRENT_FILE->m_currentMap     = 10;
+            CURRENT_FILE->m_registeredItem = I_MACH_BIKE;
             for( u8 i = 10; i; --i ) {
                 SOUND::setVolume( 0x10 * i );
                 swiWaitForVBlank( );
             }
             // at most 4 init game items
-            SAVE::SAV.getActiveFile( ).m_initGameItemCount  = 2;
-            SAVE::SAV.getActiveFile( ).m_initGameItems[ 0 ] = I_WISHING_CHARM;
-            SAVE::SAV.getActiveFile( ).m_initGameItems[ 1 ] = I_SHINY_CHARM;
+            SAVE::CURRENT_FILE->m_initGameItemCount  = 2;
+            SAVE::CURRENT_FILE->m_initGameItems[ 0 ] = I_WISHING_CHARM;
+            SAVE::CURRENT_FILE->m_initGameItems[ 1 ] = I_SHINY_CHARM;
 
             return true;
-        default: SAV.getActiveFile( ).m_gameType = UNUSED; return false;
+        default: CURRENT_FILE->m_gameType = UNUSED; return false;
         }
     }
 

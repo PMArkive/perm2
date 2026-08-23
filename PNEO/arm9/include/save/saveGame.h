@@ -691,4 +691,5 @@ namespace SAVE {
     bool initNewGame( );
 
     extern saveGame SAV;
+    extern saveGame::playerInfo* CURRENT_FILE;
 } // namespace SAVE

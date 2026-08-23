@@ -145,8 +145,8 @@ namespace MAP {
             _weatherFollow  = true;
             break;
         case SANDSTORM: {
-            bool goggles = SAVE::SAV.getActiveFile( ).m_bag.count(
-                BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_GO_GOGGLES );
+            bool goggles = SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                            I_GO_GOGGLES );
 
             IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
             bgWrapOn( IO::bg3 );
@@ -198,7 +198,7 @@ namespace MAP {
 
     void mapDrawer::changeWeather( mapWeather p_newWeather ) {
         if( getWeather( ) != p_newWeather ) {
-            SAVE::SAV.getActiveFile( ).m_currentMapWeather = p_newWeather;
+            SAVE::CURRENT_FILE->m_currentMapWeather = p_newWeather;
             for( const auto& fn : _newWeatherCallbacks ) { fn( getWeather( ) ); }
             initWeather( );
             if( ANIMATE_MAP ) {

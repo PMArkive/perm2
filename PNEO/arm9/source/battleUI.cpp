@@ -1792,7 +1792,7 @@ namespace BATTLE {
 
     void battleUI::sendOutPkmn( bool p_opponent, u8 p_pos, pokemon* p_pokemon ) {
         if( p_pokemon != nullptr ) {
-            SAVE::SAV.getActiveFile( ).registerSeenPkmn( p_pokemon->getSpecies( ) );
+            SAVE::CURRENT_FILE->registerSeenPkmn( p_pokemon->getSpecies( ) );
         }
         IO::fadeScreen( IO::UNFADE, true, true );
         REG_BLDCNT       = BLEND_ALPHA | BLEND_DST_BG3;
@@ -1832,7 +1832,7 @@ namespace BATTLE {
 
     void battleUI::sendOutFollowPkmn( u8 p_pos, pokemon* p_pokemon ) {
         if( p_pokemon != nullptr ) {
-            SAVE::SAV.getActiveFile( ).registerSeenPkmn( p_pokemon->getSpecies( ) );
+            SAVE::CURRENT_FILE->registerSeenPkmn( p_pokemon->getSpecies( ) );
         }
         IO::fadeScreen( IO::UNFADE, true, true );
         REG_BLDCNT       = BLEND_ALPHA | BLEND_DST_BG3;
@@ -2825,7 +2825,7 @@ namespace BATTLE {
             BG_PALETTE[ IO::GRAY_IDX ]  = IO::GRAY;
             IO::regularFont->printBreakingStringC(
                 p_message, 12, 192 - 40, 232, false, IO::font::LEFT, 16, ' ', 0, true, 1,
-                SAVE::SAV.getActiveFile( ).m_options.m_textSpeedModifier );
+                SAVE::CURRENT_FILE->m_options.m_textSpeedModifier );
             IO::regularFont->setColor( IO::WHITE_IDX, 1 );
         }
     }

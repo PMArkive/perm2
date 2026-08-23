@@ -96,7 +96,7 @@ namespace BATTLE {
             }
         }
 
-        switch( SAVE::SAV.getActiveFile( ).m_options.getDifficulty( ) ) {
+        switch( SAVE::CURRENT_FILE->m_options.getDifficulty( ) ) {
         case 0: {
             // easy
             auto targetlv = std::max( int( MIN_OPP_LEVEL ),
@@ -346,7 +346,7 @@ namespace BATTLE {
                 if( moves[ field::PLAYER_SIDE ][ field::PKMN_0 ].m_type == MT_USE_ITEM ) {
                     // player uses special item to escape the battle; remove said item
                     // from the player's bag
-                    SAVE::SAV.getActiveFile( ).m_bag.erase(
+                    SAVE::CURRENT_FILE->m_bag.erase(
                         BAG::bag::ITEMS, moves[ field::PLAYER_SIDE ][ field::PKMN_0 ].m_param, 1 );
                 }
 
@@ -1067,9 +1067,9 @@ namespace BATTLE {
                               _opponent.m_data.m_moneyMultiplier );
                     _battleUI.log( buffer );
                     WAIT( FULL_SEC );
-                    SAVE::SAV.getActiveFile( ).m_money += _opponent.m_data.m_moneyMultiplier;
-                    if( SAVE::SAV.getActiveFile( ).m_money > 999'999'999 ) {
-                        SAVE::SAV.getActiveFile( ).m_money = 999'999'999;
+                    SAVE::CURRENT_FILE->m_money += _opponent.m_data.m_moneyMultiplier;
+                    if( SAVE::CURRENT_FILE->m_money > 999'999'999 ) {
+                        SAVE::CURRENT_FILE->m_money = 999'999'999;
                     }
                 }
             }
@@ -1082,10 +1082,10 @@ namespace BATTLE {
                     _battleUI.log( buffer );
                     WAIT( FULL_SEC );
 
-                    if( SAVE::SAV.getActiveFile( ).m_money < _opponent.m_data.m_moneyMultiplier ) {
-                        SAVE::SAV.getActiveFile( ).m_money = 0;
+                    if( SAVE::CURRENT_FILE->m_money < _opponent.m_data.m_moneyMultiplier ) {
+                        SAVE::CURRENT_FILE->m_money = 0;
                     } else {
-                        SAVE::SAV.getActiveFile( ).m_money -= _opponent.m_data.m_moneyMultiplier;
+                        SAVE::CURRENT_FILE->m_money -= _opponent.m_data.m_moneyMultiplier;
                     }
                 }
             }
@@ -1212,9 +1212,7 @@ namespace BATTLE {
     }
 
     bool battle::playerCaptures( u16 p_pokeball ) {
-        if( !_isMockBattle ) {
-            SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::bag::ITEMS, p_pokeball, 1 );
-        }
+        if( !_isMockBattle ) { SAVE::CURRENT_FILE->m_bag.erase( BAG::bag::ITEMS, p_pokeball, 1 ); }
 
         constexpr u8 TMP_BUFFER_SIZE = 100;
         char         buffer[ TMP_BUFFER_SIZE + 10 ];
@@ -1274,7 +1272,7 @@ namespace BATTLE {
             break;
 
         case I_REPEAT_BALL:
-            if( SAVE::SAV.getActiveFile( ).m_caughtPkmn[ specId / 8 ] & ( 1LLU << ( specId % 8 ) ) )
+            if( SAVE::CURRENT_FILE->m_caughtPkmn[ specId / 8 ] & ( 1LLU << ( specId % 8 ) ) )
                 ballCatchRate = 6;
             break;
         case I_TIMER_BALL: ballCatchRate = std::min( ( _round + 10 ) / 5, 8 ); break;
@@ -1286,8 +1284,7 @@ namespace BATTLE {
             }
             break;
         case I_DIVE_BALL:
-            if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::moveMode::DIVE )
-                ballCatchRate = 7;
+            if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::moveMode::DIVE ) ballCatchRate = 7;
             break;
 
         case I_QUICK_BALL:
@@ -1376,8 +1373,8 @@ namespace BATTLE {
         u16          spid            = pkmn->getSpecies( );
         constexpr u8 TMP_BUFFER_SIZE = 100;
         char         buffer[ TMP_BUFFER_SIZE + 10 ];
-        if( !( SAVE::SAV.getActiveFile( ).m_caughtPkmn[ spid / 8 ] & ( 1LLU << ( spid % 8 ) ) ) ) {
-            SAVE::SAV.getActiveFile( ).registerCaughtPkmn( spid );
+        if( !( SAVE::CURRENT_FILE->m_caughtPkmn[ spid / 8 ] & ( 1LLU << ( spid % 8 ) ) ) ) {
+            SAVE::CURRENT_FILE->registerCaughtPkmn( spid );
             snprintf( buffer, TMP_BUFFER_SIZE, GET_STRING( IO::STR_UI_PKMN_DEX_REGISTERED ),
                       FS::getDisplayName( spid ).c_str( ) );
             _battleUI.log( buffer );
@@ -1393,8 +1390,8 @@ namespace BATTLE {
             std::memcpy( &_playerTeam[ _playerTeamSize ], pkmn, sizeof( pokemon ) );
             _playerPkmnOrigLevel[ _playerTeamSize++ ] = pkmn->m_level;
         } else {
-            u8 oldbx = SAVE::SAV.getActiveFile( ).m_curBox;
-            u8 nb    = SAVE::SAV.getActiveFile( ).storePkmn( *pkmn );
+            u8 oldbx = SAVE::CURRENT_FILE->m_curBox;
+            u8 nb    = SAVE::CURRENT_FILE->storePkmn( *pkmn );
             if( nb != u8( -1 ) ) {
                 snprintf( buffer, TMP_BUFFER_SIZE, GET_STRING( IO::STR_UI_PKMN_SENT_TO_STORAGE ),
                           pkmn->m_boxdata.m_name );
@@ -1402,12 +1399,12 @@ namespace BATTLE {
 
                 if( oldbx != nb ) {
                     snprintf( buffer, TMP_BUFFER_SIZE, GET_STRING( IO::STR_UI_STORAGE_BOX_FULL ),
-                              SAVE::SAV.getActiveFile( ).m_storedPokemon[ oldbx ].m_name );
+                              SAVE::CURRENT_FILE->m_storedPokemon[ oldbx ].m_name );
                     _battleUI.log( buffer );
                 }
                 snprintf( buffer, TMP_BUFFER_SIZE, GET_STRING( IO::STR_UI_STORAGE_BOX_PICKED ),
                           pkmn->m_boxdata.m_name,
-                          SAVE::SAV.getActiveFile( ).m_storedPokemon[ nb ].m_name );
+                          SAVE::CURRENT_FILE->m_storedPokemon[ nb ].m_name );
                 _battleUI.log( buffer );
             } else {
                 _battleUI.log( GET_STRING( IO::STR_UI_STORAGE_ALL_BOXES_FULL ) );
@@ -1678,7 +1675,7 @@ namespace BATTLE {
             }
         }
         if( remitem && !p_target.first ) {
-            SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::toBagType( idata.m_itemType ), p_item, 1 );
+            SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( idata.m_itemType ), p_item, 1 );
         }
     }
 
@@ -1748,7 +1745,7 @@ namespace BATTLE {
                         // pkmn that get regular exp
                         reg.push_back( q2 );
                     } else if( _playerTeam[ q2 ].canBattle( )
-                               && SAVE::SAV.getActiveFile( ).m_options.m_EXPShareEnabled ) {
+                               && SAVE::CURRENT_FILE->m_options.m_EXPShareEnabled ) {
                         // pkmn that get exp via exp share
                         share.push_back( q2 );
                     }

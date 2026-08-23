@@ -111,9 +111,9 @@ namespace MAP {
         memset( registers, 0, sizeof( registers ) );
 
         while( SCRIPT_INS[ pc ] ) {
-            u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-            u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
-            u16 curz = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ;
+            u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+            u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+            u16 curz = SAVE::CURRENT_FILE->m_player.m_pos.m_posZ;
             u16 mapX = curx / SIZE, mapY = cury / SIZE;
             if( p_mapX >= 0 ) { mapX = p_mapX; }
             if( p_mapY >= 0 ) { mapY = p_mapY; }
@@ -139,9 +139,9 @@ namespace MAP {
 
             switch( ins ) {
             case DES: {
-                SAVE::SAV.getActiveFile( ).registerSeenPkmn( parA );
+                SAVE::CURRENT_FILE->registerSeenPkmn( parA );
                 showPkmn( { parA, u8( parB ), false, false, false, DEFAULT_SPRITE_PID }, false );
-                changeMoveMode( SAVE::SAV.getActiveFile( ).m_player.m_movement );
+                changeMoveMode( SAVE::CURRENT_FILE->m_player.m_movement );
                 swiWaitForVBlank( );
                 break;
             }
@@ -188,9 +188,9 @@ namespace MAP {
                 return;
             }
             case GIT: {
-                auto idata     = FS::getItemData( parA );
-                registers[ 0 ] = SAVE::SAV.getActiveFile( ).m_bag.count(
-                    BAG::toBagType( idata.m_itemType ), parA );
+                auto idata = FS::getItemData( parA );
+                registers[ 0 ]
+                    = SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( idata.m_itemType ), parA );
                 break;
             }
             case SMO: {
@@ -210,9 +210,8 @@ namespace MAP {
                 }
                 // Check if there is some unused map object
                 u8 found = 255;
-                for( u8 i = _fixedObjectCount; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount;
-                     ++i ) {
-                    if( SAVE::SAV.getActiveFile( ).m_mapObjects[ i ].first == UNUSED_MAPOBJECT ) {
+                for( u8 i = _fixedObjectCount; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                    if( SAVE::CURRENT_FILE->m_mapObjects[ i ].first == UNUSED_MAPOBJECT ) {
                         found = i;
                         break;
                     }
@@ -221,14 +220,13 @@ namespace MAP {
                     registers[ 0 ] = found;
                 } else {
 #ifdef DESQUID_MORE
-                    IO::printMessage(
-                        ( std::to_string( cur.first ) + " "
-                          + std::to_string( SAVE::SAV.getActiveFile( ).m_mapObjectCount ) )
-                            .c_str( ) );
+                    IO::printMessage( ( std::to_string( cur.first ) + " "
+                                        + std::to_string( SAVE::CURRENT_FILE->m_mapObjectCount ) )
+                                          .c_str( ) );
 #endif
-                    registers[ 0 ] = SAVE::SAV.getActiveFile( ).m_mapObjectCount++;
+                    registers[ 0 ] = SAVE::CURRENT_FILE->m_mapObjectCount++;
                 }
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ 0 ] ] = cur;
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ 0 ] ] = cur;
                 break;
             }
             case WPL: {
@@ -243,15 +241,15 @@ namespace MAP {
             }
 
             case PRM: {
-                auto pkmn = SAVE::SAV.getActiveFile( ).getTeamPkmn( par1s );
+                auto pkmn = SAVE::CURRENT_FILE->getTeamPkmn( par1s );
                 if( pkmn && pkmn->getSpecies( ) == par3s ) { pc += par2s; }
                 break;
             }
 
             case PRMA: {
                 u8 cnt = 0;
-                for( u8 k = 0; k < SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ); ++k ) {
-                    auto pkmn = SAVE::SAV.getActiveFile( ).getTeamPkmn( k );
+                for( u8 k = 0; k < SAVE::CURRENT_FILE->getTeamPkmnCount( ); ++k ) {
+                    auto pkmn = SAVE::CURRENT_FILE->getTeamPkmn( k );
                     if( pkmn && pkmn->getSpecies( ) == par3s ) { cnt++; }
                 }
                 if( cnt >= par1s ) { pc += par2s; }
@@ -259,7 +257,7 @@ namespace MAP {
             }
 
             case PDT: {
-                auto pkmn = SAVE::SAV.getActiveFile( ).getTeamPkmn( par2 );
+                auto pkmn = SAVE::CURRENT_FILE->getTeamPkmn( par2 );
                 if( !pkmn ) { break; }
                 if( par1 >= PDT_STAT_START && par1 <= PDT_STAT_END ) {
                     registers[ 0 ] = pkmn->getStat( par1 - PDT_STAT_START );
@@ -293,22 +291,21 @@ namespace MAP {
             }
 
             case CMM: {
-                if( SAVE::SAV.getActiveFile( ).m_player.m_movement != parA ) {
+                if( SAVE::CURRENT_FILE->m_player.m_movement != parA ) {
                     changeMoveMode( moveMode( parA ) );
                 }
                 break;
             }
             case FMM: {
-                SAVE::SAV.getActiveFile( ).m_forcedMovement
-                    = SAVE::SAV.getActiveFile( ).m_player.m_movement;
+                SAVE::CURRENT_FILE->m_forcedMovement = SAVE::CURRENT_FILE->m_player.m_movement;
                 break;
             }
             case UMM: {
-                SAVE::SAV.getActiveFile( ).m_forcedMovement = 0;
+                SAVE::CURRENT_FILE->m_forcedMovement = 0;
                 break;
             }
             case GMM: {
-                registers[ 0 ] = SAVE::SAV.getActiveFile( ).m_player.m_movement;
+                registers[ 0 ] = SAVE::CURRENT_FILE->m_player.m_movement;
                 break;
             }
 
@@ -316,79 +313,75 @@ namespace MAP {
                 movement m = { direction( par2 ), 0 };
                 _mapSprites.setFrameD( par1, direction( par2 ) );
 
-                auto tmp = SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].second.m_movement;
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].second.m_movement = NO_MOVEMENT;
+                auto tmp = SAVE::CURRENT_FILE->m_mapObjects[ par1 ].second.m_movement;
+                SAVE::CURRENT_FILE->m_mapObjects[ par1 ].second.m_movement = NO_MOVEMENT;
 
                 for( u8 j = 0; j < par3; ++j ) {
                     for( u8 i = 0; i < 16; ++i ) {
                         moveMapObject( par1, m, playerAttachedToObject,
-                                       SAVE::SAV.getActiveFile( ).m_player.m_direction );
+                                       SAVE::CURRENT_FILE->m_player.m_direction );
                         m.m_frame = ( m.m_frame + 1 ) & 15;
                         swiWaitForVBlank( );
                     }
                     if( playerAttachedToObject ) {
-                        SAVE::SAV.getActiveFile( ).m_player.m_direction = direction( par2 );
+                        SAVE::CURRENT_FILE->m_player.m_direction = direction( par2 );
                     }
                 }
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].second.m_direction
-                    = direction( par2 );
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].second.m_movement = tmp;
+                SAVE::CURRENT_FILE->m_mapObjects[ par1 ].second.m_direction = direction( par2 );
+                SAVE::CURRENT_FILE->m_mapObjects[ par1 ].second.m_movement  = tmp;
                 break;
             }
             case MFO: {
                 movement m = { direction( par2 ), 0 };
                 _mapSprites.setFrameD( par1, direction( par2 ) );
 
-                auto tmp = SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].second.m_movement;
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].second.m_movement = NO_MOVEMENT;
+                auto tmp = SAVE::CURRENT_FILE->m_mapObjects[ par1 ].second.m_movement;
+                SAVE::CURRENT_FILE->m_mapObjects[ par1 ].second.m_movement = NO_MOVEMENT;
 
                 for( u8 j = 0; j < par3; ++j ) {
                     for( u8 i = 0; i < 16; ++i ) {
                         moveMapObject( par1, m, playerAttachedToObject,
-                                       SAVE::SAV.getActiveFile( ).m_player.m_direction );
+                                       SAVE::CURRENT_FILE->m_player.m_direction );
                         m.m_frame = ( m.m_frame + 1 ) & 15;
                         if( i & 1 ) { swiWaitForVBlank( ); }
                     }
                     if( playerAttachedToObject ) {
-                        SAVE::SAV.getActiveFile( ).m_player.m_direction = direction( par2 );
+                        SAVE::CURRENT_FILE->m_player.m_direction = direction( par2 );
                     }
                 }
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].second.m_direction
-                    = direction( par2 );
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].second.m_movement = tmp;
+                SAVE::CURRENT_FILE->m_mapObjects[ par1 ].second.m_direction = direction( par2 );
+                SAVE::CURRENT_FILE->m_mapObjects[ par1 ].second.m_movement  = tmp;
                 break;
             }
             case DMO: {
-                _mapSprites.destroySprite( SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ].first );
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ par1 ]
-                    = { UNUSED_MAPOBJECT, mapObject( ) };
+                _mapSprites.destroySprite( SAVE::CURRENT_FILE->m_mapObjects[ par1 ].first );
+                SAVE::CURRENT_FILE->m_mapObjects[ par1 ] = { UNUSED_MAPOBJECT, mapObject( ) };
                 break;
             }
             case CFL: {
-                if( SAVE::SAV.getActiveFile( ).checkFlag( par1x ) == par2x ) { pc += par3x; }
+                if( SAVE::CURRENT_FILE->checkFlag( par1x ) == par2x ) { pc += par3x; }
                 break;
             }
             case SFL: {
-                SAVE::SAV.getActiveFile( ).setFlag( par1x, par2x );
+                SAVE::CURRENT_FILE->setFlag( par1x, par2x );
                 break;
             }
             case STF: {
-                SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_TRAINER_BATTLED( par1x ), par2x );
+                SAVE::CURRENT_FILE->setFlag( SAVE::F_TRAINER_BATTLED( par1x ), par2x );
                 break;
             }
             case CTF: {
-                if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_TRAINER_BATTLED( par1x ) )
-                    == par2x ) {
+                if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_TRAINER_BATTLED( par1x ) ) == par2x ) {
                     pc += par3x;
                 }
                 break;
             }
             case SRT: {
-                SAVE::SAV.getActiveFile( ).m_route = par1;
+                SAVE::CURRENT_FILE->m_route = par1;
                 break;
             }
             case CRT: {
-                if( SAVE::SAV.getActiveFile( ).m_route == par1 ) { pc += par2; }
+                if( SAVE::CURRENT_FILE->m_route == par1 ) { pc += par2; }
                 break;
             }
 
@@ -396,12 +389,11 @@ namespace MAP {
                 u16 move    = parA;
                 ANIMATE_MAP = false;
 
-                auto oldframe = _mapSprites.getFrame(
-                    SAVE::SAV.getActiveFile( ).m_mapObjects[ p_mapObject ].first );
+                auto oldframe
+                    = _mapSprites.getFrame( SAVE::CURRENT_FILE->m_mapObjects[ p_mapObject ].first );
 
-                STS::partyScreen sts
-                    = STS::partyScreen( move, SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                        SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) );
+                STS::partyScreen sts = STS::partyScreen( move, SAVE::CURRENT_FILE->m_pkmnTeam,
+                                                         SAVE::CURRENT_FILE->getTeamPkmnCount( ) );
                 SOUND::dimVolume( );
 
                 auto res = sts.run( );
@@ -416,18 +408,18 @@ namespace MAP {
 
                 IO::init( );
                 MAP::curMap->draw( );
-                _mapSprites.setFrame( SAVE::SAV.getActiveFile( ).m_mapObjects[ p_mapObject ].first,
+                _mapSprites.setFrame( SAVE::CURRENT_FILE->m_mapObjects[ p_mapObject ].first,
                                       oldframe );
 
                 auto selpkmn = res.getSelectedPkmn( );
 
-                if( selpkmn >= SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) ) {
+                if( selpkmn >= SAVE::CURRENT_FILE->getTeamPkmnCount( ) ) {
                     registers[ 0 ] = 0;
                     ANIMATE_MAP    = true;
                     break;
                 }
 
-                registers[ 0 ] = SAVE::SAV.getActiveFile( ).getTeamPkmn( selpkmn )->learnMove(
+                registers[ 0 ] = SAVE::CURRENT_FILE->getTeamPkmn( selpkmn )->learnMove(
                     move,
                     [ & ]( const char* p_message ) {
                         IO::init( );
@@ -498,9 +490,8 @@ namespace MAP {
 
                 // Check if there is some unused map object
                 u8 found = 255;
-                for( u8 i = _fixedObjectCount; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount;
-                     ++i ) {
-                    if( SAVE::SAV.getActiveFile( ).m_mapObjects[ i ].first == UNUSED_MAPOBJECT ) {
+                for( u8 i = _fixedObjectCount; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                    if( SAVE::CURRENT_FILE->m_mapObjects[ i ].first == UNUSED_MAPOBJECT ) {
                         found = i;
                         break;
                     }
@@ -509,100 +500,88 @@ namespace MAP {
                 if( found < 255 ) {
                     registers[ 0 ] = found;
                 } else {
-                    registers[ 0 ] = SAVE::SAV.getActiveFile( ).m_mapObjectCount++;
+                    registers[ 0 ] = SAVE::CURRENT_FILE->m_mapObjectCount++;
                 }
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ 0 ] ] = cur;
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ 0 ] ] = cur;
                 break;
             }
             case MMOR: {
 #ifdef DESQUID_MORE
                 IO::printMessage(
-                    ( std::to_string(
-                          SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].first )
+                    ( std::to_string( SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].first )
                       + " ( " + std::to_string( registers[ par1 ] ) + " , " + std::to_string( par2 )
                       + " , " + std::to_string( par3 ) + ")" )
                         .c_str( ) );
 #endif
-                auto tmp = SAVE::SAV.getActiveFile( )
-                               .m_mapObjects[ registers[ par1 ] ]
-                               .second.m_movement;
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].second.m_movement
+                auto tmp = SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement;
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement
                     = NO_MOVEMENT;
                 movement m = { direction( par2 ), 0 };
-                _mapSprites.setFrameD(
-                    SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].first,
-                    direction( par2 ) );
+                _mapSprites.setFrameD( SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].first,
+                                       direction( par2 ) );
 
                 for( u8 j = 0; j < par3; ++j ) {
                     for( u8 i = 0; i < 16; ++i ) {
                         moveMapObject( registers[ par1 ], m, playerAttachedToObject,
-                                       SAVE::SAV.getActiveFile( ).m_player.m_direction );
+                                       SAVE::CURRENT_FILE->m_player.m_direction );
                         m.m_frame = ( m.m_frame + 1 ) & 15;
                         swiWaitForVBlank( );
                     }
 
                     if( playerAttachedToObject ) {
-                        SAVE::SAV.getActiveFile( ).m_player.m_direction = direction( par2 );
+                        SAVE::CURRENT_FILE->m_player.m_direction = direction( par2 );
                     }
                 }
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].second.m_direction
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_direction
                     = direction( par2 );
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].second.m_movement
-                    = tmp;
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement = tmp;
                 break;
             }
             case MFOR: {
 #ifdef DESQUID_MORE
                 IO::printMessage(
-                    ( std::to_string(
-                          SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].first )
+                    ( std::to_string( SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].first )
                       + " ( " + std::to_string( registers[ par1 ] ) + " , " + std::to_string( par2 )
                       + " , " + std::to_string( par3 ) + ")" )
                         .c_str( ) );
 #endif
-                auto tmp = SAVE::SAV.getActiveFile( )
-                               .m_mapObjects[ registers[ par1 ] ]
-                               .second.m_movement;
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].second.m_movement
+                auto tmp = SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement;
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement
                     = NO_MOVEMENT;
                 movement m = { direction( par2 ), 0 };
-                _mapSprites.setFrameD(
-                    SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].first,
-                    direction( par2 ) );
+                _mapSprites.setFrameD( SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].first,
+                                       direction( par2 ) );
 
                 for( u8 j = 0; j < par3; ++j ) {
                     for( u8 i = 0; i < 16; ++i ) {
                         moveMapObject( registers[ par1 ], m, playerAttachedToObject,
-                                       SAVE::SAV.getActiveFile( ).m_player.m_direction );
+                                       SAVE::CURRENT_FILE->m_player.m_direction );
                         m.m_frame = ( m.m_frame + 1 ) & 15;
                         if( i & 1 ) { swiWaitForVBlank( ); }
                     }
 
                     if( playerAttachedToObject ) {
-                        SAVE::SAV.getActiveFile( ).m_player.m_direction = direction( par2 );
+                        SAVE::CURRENT_FILE->m_player.m_direction = direction( par2 );
                     }
                 }
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].second.m_direction
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_direction
                     = direction( par2 );
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].second.m_movement
-                    = tmp;
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement = tmp;
                 break;
             }
             case DMOR: {
                 _mapSprites.destroySprite(
-                    SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].first );
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ]
+                    SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].first );
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ]
                     = { UNUSED_MAPOBJECT, mapObject( ) };
                 break;
             }
             case CFLR: {
-                if( SAVE::SAV.getActiveFile( ).checkFlag( par1x ) == registers[ par2x ] ) {
-                    pc += par3x;
-                }
+                if( SAVE::CURRENT_FILE->checkFlag( par1x ) == registers[ par2x ] ) { pc += par3x; }
                 break;
             }
             case SFLR: {
-                SAVE::SAV.getActiveFile( ).setFlag( par1x, registers[ par2x ] );
+                SAVE::CURRENT_FILE->setFlag( par1x, registers[ par2x ] );
                 break;
             }
             case CRGL:
@@ -615,22 +594,22 @@ namespace MAP {
                 if( registers[ par1 ] != par2 ) { pc += par3; }
                 break;
             case CVRL:
-                if( SAVE::SAV.getActiveFile( ).getVar( par1 ) < par2 ) { pc += par3; }
+                if( SAVE::CURRENT_FILE->getVar( par1 ) < par2 ) { pc += par3; }
                 break;
             case CVRG:
-                if( SAVE::SAV.getActiveFile( ).getVar( par1 ) > par2 ) { pc += par3; }
+                if( SAVE::CURRENT_FILE->getVar( par1 ) > par2 ) { pc += par3; }
                 break;
             case CVRN:
-                if( SAVE::SAV.getActiveFile( ).getVar( par1 ) != par2 ) { pc += par3; }
+                if( SAVE::CURRENT_FILE->getVar( par1 ) != par2 ) { pc += par3; }
                 break;
             case CVR:
-                if( SAVE::SAV.getActiveFile( ).getVar( par1 ) == par2 ) { pc += par3; }
+                if( SAVE::CURRENT_FILE->getVar( par1 ) == par2 ) { pc += par3; }
                 break;
-            case GVR: registers[ parB ] = SAVE::SAV.getActiveFile( ).getVar( parA ); break;
-            case SVR: SAVE::SAV.getActiveFile( ).setVar( parA, parB ); break;
-            case SVRR: SAVE::SAV.getActiveFile( ).setVar( parA, registers[ parB ] ); break;
+            case GVR: registers[ parB ] = SAVE::CURRENT_FILE->getVar( parA ); break;
+            case SVR: SAVE::CURRENT_FILE->setVar( parA, parB ); break;
+            case SVRR: SAVE::CURRENT_FILE->setVar( parA, registers[ parB ] ); break;
             case CMN:
-                if( SAVE::SAV.getActiveFile( ).m_money >= parA ) { pc += parB; }
+                if( SAVE::CURRENT_FILE->m_money >= parA ) { pc += parB; }
                 break;
             case PMN:
                 SOUND::playSoundEffect( SFX_BUY_SUCCESSFUL );
@@ -639,34 +618,34 @@ namespace MAP {
                 default:
                 case 0:
                     // money
-                    if( SAVE::SAV.getActiveFile( ).m_money >= parA ) {
-                        SAVE::SAV.getActiveFile( ).m_money -= parA;
+                    if( SAVE::CURRENT_FILE->m_money >= parA ) {
+                        SAVE::CURRENT_FILE->m_money -= parA;
                     } else {
-                        SAVE::SAV.getActiveFile( ).m_money = 0;
+                        SAVE::CURRENT_FILE->m_money = 0;
                     }
                     break;
                 case 1:
                     // battle points
-                    if( SAVE::SAV.getActiveFile( ).m_battlePoints >= parA ) {
-                        SAVE::SAV.getActiveFile( ).m_battlePoints -= parA;
+                    if( SAVE::CURRENT_FILE->m_battlePoints >= parA ) {
+                        SAVE::CURRENT_FILE->m_battlePoints -= parA;
                     } else {
-                        SAVE::SAV.getActiveFile( ).m_battlePoints = 0;
+                        SAVE::CURRENT_FILE->m_battlePoints = 0;
                     }
                     break;
                 case 2:
                     // coins
-                    if( SAVE::SAV.getActiveFile( ).m_coins >= parA ) {
-                        SAVE::SAV.getActiveFile( ).m_coins -= parA;
+                    if( SAVE::CURRENT_FILE->m_coins >= parA ) {
+                        SAVE::CURRENT_FILE->m_coins -= parA;
                     } else {
-                        SAVE::SAV.getActiveFile( ).m_coins = 0;
+                        SAVE::CURRENT_FILE->m_coins = 0;
                     }
                     break;
                 case 3:
                     // ash
-                    if( SAVE::SAV.getActiveFile( ).m_ashCount >= parA ) {
-                        SAVE::SAV.getActiveFile( ).m_ashCount -= parA;
+                    if( SAVE::CURRENT_FILE->m_ashCount >= parA ) {
+                        SAVE::CURRENT_FILE->m_ashCount -= parA;
                     } else {
-                        SAVE::SAV.getActiveFile( ).m_ashCount = 0;
+                        SAVE::CURRENT_FILE->m_ashCount = 0;
                     }
                     break;
                 }
@@ -678,41 +657,38 @@ namespace MAP {
                 default:
                 case 0:
                     // money
-                    SAVE::SAV.getActiveFile( ).m_money += parA;
+                    SAVE::CURRENT_FILE->m_money += parA;
                     break;
                 case 1:
                     // battle points
-                    SAVE::SAV.getActiveFile( ).m_battlePoints += parA;
+                    SAVE::CURRENT_FILE->m_battlePoints += parA;
                     break;
                 case 2:
                     // coins
-                    SAVE::SAV.getActiveFile( ).m_coins += parA;
+                    SAVE::CURRENT_FILE->m_coins += parA;
                     break;
                 case 3:
                     // ash
-                    SAVE::SAV.getActiveFile( ).m_ashCount += parA;
+                    SAVE::CURRENT_FILE->m_ashCount += parA;
                     break;
                 }
                 break;
             }
             case CMO: registers[ 0 ] = p_mapObject; break;
             case LCKR: {
-                tmpmove = SAVE::SAV.getActiveFile( )
-                              .m_mapObjects[ registers[ par1 ] ]
-                              .second.m_movement;
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].second.m_movement
+                tmpmove = SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement;
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement
                     = NO_MOVEMENT;
                 break;
             }
             case ULKR: {
-                SAVE::SAV.getActiveFile( ).m_mapObjects[ registers[ par1 ] ].second.m_movement
-                    = tmpmove;
+                SAVE::CURRENT_FILE->m_mapObjects[ registers[ par1 ] ].second.m_movement = tmpmove;
                 break;
             }
             case GMO: {
                 registers[ 0 ] = 255;
-                for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-                    auto& o2 = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+                for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                    auto& o2 = SAVE::CURRENT_FILE->m_mapObjects[ i ];
                     if( o2.second.m_pos.m_posX == par1 + mapX * SIZE
                         && o2.second.m_pos.m_posY == par2 + mapY * SIZE
                         && o2.second.m_pos.m_posZ == par3 ) {
@@ -743,7 +719,7 @@ namespace MAP {
                 IO::init( );
                 draw( playerPrio );
                 _mapSprites.setPriority( _playerSprite,
-                                         SAVE::SAV.getActiveFile( ).m_playerPriority = playerPrio );
+                                         SAVE::CURRENT_FILE->m_playerPriority = playerPrio );
                 ANIMATE_MAP = true;
                 break;
             }
@@ -753,12 +729,12 @@ namespace MAP {
             }
             case BTR: {
                 // If the player can't battle, they'll just lose
-                if( !SAVE::SAV.getActiveFile( ).countAlivePkmn( ) ) {
+                if( !SAVE::CURRENT_FILE->countAlivePkmn( ) ) {
                     registers[ 0 ] = 0;
                     break;
                 }
 
-                auto policy     = parB == 1 && SAVE::SAV.getActiveFile( ).countAlivePkmn( ) > 1
+                auto policy     = parB == 1 && SAVE::CURRENT_FILE->countAlivePkmn( ) > 1
                                       ? BATTLE::DEFAULT_DOUBLE_TRAINER_POLICY
                                       : BATTLE::DEFAULT_TRAINER_POLICY;
                 auto tr         = FS::getBattleTrainer( parA );
@@ -770,15 +746,15 @@ namespace MAP {
                 swiWaitForVBlank( );
 
                 BATTLE::battle bt
-                    = BATTLE::battle( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                      SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ), tr, policy );
+                    = BATTLE::battle( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                      SAVE::CURRENT_FILE->getTeamPkmnCount( ), tr, policy );
                 auto result = bt.start( _pkmnFollowsPlayer );
 
                 FADE_TOP_DARK( );
                 IO::init( );
                 draw( playerPrio );
                 _mapSprites.setPriority( _playerSprite,
-                                         SAVE::SAV.getActiveFile( ).m_playerPriority = playerPrio );
+                                         SAVE::CURRENT_FILE->m_playerPriority = playerPrio );
                 SOUND::restartBGM( );
                 ANIMATE_MAP = true;
 
@@ -793,7 +769,7 @@ namespace MAP {
             }
             case BTRR:
                 // If the player can't battle, they'll just lose
-                if( !SAVE::SAV.getActiveFile( ).countAlivePkmn( ) ) {
+                if( !SAVE::CURRENT_FILE->countAlivePkmn( ) ) {
                     registers[ 0 ] = 0;
                     break;
                 }
@@ -802,28 +778,28 @@ namespace MAP {
                 break;
             case BPK: {
                 // If the player can't battle, they'll just lose
-                if( !SAVE::SAV.getActiveFile( ).countAlivePkmn( ) ) {
+                if( !SAVE::CURRENT_FILE->countAlivePkmn( ) ) {
                     registers[ 0 ] = 0;
                     break;
                 }
 
-                pokemon wildPkmn = pokemon( parA, parB );
+                pokemon     wildPkmn = pokemon( parA, parB );
+                const auto& cD       = currentData( );
 
                 auto playerPrio = _mapSprites.getPriority( _playerSprite );
                 ANIMATE_MAP     = false;
                 DRAW_TIME       = false;
                 swiWaitForVBlank( );
-                auto res
-                    = BATTLE::battle( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                      SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ), wildPkmn,
-                                      currentData( ).m_battlePlat1, currentData( ).m_battlePlat2,
-                                      currentData( ).m_battleBG, getBattlePolicy( true ) )
-                          .start( _pkmnFollowsPlayer );
+                auto res = BATTLE::battle( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                           SAVE::CURRENT_FILE->getTeamPkmnCount( ), wildPkmn,
+                                           cD.m_battlePlat1, cD.m_battlePlat2, cD.m_battleBG,
+                                           getBattlePolicy( true ) )
+                               .start( _pkmnFollowsPlayer );
 
                 FADE_TOP_DARK( );
                 draw( playerPrio );
                 _mapSprites.setPriority( _playerSprite,
-                                         SAVE::SAV.getActiveFile( ).m_playerPriority = playerPrio );
+                                         SAVE::CURRENT_FILE->m_playerPriority = playerPrio );
                 ANIMATE_MAP = true;
                 IO::init( );
 
@@ -839,7 +815,7 @@ namespace MAP {
             }
             case BPKR:
                 // If the player can't battle, they'll just lose
-                if( !SAVE::SAV.getActiveFile( ).countAlivePkmn( ) ) {
+                if( !SAVE::CURRENT_FILE->countAlivePkmn( ) ) {
                     registers[ 0 ] = 0;
                     break;
                 }
@@ -851,7 +827,7 @@ namespace MAP {
 
                 // Player obtained <pkmn>
 
-                snprintf( buffer, 99, GET_STRING( 814 ), SAVE::SAV.getActiveFile( ).m_playername,
+                snprintf( buffer, 99, GET_STRING( 814 ), SAVE::CURRENT_FILE->m_playername,
                           giftPkmn.m_boxdata.m_name );
 
                 SOUND::playSoundEffect( SFX_CAPTURE_SUCCESSFUL );
@@ -879,14 +855,14 @@ namespace MAP {
 
                 IO::init( );
 
-                auto cnt = SAVE::SAV.getActiveFile( ).getTeamPkmnCount( );
+                auto cnt = SAVE::CURRENT_FILE->getTeamPkmnCount( );
 
                 if( cnt < 6 ) {
-                    SAVE::SAV.getActiveFile( ).setTeamPkmn( cnt, &giftPkmn );
+                    SAVE::CURRENT_FILE->setTeamPkmn( cnt, &giftPkmn );
                     registers[ 0 ] = 1;
                 } else {
-                    u8 oldbx = SAVE::SAV.getActiveFile( ).m_curBox;
-                    u8 nb    = SAVE::SAV.getActiveFile( ).storePkmn( giftPkmn );
+                    u8 oldbx = SAVE::CURRENT_FILE->m_curBox;
+                    u8 nb    = SAVE::CURRENT_FILE->storePkmn( giftPkmn );
                     if( nb != u8( -1 ) ) {
                         snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_SENT_TO_STORAGE ),
                                   giftPkmn.m_boxdata.m_name );
@@ -894,12 +870,12 @@ namespace MAP {
 
                         if( oldbx != nb ) {
                             snprintf( buffer, 99, GET_STRING( IO::STR_UI_STORAGE_BOX_FULL ),
-                                      SAVE::SAV.getActiveFile( ).m_storedPokemon[ oldbx ].m_name );
+                                      SAVE::CURRENT_FILE->m_storedPokemon[ oldbx ].m_name );
                             printMapMessage( buffer, MSG_INFO );
                         }
                         snprintf( buffer, 99, GET_STRING( IO::STR_UI_STORAGE_BOX_PICKED ),
                                   giftPkmn.m_boxdata.m_name,
-                                  SAVE::SAV.getActiveFile( ).m_storedPokemon[ nb ].m_name );
+                                  SAVE::CURRENT_FILE->m_storedPokemon[ nb ].m_name );
                         printMapMessage( buffer, MSG_INFO );
                         registers[ 0 ] = 1;
                     } else {
@@ -960,9 +936,9 @@ namespace MAP {
             }
             case SBCC: {
                 setBlock( u16( mapX * SIZE + par1s
-                               + dir[ SAVE::SAV.getActiveFile( ).m_player.m_direction ][ 0 ] ),
+                               + dir[ SAVE::CURRENT_FILE->m_player.m_direction ][ 0 ] ),
                           u16( mapY * SIZE + par2s
-                               + dir[ SAVE::SAV.getActiveFile( ).m_player.m_direction ][ 1 ] ),
+                               + dir[ SAVE::CURRENT_FILE->m_player.m_direction ][ 1 ] ),
                           par3s );
                 break;
             }
@@ -1010,8 +986,8 @@ namespace MAP {
             case CLL:
                 switch( par1 ) {
                 case CLL_HEAL_ENTIRE_TEAM: { // heal pkmn team
-                    for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ); ++i ) {
-                        auto tmp = SAVE::SAV.getActiveFile( ).getTeamPkmn( i );
+                    for( u8 i = 0; i < SAVE::CURRENT_FILE->getTeamPkmnCount( ); ++i ) {
+                        auto tmp = SAVE::CURRENT_FILE->getTeamPkmn( i );
                         if( tmp ) { tmp->heal( ); }
                     }
                     break;
@@ -1024,31 +1000,31 @@ namespace MAP {
                     break;
                 }
                 case CLL_GET_BADGE_COUNT: {
-                    registers[ 0 ] = SAVE::SAV.getActiveFile( ).getBadgeCount( par2 );
+                    registers[ 0 ] = SAVE::CURRENT_FILE->getBadgeCount( par2 );
                     break;
                 }
                 case CLL_INIT_GAME_ITEM_COUNT: {
-                    registers[ 0 ] = SAVE::SAV.getActiveFile( ).m_initGameItemCount;
+                    registers[ 0 ] = SAVE::CURRENT_FILE->m_initGameItemCount;
                     break;
                 }
                 case CLL_GET_AND_REMOVE_INIT_GAME_ITEM: {
                     // At most 4 init game items
                     if( par2 <= 4 ) [[likely]] {
-                        registers[ 0 ] = SAVE::SAV.getActiveFile( ).m_initGameItems[ par2 ];
+                        registers[ 0 ] = SAVE::CURRENT_FILE->m_initGameItems[ par2 ];
                     } else {
                         registers[ 0 ] = 0;
                         break;
                     }
                     // remove first item from list of items yet to be handed out
-                    for( u8 i = par2; i < SAVE::SAV.getActiveFile( ).m_initGameItemCount; ++i ) {
+                    for( u8 i = par2; i < SAVE::CURRENT_FILE->m_initGameItemCount; ++i ) {
                         if( i < 4 ) [[likely]] {
-                            SAVE::SAV.getActiveFile( ).m_initGameItems[ i ]
-                                = SAVE::SAV.getActiveFile( ).m_initGameItems[ i + 1 ];
+                            SAVE::CURRENT_FILE->m_initGameItems[ i ]
+                                = SAVE::CURRENT_FILE->m_initGameItems[ i + 1 ];
                         } else {
-                            SAVE::SAV.getActiveFile( ).m_initGameItems[ i ] = 0;
+                            SAVE::CURRENT_FILE->m_initGameItems[ i ] = 0;
                         }
                     }
-                    SAVE::SAV.getActiveFile( ).m_initGameItemCount--;
+                    SAVE::CURRENT_FILE->m_initGameItemCount--;
                     break;
                 }
                 case CLL_RUN_INITIAL_PKMN_SELECTION: {
@@ -1139,7 +1115,7 @@ namespace MAP {
                     break;
                 }
                 case CLL_PLAYTIME_HOURS: {
-                    registers[ 0 ] = SAVE::SAV.getActiveFile( ).m_playTime.m_hours;
+                    registers[ 0 ] = SAVE::CURRENT_FILE->m_playTime.m_hours;
                     break;
                 }
                 case CLL_HALL_OF_FAME: {

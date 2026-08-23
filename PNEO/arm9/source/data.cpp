@@ -638,10 +638,10 @@ namespace FS {
             return false;
         }
 
-        FILE* f = openSplit(
-            BATTLE_TRAINER_PATHS[ SAVE::SAV.getActiveFile( ).m_options.getDifficulty( ) / 3 ],
-            p_battleTrainerId, ".trnr.data" );
-        if( !f && SAVE::SAV.getActiveFile( ).m_options.getDifficulty( ) != 3 ) {
+        FILE* f
+            = openSplit( BATTLE_TRAINER_PATHS[ SAVE::CURRENT_FILE->m_options.getDifficulty( ) / 3 ],
+                         p_battleTrainerId, ".trnr.data" );
+        if( !f && SAVE::CURRENT_FILE->m_options.getDifficulty( ) != 3 ) {
             f = openSplit( BATTLE_TRAINER_PATHS[ 1 ], p_battleTrainerId, ".trnr.data" );
         }
         if( !f ) { return false; }

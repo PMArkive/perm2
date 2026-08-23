@@ -55,8 +55,7 @@ namespace MAP {
 
     void mapDrawer::loadNewBank( u8 p_bank ) {
         if( _currentBank != nullptr ) { fclose( _currentBank ); }
-        _currentBank
-            = FS::openBank( p_bank, SAVE::SAV.getActiveFile( ).m_player.m_movement == DIVE );
+        _currentBank = FS::openBank( p_bank, SAVE::CURRENT_FILE->m_player.m_movement == DIVE );
     }
 
     const mapBlockAtom& mapDrawer::atom( u16 p_x, u16 p_y ) const {
@@ -67,8 +66,8 @@ namespace MAP {
     const block& mapDrawer::at( u16 p_x, u16 p_y ) const {
         bool x = ( p_x / SIZE != CUR_SLICE.m_x ), y = ( p_y / SIZE != CUR_SLICE.m_y );
         u16  blockidx = _slices[ ( _curX + x ) & 1 ][ ( _curY + y ) & 1 ]
-                           .m_data.m_blocks[ p_y % SIZE ][ p_x % SIZE ]
-                           .m_blockidx;
+                            .m_data.m_blocks[ p_y % SIZE ][ p_x % SIZE ]
+                            .m_blockidx;
         return _slices[ ( _curX + x ) & 1 ][ ( _curY + y ) & 1 ].m_blockSet.m_blocks[ blockidx ];
     }
 
@@ -80,20 +79,20 @@ namespace MAP {
     block& mapDrawer::at( u16 p_x, u16 p_y ) {
         bool x = ( p_x / SIZE != CUR_SLICE.m_x ), y = ( p_y / SIZE != CUR_SLICE.m_y );
         u16  blockidx = _slices[ ( _curX + x ) & 1 ][ ( _curY + y ) & 1 ]
-                           .m_data.m_blocks[ p_y % SIZE ][ p_x % SIZE ]
-                           .m_blockidx;
+                            .m_data.m_blocks[ p_y % SIZE ][ p_x % SIZE ]
+                            .m_blockidx;
         return _slices[ ( _curX + x ) & 1 ][ ( _curY + y ) & 1 ].m_blockSet.m_blocks[ blockidx ];
     }
 
     const mapData& mapDrawer::currentData( ) const {
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         return currentData( curx, cury );
     }
 
     mapData& mapDrawer::currentData( ) {
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
         return currentData( curx, cury );
     }
 
@@ -174,18 +173,18 @@ namespace MAP {
 
             _curX = _curY = 0;
 
-            u16 mx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                my = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
-            constructSlice( _currentBank, _tileset, SAVE::SAV.getActiveFile( ).m_currentMap,
-                            mx / SIZE, my / SIZE, &_slices[ _curX ][ _curY ],
-                            &_data[ _curX ][ _curY ], _slices );
-            constructSlice( _currentBank, _tileset, SAVE::SAV.getActiveFile( ).m_currentMap,
+            u16 mx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                my = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+            constructSlice( _currentBank, _tileset, SAVE::CURRENT_FILE->m_currentMap, mx / SIZE,
+                            my / SIZE, &_slices[ _curX ][ _curY ], &_data[ _curX ][ _curY ],
+                            _slices );
+            constructSlice( _currentBank, _tileset, SAVE::CURRENT_FILE->m_currentMap,
                             mx / SIZE + currentHalf( mx ), my / SIZE,
                             &_slices[ _curX ^ 1 ][ _curY ], &_data[ _curX ^ 1 ][ _curY ], _slices );
-            constructSlice( _currentBank, _tileset, SAVE::SAV.getActiveFile( ).m_currentMap,
-                            mx / SIZE, my / SIZE + currentHalf( my ),
-                            &_slices[ _curX ][ _curY ^ 1 ], &_data[ _curX ][ _curY ^ 1 ], _slices );
-            constructSlice( _currentBank, _tileset, SAVE::SAV.getActiveFile( ).m_currentMap,
+            constructSlice( _currentBank, _tileset, SAVE::CURRENT_FILE->m_currentMap, mx / SIZE,
+                            my / SIZE + currentHalf( my ), &_slices[ _curX ][ _curY ^ 1 ],
+                            &_data[ _curX ][ _curY ^ 1 ], _slices );
+            constructSlice( _currentBank, _tileset, SAVE::CURRENT_FILE->m_currentMap,
                             mx / SIZE + currentHalf( mx ), my / SIZE + currentHalf( my ),
                             &_slices[ _curX ^ 1 ][ _curY ^ 1 ], &_data[ _curX ^ 1 ][ _curY ^ 1 ],
                             _slices );
@@ -209,8 +208,8 @@ namespace MAP {
                 bgSetPriority( i - 1, i );
             }
             // reset frame animation of objects
-            for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-                auto& o                            = SAVE::SAV.getActiveFile( ).m_mapObjects[ i ];
+            for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                auto& o                            = SAVE::CURRENT_FILE->m_mapObjects[ i ];
                 o.second.m_currentMovement.m_frame = 0;
             }
 
@@ -226,8 +225,8 @@ namespace MAP {
 
             _mapSprites.reset( );
             // Restore the map objects
-            for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).m_mapObjectCount; ++i ) {
-                loadMapObject( SAVE::SAV.getActiveFile( ).m_mapObjects[ i ] );
+            for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+                loadMapObject( SAVE::CURRENT_FILE->m_mapObjects[ i ] );
             }
             if( _pkmnFollowsPlayer ) {
                 if( updateFollowPkmn( ) ) {
@@ -239,8 +238,8 @@ namespace MAP {
                     removeFollowPkmn( );
                 }
             }
-            if( SAVE::SAV.getActiveFile( ).m_objectAttached ) {
-                attachMapObjectToPlayer( SAVE::SAV.getActiveFile( ).m_mapObjAttachedIdx );
+            if( SAVE::CURRENT_FILE->m_objectAttached ) {
+                attachMapObjectToPlayer( SAVE::CURRENT_FILE->m_mapObjAttachedIdx );
             }
 
             runLevelScripts( _data[ _curX ][ _curY ], mx / SIZE, my / SIZE );
@@ -270,27 +269,26 @@ namespace MAP {
     }
 
     void mapDrawer::draw( ObjPriority, bool p_playerHidden, bool p_init ) {
-        draw( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-              SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY, true ); // Draw the map
-        stepOn( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY,
-                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ, false, false, false );
+        draw( SAVE::CURRENT_FILE->m_player.m_pos.m_posX, SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
+              true ); // Draw the map
+        stepOn( SAVE::CURRENT_FILE->m_player.m_pos.m_posX, SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
+                SAVE::CURRENT_FILE->m_player.m_pos.m_posZ, false, false, false );
 
         if( p_init ) { unfadeScreen( ); }
 
-        drawPlayer( SAVE::SAV.getActiveFile( ).m_playerPriority,
+        drawPlayer( SAVE::CURRENT_FILE->m_playerPriority,
                     p_playerHidden ); // Draw the player
 
         unfadeScreen( );
 
-        for( const auto& fn : _newBankCallbacks ) { fn( SAVE::SAV.getActiveFile( ).m_currentMap ); }
+        for( const auto& fn : _newBankCallbacks ) { fn( SAVE::CURRENT_FILE->m_currentMap ); }
         auto curLocId = getCurrentLocationId( );
         for( const auto& fn : _newLocationCallbacks ) { fn( curLocId, false ); }
 
         if( !_scriptRunning ) {
-            handleEvents( SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX,
-                          SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY,
-                          SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posZ );
+            handleEvents( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                          SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
+                          SAVE::CURRENT_FILE->m_player.m_pos.m_posZ );
         }
     }
 
@@ -298,8 +296,8 @@ namespace MAP {
         if( p_newBlock > 2 * MAX_BLOCKS_PER_TILE_SET ) [[unlikely]] { return; }
         atom( p_globX, p_globY ).m_blockidx = p_newBlock;
 
-        auto curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX;
-        auto cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY;
+        auto curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        auto cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
 
         if( std::abs( curx - p_globX ) >= NUM_COLS / 2
             || std::abs( cury - p_globY ) > NUM_ROWS / 2 ) {
@@ -321,8 +319,8 @@ namespace MAP {
         _cx += dir[ p_direction ][ 0 ];
         _cy += dir[ p_direction ][ 1 ];
 #ifdef DESQUID_MORE
-        assert( _cx != SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX
-                || _cy != SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY );
+        assert( _cx != SAVE::CURRENT_FILE->m_player.m_pos.m_posX
+                || _cy != SAVE::CURRENT_FILE->m_player.m_pos.m_posY );
 #endif
         if( p_updatePlayer ) { updatePlayer( ); }
 
@@ -464,7 +462,7 @@ namespace MAP {
         auto mx = CUR_SLICE.m_x + dir[ p_direction ][ 0 ],
              my = CUR_SLICE.m_y + dir[ p_direction ][ 1 ];
 
-        constructSlice( _currentBank, _tileset, SAVE::SAV.getActiveFile( ).m_currentMap, mx, my,
+        constructSlice( _currentBank, _tileset, SAVE::CURRENT_FILE->m_currentMap, mx, my,
                         &_slices[ ( 2 + _curX + dir[ p_direction ][ 0 ] ) & 1 ]
                                 [ ( 2 + _curY + dir[ p_direction ][ 1 ] ) & 1 ],
                         &_data[ ( 2 + _curX + dir[ p_direction ][ 0 ] ) & 1 ]
@@ -476,28 +474,27 @@ namespace MAP {
 
         auto& neigh = _slices[ ( _curX + !dir[ p_direction ][ 0 ] ) & 1 ]
                              [ ( _curY + !dir[ p_direction ][ 1 ] ) & 1 ];
-        mx = neigh.m_x + dir[ p_direction ][ 0 ];
-        my = neigh.m_y + dir[ p_direction ][ 1 ];
-        constructSlice( _currentBank, _tileset, SAVE::SAV.getActiveFile( ).m_currentMap, mx, my,
+        mx          = neigh.m_x + dir[ p_direction ][ 0 ];
+        my          = neigh.m_y + dir[ p_direction ][ 1 ];
+        constructSlice( _currentBank, _tileset, SAVE::CURRENT_FILE->m_currentMap, mx, my,
                         &_slices[ _curX ^ 1 ][ _curY ^ 1 ], &_data[ _curX ^ 1 ][ _curY ^ 1 ],
                         _slices );
         runLevelScripts( _data[ _curX ^ 1 ][ _curY ^ 1 ], mx, my );
     }
 
     u16 mapDrawer::getCurrentLocationId( ) const {
-        if( FSDATA.isOWMap( SAVE::SAV.getActiveFile( ).m_currentMap ) ) [[likely]] {
-            if( MAP_LOCATIONS.m_bank != SAVE::SAV.getActiveFile( ).m_currentMap
-                || !MAP_LOCATIONS.m_good ) {
-                FS::loadLocationData( SAVE::SAV.getActiveFile( ).m_currentMap );
+        if( FSDATA.isOWMap( SAVE::CURRENT_FILE->m_currentMap ) ) [[likely]] {
+            if( MAP_LOCATIONS.m_bank != SAVE::CURRENT_FILE->m_currentMap || !MAP_LOCATIONS.m_good ) {
+                FS::loadLocationData( SAVE::CURRENT_FILE->m_currentMap );
             }
 
             return MAP_LOCATIONS.get(
-                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY / mapLocation::MAP_LOCATION_RES,
-                SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX / mapLocation::MAP_LOCATION_RES );
+                SAVE::CURRENT_FILE->m_player.m_pos.m_posY / mapLocation::MAP_LOCATION_RES,
+                SAVE::CURRENT_FILE->m_player.m_pos.m_posX / mapLocation::MAP_LOCATION_RES );
         }
 
-        u16 curx = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX % SIZE;
-        u16 cury = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY % SIZE;
+        u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX % SIZE;
+        u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY % SIZE;
 
         const mapData& mdata = currentData( );
         return mdata.m_locationIds[ cury / 8 ][ curx / 8 ];
