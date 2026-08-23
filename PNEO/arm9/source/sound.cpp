@@ -82,7 +82,7 @@ namespace SOUND {
         p_fade = false;
 #endif
 
-        if( SAVE::SAV.getActiveFile( ).m_options.m_enableBGM ) {
+        if( SAVE::CURRENT_FILE->m_options.m_enableBGM ) {
             if( p_force ) { BGMforced = true; }
             if( BGMLoaded && p_id == currentBGM ) { return; }
             auto sseqId = SSEQ::BGMIndexForName( p_id );
@@ -109,7 +109,7 @@ namespace SOUND {
 
     void playBGMOneshot( s16 p_id ) {
 #ifndef NO_SOUND
-        if( SAVE::SAV.getActiveFile( ).m_options.m_enableBGM ) {
+        if( SAVE::CURRENT_FILE->m_options.m_enableBGM ) {
             if( BGMLoaded && p_id == currentBGM ) { return; }
             // looping is done via sseq commands; no need for different code here
             // TODO: (blockingly) wait for OS to complete?

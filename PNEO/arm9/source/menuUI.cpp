@@ -96,15 +96,15 @@ namespace IO {
         u16 tileCnt = 32; // some space for nav apps
 
         // Main menu icons
-        tileCnt = IO::loadUIIcon(
-            IO::ICON::ICON_PARTY_START, SPR_MENU_OAM_SUB( 0 ), SPR_MENU_PAL_SUB( 0 ), tileCnt,
-            256 - 29, 192 - 6 * 29, 32, 32, false, false,
-            p_noPic || !SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ), OBJPRIORITY_2, p_bottom );
-        tileCnt = IO::loadUIIcon(
-            IO::ICON::ICON_DEX_START, SPR_MENU_OAM_SUB( 1 ), SPR_MENU_PAL_SUB( 1 ), tileCnt,
-            256 - 29, 192 - 5 * 29, 32, 32, false, false,
-            p_noPic || !SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_DEX_OBTAINED ), OBJPRIORITY_2,
-            p_bottom );
+        tileCnt = IO::loadUIIcon( IO::ICON::ICON_PARTY_START, SPR_MENU_OAM_SUB( 0 ),
+                                  SPR_MENU_PAL_SUB( 0 ), tileCnt, 256 - 29, 192 - 6 * 29, 32, 32,
+                                  false, false, p_noPic || !SAVE::CURRENT_FILE->getTeamPkmnCount( ),
+                                  OBJPRIORITY_2, p_bottom );
+        tileCnt = IO::loadUIIcon( IO::ICON::ICON_DEX_START, SPR_MENU_OAM_SUB( 1 ),
+                                  SPR_MENU_PAL_SUB( 1 ), tileCnt, 256 - 29, 192 - 5 * 29, 32, 32,
+                                  false, false,
+                                  p_noPic || !SAVE::CURRENT_FILE->checkFlag( SAVE::F_DEX_OBTAINED ),
+                                  OBJPRIORITY_2, p_bottom );
         tileCnt = IO::loadUIIcon( IO::ICON::ICON_BAG_START, SPR_MENU_OAM_SUB( 2 ),
                                   SPR_MENU_PAL_SUB( 2 ), tileCnt, 256 - 29, 192 - 4 * 29, 32, 32,
                                   false, false, p_noPic, OBJPRIORITY_2, p_bottom );
@@ -253,8 +253,8 @@ namespace IO {
             } else {
                 FS::readPictureData(
                     ptr3, "nitro:/PICS/NAV/",
-                    std::to_string( SAVE::SAV.getActiveFile( ).m_options.m_bgIdx ).c_str( ),
-                    192 * 2, 192 * 256, p_bottom );
+                    std::to_string( SAVE::CURRENT_FILE->m_options.m_bgIdx ).c_str( ), 192 * 2,
+                    192 * 256, p_bottom );
             }
             hideMessageBox( );
         }
@@ -287,10 +287,9 @@ namespace IO {
         if( CUR_NAV_APP != nullptr ) {
             CUR_NAV_APP->load( p_bottom );
         } else {
-            FS::readPictureData(
-                ptr3, "nitro:/PICS/NAV/",
-                std::to_string( SAVE::SAV.getActiveFile( ).m_options.m_bgIdx ).c_str( ), 192 * 2,
-                192 * 256, p_bottom );
+            FS::readPictureData( ptr3, "nitro:/PICS/NAV/",
+                                 std::to_string( SAVE::CURRENT_FILE->m_options.m_bgIdx ).c_str( ),
+                                 192 * 2, 192 * 256, p_bottom );
         }
 
         IO::updateOAM( p_bottom );
@@ -359,8 +358,7 @@ namespace IO {
 
             if( p_showMoney ) {
                 char buffer[ 100 ];
-                snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEY ),
-                          SAVE::SAV.getActiveFile( ).m_money );
+                snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEY ), SAVE::CURRENT_FILE->m_money );
                 IO::regularFont->printStringC( buffer, 2, 2, true, IO::font::LEFT );
             }
         }
@@ -627,7 +625,7 @@ namespace IO {
 
             if( !oam[ SPR_MENU_OAM_SUB( i ) ].isHidden ) {
                 if( i == IO::STR_UI_MENU_ITEM_TRAINER_ID - IO::STR_UI_MENU_ITEM_NAME_START ) {
-                    IO::regularFont->printString( SAVE::SAV.getActiveFile( ).m_playername,
+                    IO::regularFont->printString( SAVE::CURRENT_FILE->m_playername,
                                                   oam[ SPR_CHOICE_START_OAM_SUB( i ) ].x + 48 + 13,
                                                   oam[ SPR_CHOICE_START_OAM_SUB( i ) ].y + 8, true,
                                                   IO::font::CENTER );
@@ -717,12 +715,12 @@ namespace IO {
         if( p_paymentMethod < 3 ) {
             snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEYTYPE_START + p_paymentMethod ),
                       p_paymentMethod == 0
-                          ? SAVE::SAV.getActiveFile( ).m_money
-                          : ( p_paymentMethod == 1 ? SAVE::SAV.getActiveFile( ).m_battlePoints
-                                                   : SAVE::SAV.getActiveFile( ).m_coins ) );
+                          ? SAVE::CURRENT_FILE->m_money
+                          : ( p_paymentMethod == 1 ? SAVE::CURRENT_FILE->m_battlePoints
+                                                   : SAVE::CURRENT_FILE->m_coins ) );
         } else if( p_paymentMethod == 3 ) {
             snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEYTYPE_ASH ),
-                      SAVE::SAV.getActiveFile( ).m_ashCount );
+                      SAVE::CURRENT_FILE->m_ashCount );
         }
         IO::regularFont->printStringC( buffer, 2, 2, true, IO::font::LEFT );
 
@@ -859,8 +857,8 @@ namespace IO {
 
             char buffer[ 100 ];
             snprintf( buffer, 99, GET_STRING( IO::STR_UI_ITEMCOUNT_IN_BAG ),
-                      SAVE::SAV.getActiveFile( ).m_bag.count(
-                          BAG::toBagType( p_itemData.m_itemType ), p_item.first ) );
+                      SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( p_itemData.m_itemType ),
+                                                       p_item.first ) );
             IO::regularFont->printStringC( buffer, 254, 2, true, IO::font::RIGHT );
 
             selectMenuItem( p_selection % NUM_CB_CHOICES );
@@ -1004,8 +1002,8 @@ namespace IO {
         std::vector<std::pair<IO::inputTarget, u8>> res
             = std::vector<std::pair<IO::inputTarget, u8>>( );
 
-        boxPokemon* dcstart  = &SAVE::SAV.getActiveFile( ).m_dayCarePkmn[ p_daycare * 2 ];
-        u8*         dclstart = &SAVE::SAV.getActiveFile( ).m_dayCareDepositLevel[ p_daycare * 2 ];
+        boxPokemon* dcstart  = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 ];
+        u8*         dclstart = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 ];
 
         FADE_SUB_DARK( );
         dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
@@ -1025,7 +1023,7 @@ namespace IO {
 
         char buffer[ 100 ];
         snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEYTYPE_MONEY ),
-                  SAVE::SAV.getActiveFile( ).m_money );
+                  SAVE::CURRENT_FILE->m_money );
         IO::regularFont->printStringC( buffer, 2, 2, true, IO::font::LEFT );
 
         auto& oam = IO::Oam->oamBuffer;

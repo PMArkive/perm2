@@ -55,9 +55,9 @@ namespace IO {
     std::string parseLogCmd( const std::string& p_cmd ) {
         u16 tmp = -1;
 
-        if( p_cmd == "PLAYER" ) { return SAVE::SAV.getActiveFile( ).m_playername; }
+        if( p_cmd == "PLAYER" ) { return SAVE::CURRENT_FILE->m_playername; }
         if( p_cmd == "RIVAL" ) {
-            if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
+            if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
                 return std::string( GET_STRING( 461 ) );
             } else {
                 return std::string( GET_STRING( 460 ) );
@@ -68,10 +68,10 @@ namespace IO {
             return "";
         }
         if( sscanf( p_cmd.c_str( ), "VAR:%hu", &tmp ) && tmp != u16( -1 ) ) {
-            return std::to_string( SAVE::SAV.getActiveFile( ).getVar( tmp ) );
+            return std::to_string( SAVE::CURRENT_FILE->getVar( tmp ) );
         }
         if( sscanf( p_cmd.c_str( ), "TEAM:%hu", &tmp ) && tmp != u16( -1 ) ) {
-            return SAVE::SAV.getActiveFile( ).getTeamPkmn( tmp )->m_boxdata.m_name;
+            return SAVE::CURRENT_FILE->getTeamPkmn( tmp )->m_boxdata.m_name;
         }
         return std::string( "[" ) + p_cmd + "]";
     }
@@ -366,9 +366,7 @@ namespace IO {
                 }
                 IO::updateOAM( false );
                 for( u8 i = 0;
-                     i < 80
-                             / ( IO::TEXTSPEED
-                                 + SAVE::SAV.getActiveFile( ).m_options.m_textSpeedModifier );
+                     i < 80 / ( IO::TEXTSPEED + SAVE::CURRENT_FILE->m_options.m_textSpeedModifier );
                      ++i ) {
                     swiWaitForVBlank( );
                 }
@@ -413,9 +411,9 @@ namespace IO {
 
     void useItemFromPlayer( u16 p_itemId, u16 p_amount ) {
         auto data = FS::getItemData( p_itemId );
-        auto cnt  = std::min( p_amount, SAVE::SAV.getActiveFile( ).m_bag.count(
-                                           BAG::toBagType( data.m_itemType ), p_itemId ) );
-        SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::toBagType( data.m_itemType ), p_itemId, cnt );
+        auto cnt  = std::min( p_amount, SAVE::CURRENT_FILE->m_bag.count(
+                                            BAG::toBagType( data.m_itemType ), p_itemId ) );
+        SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( data.m_itemType ), p_itemId, cnt );
         char buffer[ 100 ];
         auto iname = FS::getItemName( p_itemId );
 
@@ -435,9 +433,9 @@ namespace IO {
 
     void takeItemFromPlayer( u16 p_itemId, u16 p_amount ) {
         auto data = FS::getItemData( p_itemId );
-        auto cnt  = std::min( p_amount, SAVE::SAV.getActiveFile( ).m_bag.count(
-                                           BAG::toBagType( data.m_itemType ), p_itemId ) );
-        SAVE::SAV.getActiveFile( ).m_bag.erase( BAG::toBagType( data.m_itemType ), p_itemId, cnt );
+        auto cnt  = std::min( p_amount, SAVE::CURRENT_FILE->m_bag.count(
+                                            BAG::toBagType( data.m_itemType ), p_itemId ) );
+        SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( data.m_itemType ), p_itemId, cnt );
         char buffer[ 100 ];
         auto iname = FS::getItemName( p_itemId );
 
@@ -458,8 +456,7 @@ namespace IO {
 
     void giveItemToPlayer( u16 p_itemId, u16 p_amount ) {
         auto data = FS::getItemData( p_itemId );
-        SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::toBagType( data.m_itemType ), p_itemId,
-                                                 p_amount );
+        SAVE::CURRENT_FILE->m_bag.insert( BAG::toBagType( data.m_itemType ), p_itemId, p_amount );
         char buffer[ 100 ];
         auto iname = FS::getItemName( p_itemId );
 
@@ -468,7 +465,7 @@ namespace IO {
         }
 
         if( data.m_itemType == BAG::ITEMTYPE_BERRY ) {
-            SAVE::SAV.getActiveFile( ).registerCollectedBerry( BAG::itemToBerry( p_itemId ) );
+            SAVE::CURRENT_FILE->registerCollectedBerry( BAG::itemToBerry( p_itemId ) );
         }
 
         if( p_amount > 1 ) {
@@ -500,7 +497,7 @@ namespace IO {
     u8   LOCATION_TIMER   = 0;
     void showNewLocation( u16 p_newLocation, bool ) {
         if( p_newLocation == CURRENT_LOCATION ) { return; }
-        if( SAVE::SAV.getActiveFile( ).m_player.m_movement == MAP::moveMode::DIVE ) { return; }
+        if( SAVE::CURRENT_FILE->m_player.m_movement == MAP::moveMode::DIVE ) { return; }
         if( p_newLocation == L_POKEMON_CENTER || p_newLocation == L_POKEMON_MART ) { return; }
 
         CURRENT_LOCATION = p_newLocation;

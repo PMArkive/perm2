@@ -79,7 +79,7 @@ namespace IO {
         NAV_APPS.clear( );
         NAV_APPS.push_back( &MAP_NAV_APP );
 #ifndef NO_SOUND
-        if( SAVE::SAV.getActiveFile( ).m_options.m_enableBGM ) {
+        if( SAVE::CURRENT_FILE->m_options.m_enableBGM ) {
             NAV_APPS.push_back( &JBOX_NAV_APP );
         } else {
             if( CUR_NAV_APP == &JBOX_NAV_APP ) {
@@ -106,9 +106,9 @@ namespace IO {
         if( pressed & KEY_Y ) {
             // registered item
             IO::waitForKeysUp( KEY_Y );
-            if( SAVE::SAV.getActiveFile( ).m_registeredItem ) {
-                if( BAG::isUsable( SAVE::SAV.getActiveFile( ).m_registeredItem ) ) {
-                    if( BAG::hasInterface( SAVE::SAV.getActiveFile( ).m_registeredItem ) ) {
+            if( SAVE::CURRENT_FILE->m_registeredItem ) {
+                if( BAG::isUsable( SAVE::CURRENT_FILE->m_registeredItem ) ) {
+                    if( BAG::hasInterface( SAVE::CURRENT_FILE->m_registeredItem ) ) {
                         ANIMATE_MAP = false;
                         IO::clearScreen( false );
                         videoSetMode( MODE_5_2D );
@@ -117,10 +117,10 @@ namespace IO {
                         SOUND::dimVolume( );
                     }
 
-                    BAG::use( SAVE::SAV.getActiveFile( ).m_registeredItem,
+                    BAG::use( SAVE::CURRENT_FILE->m_registeredItem,
                               []( const char* p_msg ) { printMessage( p_msg ); } );
 
-                    if( BAG::hasInterface( SAVE::SAV.getActiveFile( ).m_registeredItem ) ) {
+                    if( BAG::hasInterface( SAVE::CURRENT_FILE->m_registeredItem ) ) {
                         FADE_TOP_DARK( );
                         FADE_SUB_DARK( );
                         IO::clearScreen( false );
@@ -201,12 +201,12 @@ namespace IO {
                 true );
             switch( res ) {
             case 0: { // default team
-                memset( SAVE::SAV.getActiveFile( ).m_pkmnTeam, 0,
-                        sizeof( SAVE::SAV.getActiveFile( ).m_pkmnTeam ) );
+                memset( SAVE::CURRENT_FILE->m_pkmnTeam, 0,
+                        sizeof( SAVE::CURRENT_FILE->m_pkmnTeam ) );
                 std::vector<u16> tmp
                     = { PKMN_MIMIKYU, PKMN_SCEPTILE, PKMN_BLAZIKEN, PKMN_SWAMPERT };
                 for( int i = 0; i < 4; ++i ) {
-                    pokemon& a = SAVE::SAV.getActiveFile( ).m_pkmnTeam[ i ];
+                    pokemon& a = SAVE::CURRENT_FILE->m_pkmnTeam[ i ];
 
                     a = pokemon( tmp[ i ], 50, 0, 0, i );
 
@@ -216,44 +216,44 @@ namespace IO {
                         a.m_boxdata.m_contestStats[ j ] = rand( );
                     }
                 }
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 1 ].m_boxdata.m_moves[ 0 ] = M_ROCK_CLIMB;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 1 ].m_boxdata.m_moves[ 1 ] = M_FLASH;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 1 ].m_boxdata.m_moves[ 2 ] = M_SWEET_SCENT;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 1 ].m_boxdata.m_moves[ 3 ] = M_CUT;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 2 ].m_boxdata.m_moves[ 0 ] = M_DIG;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 2 ].m_boxdata.m_moves[ 1 ] = M_ROCK_SMASH;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 2 ].m_boxdata.m_moves[ 2 ] = M_STRENGTH;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 2 ].m_boxdata.m_moves[ 3 ] = M_FLY;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 3 ].m_boxdata.m_moves[ 0 ] = M_SURF;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 3 ].m_boxdata.m_moves[ 1 ] = M_WATERFALL;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 3 ].m_boxdata.m_moves[ 2 ] = M_DIVE;
-                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 3 ].m_boxdata.m_moves[ 3 ] = M_SPLASH;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 1 ].m_boxdata.m_moves[ 0 ] = M_ROCK_CLIMB;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 1 ].m_boxdata.m_moves[ 1 ] = M_FLASH;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 1 ].m_boxdata.m_moves[ 2 ] = M_SWEET_SCENT;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 1 ].m_boxdata.m_moves[ 3 ] = M_CUT;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 2 ].m_boxdata.m_moves[ 0 ] = M_DIG;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 2 ].m_boxdata.m_moves[ 1 ] = M_ROCK_SMASH;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 2 ].m_boxdata.m_moves[ 2 ] = M_STRENGTH;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 2 ].m_boxdata.m_moves[ 3 ] = M_FLY;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 3 ].m_boxdata.m_moves[ 0 ] = M_SURF;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 3 ].m_boxdata.m_moves[ 1 ] = M_WATERFALL;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 3 ].m_boxdata.m_moves[ 2 ] = M_DIVE;
+                SAVE::CURRENT_FILE->m_pkmnTeam[ 3 ].m_boxdata.m_moves[ 3 ] = M_SPLASH;
 
                 break;
             }
             case 1: { // fill boxes
-                memset( SAVE::SAV.getActiveFile( ).m_caughtPkmn, 0,
-                        sizeof( SAVE::SAV.getActiveFile( ).m_caughtPkmn ) );
-                memset( SAVE::SAV.getActiveFile( ).m_seenPkmn, 0,
-                        sizeof( SAVE::SAV.getActiveFile( ).m_seenPkmn ) );
-                SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_NAT_DEX_OBTAINED, 1 );
+                memset( SAVE::CURRENT_FILE->m_caughtPkmn, 0,
+                        sizeof( SAVE::CURRENT_FILE->m_caughtPkmn ) );
+                memset( SAVE::CURRENT_FILE->m_seenPkmn, 0,
+                        sizeof( SAVE::CURRENT_FILE->m_seenPkmn ) );
+                SAVE::CURRENT_FILE->setFlag( SAVE::F_NAT_DEX_OBTAINED, 1 );
                 for( u16 pid = 1; pid <= MAX_PKMN; ++pid ) {
                     auto box    = ( pid - 1 ) / 30;
                     auto boxpos = ( pid - 1 ) % 30;
 
-                    SAVE::SAV.getActiveFile( ).m_storedPokemon[ box ][ boxpos ]
+                    SAVE::CURRENT_FILE->m_storedPokemon[ box ][ boxpos ]
                         = boxPokemon( pid, 75, 0, 0, 255 );
-                    SAVE::SAV.getActiveFile( ).registerCaughtPkmn( pid );
+                    SAVE::CURRENT_FILE->registerCaughtPkmn( pid );
                 }
 
                 break;
             }
             case 2: { // repel 9999
-                SAVE::SAV.getActiveFile( ).m_repelSteps = 9999;
+                SAVE::CURRENT_FILE->m_repelSteps = 9999;
                 break;
             }
             case 3: { // repel off
-                SAVE::SAV.getActiveFile( ).m_repelSteps = 0;
+                SAVE::CURRENT_FILE->m_repelSteps = 0;
                 break;
             }
             case 4: { // evolution animation
@@ -280,8 +280,8 @@ namespace IO {
                 FADE_TOP_DARK( );
                 FADE_SUB_DARK( );
 
-                pokemon::trade( SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 0 ],
-                                SAVE::SAV.getActiveFile( ).m_pkmnTeam[ 1 ], "TEST" );
+                pokemon::trade( SAVE::CURRENT_FILE->m_pkmnTeam[ 0 ],
+                                SAVE::CURRENT_FILE->m_pkmnTeam[ 1 ], "TEST" );
 
                 FADE_TOP_DARK( );
                 FADE_SUB_DARK( );
@@ -301,24 +301,24 @@ namespace IO {
             break;
         }
         case DSQ_SPAWN_DEFAULT_ITEMS:
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::ITEMS, I_MAX_REPEL, 999 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::ITEMS, I_MASTER_BALL, 999 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::MEDICINE, I_MAX_REVIVE, 999 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_ACRO_BIKE, 1 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_MACH_BIKE, 1 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_SUPER_ROD, 1 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_GO_GOGGLES, 1 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_DEVON_SCOPE, 1 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::KEY_ITEMS, I_POKEBLOCK_CASE, 1 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::ITEMS, I_RED_SHARD, 999 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::ITEMS, I_BLUE_SHARD, 999 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::ITEMS, I_YELLOW_SHARD, 999 );
-            SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::ITEMS, I_GREEN_SHARD, 999 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::ITEMS, I_MAX_REPEL, 999 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::ITEMS, I_MASTER_BALL, 999 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::MEDICINE, I_MAX_REVIVE, 999 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_ACRO_BIKE, 1 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_MACH_BIKE, 1 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_SUPER_ROD, 1 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_GO_GOGGLES, 1 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_DEVON_SCOPE, 1 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::KEY_ITEMS, I_POKEBLOCK_CASE, 1 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::ITEMS, I_RED_SHARD, 999 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::ITEMS, I_BLUE_SHARD, 999 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::ITEMS, I_YELLOW_SHARD, 999 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::ITEMS, I_GREEN_SHARD, 999 );
 
             for( u16 i = 0; i < I_EGGANT_BERRY; ++i ) {
                 if( BAG::itemToBerry( i ) ) {
-                    SAVE::SAV.getActiveFile( ).m_bag.insert( BAG::bag::BERRIES, i, 1 );
-                    SAVE::SAV.getActiveFile( ).registerCollectedBerry( BAG::itemToBerry( i ) );
+                    SAVE::CURRENT_FILE->m_bag.insert( BAG::bag::BERRIES, i, 1 );
+                    SAVE::CURRENT_FILE->registerCollectedBerry( BAG::itemToBerry( i ) );
                 }
             }
             init( );
@@ -345,7 +345,7 @@ namespace IO {
             case 2: { // edit route
                 init( );
                 IO::choiceBox menu3 = IO::choiceBox( IO::choiceBox::MODE_UP_DOWN_LEFT_RIGHT );
-                SAVE::SAV.getActiveFile( ).m_route = menu3.getResult(
+                SAVE::CURRENT_FILE->m_route = menu3.getResult(
                     GET_STRING( FS::DESQUID_STRING + 46 ), MSG_NOCLOSE,
                     std::vector<u16>{ FS::DESQUID_STRING + 65, FS::DESQUID_STRING + 66,
                                       FS::DESQUID_STRING + 67, FS::DESQUID_STRING + 68,
@@ -393,10 +393,10 @@ namespace IO {
                 break;
             }
             case 4: { // playtime +10h
-                if( SAVE::SAV.getActiveFile( ).m_playTime.m_hours + 10 <= 999 ) {
-                    SAVE::SAV.getActiveFile( ).m_playTime.m_hours += 10;
+                if( SAVE::CURRENT_FILE->m_playTime.m_hours + 10 <= 999 ) {
+                    SAVE::CURRENT_FILE->m_playTime.m_hours += 10;
                 } else {
-                    SAVE::SAV.getActiveFile( ).m_playTime.m_hours = 999;
+                    SAVE::CURRENT_FILE->m_playTime.m_hours = 999;
                 }
                 break;
             }
@@ -456,12 +456,9 @@ namespace IO {
 
             u8 teamSize = 0;
             for( ; teamSize < SAVE::NUM_PARTY_SLOTS; ++teamSize ) {
-                if( !SAVE::SAV.getActiveFile( ).m_pkmnTeam[ teamSize ].m_boxdata.m_speciesId ) {
-                    break;
-                }
+                if( !SAVE::CURRENT_FILE->m_pkmnTeam[ teamSize ].m_boxdata.m_speciesId ) { break; }
             }
-            STS::partyScreen sts
-                = STS::partyScreen( SAVE::SAV.getActiveFile( ).m_pkmnTeam, teamSize );
+            STS::partyScreen sts = STS::partyScreen( SAVE::CURRENT_FILE->m_pkmnTeam, teamSize );
 
             SOUND::dimVolume( );
 
@@ -490,8 +487,8 @@ namespace IO {
                 }
 
                 if( res.m_selectedMove == M_FLY ) {
-                    auto fpos = SAVE::SAV.getActiveFile( ).getFlyPosForLocation(
-                        res.m_selectedMoveTarget );
+                    auto fpos
+                        = SAVE::CURRENT_FILE->getFlyPosForLocation( res.m_selectedMoveTarget );
                     if( res.m_selectedMoveTarget != fpos.m_targetLocation
                         || !fpos.m_targetLocation ) {
                         return;
@@ -522,7 +519,7 @@ namespace IO {
             SOUND::dimVolume( );
 
             dx.run( );
-            // DEX::dex::SHOW_CAUGHT, MAX_PKMN ).run( SAVE::SAV.getActiveFile( ).m_lstDex );
+            // DEX::dex::SHOW_CAUGHT, MAX_PKMN ).run( SAVE::CURRENT_FILE->m_lstDex );
 
             IO::initVideoSub( );
             IO::resetScale( true, false );
@@ -544,7 +541,7 @@ namespace IO {
             videoSetMode( MODE_5_2D );
             bgUpdate( );
 
-            BAG::bagViewer bv = BAG::bagViewer( SAVE::SAV.getActiveFile( ).m_pkmnTeam );
+            BAG::bagViewer bv = BAG::bagViewer( SAVE::CURRENT_FILE->m_pkmnTeam );
             SOUND::dimVolume( );
             u16 res = bv.run( );
 
@@ -674,18 +671,18 @@ namespace IO {
 
         s32 mx = 0;
         if( p_paymentMethod == 0 ) {
-            mx = SAVE::SAV.getActiveFile( ).m_money / p_item.second;
+            mx = SAVE::CURRENT_FILE->m_money / p_item.second;
         } else if( p_paymentMethod == 1 ) {
-            mx = SAVE::SAV.getActiveFile( ).m_battlePoints / p_item.second;
+            mx = SAVE::CURRENT_FILE->m_battlePoints / p_item.second;
         } else if( p_paymentMethod == 2 ) {
-            mx = SAVE::SAV.getActiveFile( ).m_coins / p_item.second;
+            mx = SAVE::CURRENT_FILE->m_coins / p_item.second;
         } else if( p_paymentMethod == 3 ) {
-            mx = SAVE::SAV.getActiveFile( ).m_ashCount / p_item.second;
+            mx = SAVE::CURRENT_FILE->m_ashCount / p_item.second;
         }
 
         mx = std::max( s32( 0 ),
                        (s32) std::min( mx, s32( 999
-                                                - SAVE::SAV.getActiveFile( ).m_bag.count(
+                                                - SAVE::CURRENT_FILE->m_bag.count(
                                                     BAG::toBagType( p_itemData.m_itemType ),
                                                     p_item.first ) ) ) );
 
@@ -781,7 +778,7 @@ namespace IO {
     }
 
     void selectDaycarePkmn( u8 p_daycare, u8 p_selection ) {
-        boxPokemon* dcstart = &SAVE::SAV.getActiveFile( ).m_dayCarePkmn[ p_daycare * 2 ];
+        boxPokemon* dcstart = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 ];
         if( p_selection == IO::choiceBox::EXIT_CHOICE
             || p_selection == IO::choiceBox::BACK_CHOICE ) {
             // empty!
@@ -861,18 +858,16 @@ namespace IO {
 
             if( cnt > 0 ) {
                 if( p_paymentMethod == 0 ) {
-                    SAVE::SAV.getActiveFile( ).m_money -= p_offeredItems[ curItm ].second * cnt;
+                    SAVE::CURRENT_FILE->m_money -= p_offeredItems[ curItm ].second * cnt;
                 } else if( p_paymentMethod == 1 ) {
-                    SAVE::SAV.getActiveFile( ).m_battlePoints
-                        -= p_offeredItems[ curItm ].second * cnt;
+                    SAVE::CURRENT_FILE->m_battlePoints -= p_offeredItems[ curItm ].second * cnt;
                 } else if( p_paymentMethod == 2 ) {
-                    SAVE::SAV.getActiveFile( ).m_coins -= p_offeredItems[ curItm ].second * cnt;
+                    SAVE::CURRENT_FILE->m_coins -= p_offeredItems[ curItm ].second * cnt;
                 } else if( p_paymentMethod == 3 ) {
-                    SAVE::SAV.getActiveFile( ).m_ashCount -= p_offeredItems[ curItm ].second * cnt;
+                    SAVE::CURRENT_FILE->m_ashCount -= p_offeredItems[ curItm ].second * cnt;
                 }
-                SAVE::SAV.getActiveFile( ).m_bag.insert(
-                    BAG::toBagType( data[ curItm ].m_itemType ), p_offeredItems[ curItm ].first,
-                    cnt );
+                SAVE::CURRENT_FILE->m_bag.insert( BAG::toBagType( data[ curItm ].m_itemType ),
+                                                  p_offeredItems[ curItm ].first, cnt );
             }
         }
     }

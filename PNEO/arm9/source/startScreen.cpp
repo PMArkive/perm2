@@ -717,7 +717,9 @@ namespace SAVE {
                 res = getMainChoicesForSlot( _currentSlot )[ res ];
                 switch( res ) {
                 case CONTINUE:
-                    SAV.m_activeFile = _currentSlot;
+                    SAV.m_activeFile   = _currentSlot;
+                    SAVE::CURRENT_FILE = &SAVE::SAV.getActiveFile( );
+
                     cleanUp( );
                     return;
                 case NEW_GAME:
@@ -743,7 +745,9 @@ namespace SAVE {
                     if( !transferGame( ) ) break;
                     return;
                 case MYSTERY_GIFT: {
-                    SAV.m_activeFile = _currentSlot;
+                    SAV.m_activeFile   = _currentSlot;
+                    SAVE::CURRENT_FILE = &SAVE::SAV.getActiveFile( );
+
                     runMysteryGift( );
                     break;
                 }

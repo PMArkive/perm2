@@ -94,11 +94,11 @@ namespace STS {
         _ranges = _partyUI->drawPartyPkmnChoice( 0, 0, 0, false, false );
         IO::yesNoBox yn;
         bool         res = yn.getResult( [ & ]( ) { return _partyUI->printYNMessage( 0, 254 ); },
-                                 [ & ]( IO::yesNoBox::selection p_sel ) {
+                                         [ & ]( IO::yesNoBox::selection p_sel ) {
                                      _partyUI->printYNMessage( 0, p_sel == IO::yesNoBox::NO );
-                                 },
-                                 IO::yesNoBox::YES, [ & ]( ) { _partyUI->animate( ); } )
-                   == IO::yesNoBox::YES;
+                                         },
+                                         IO::yesNoBox::YES, [ & ]( ) { _partyUI->animate( ); } )
+                           == IO::yesNoBox::YES;
 
         _partyUI->hideYNMessageBox( );
         _currentChoiceSelection = 0;
@@ -511,8 +511,7 @@ namespace STS {
                 SOUND::playSoundEffect( SFX_SELECT );
                 if( editing ) {
                     u32 change = 1;
-                    for( u8 i = 0; i < selectedDigit; ++i, change *= 10 )
-                        ;
+                    for( u8 i = 0; i < selectedDigit; ++i, change *= 10 );
                     if( choices[ selectedLine ].m_currentValue( )
                         == choices[ selectedLine ].m_minValue ) {
                         UPDATE_VALUE( choices[ selectedLine ].m_maxValue );
@@ -542,8 +541,7 @@ namespace STS {
                 SOUND::playSoundEffect( SFX_SELECT );
                 if( editing ) {
                     u32 change = 1;
-                    for( u8 i = 0; i < selectedDigit; ++i, change *= 10 )
-                        ;
+                    for( u8 i = 0; i < selectedDigit; ++i, change *= 10 );
                     if( choices[ selectedLine ].m_currentValue( )
                         == choices[ selectedLine ].m_maxValue ) {
                         UPDATE_VALUE( choices[ selectedLine ].m_minValue );
@@ -573,8 +571,7 @@ namespace STS {
                 SOUND::playSoundEffect( SFX_SELECT );
 
                 u8 numDig = 0;
-                for( u32 cur = choices[ selectedLine ].m_maxValue; cur > 0; ++numDig, cur /= 10 )
-                    ;
+                for( u32 cur = choices[ selectedLine ].m_maxValue; cur > 0; ++numDig, cur /= 10 );
                 selectedDigit = ( selectedDigit + 1 ) % numDig;
                 _partyUI->drawDesquidItem(
                     selectedLine, choices[ selectedLine ].computeString( ).c_str( ),
@@ -586,8 +583,7 @@ namespace STS {
                 SOUND::playSoundEffect( SFX_SELECT );
 
                 u8 numDig = 0;
-                for( u32 cur = choices[ selectedLine ].m_maxValue; cur > 0; ++numDig, cur /= 10 )
-                    ;
+                for( u32 cur = choices[ selectedLine ].m_maxValue; cur > 0; ++numDig, cur /= 10 );
                 selectedDigit = ( selectedDigit + numDig - 1 ) % numDig;
                 _partyUI->drawDesquidItem(
                     selectedLine, choices[ selectedLine ].computeString( ).c_str( ),
@@ -633,7 +629,7 @@ namespace STS {
 #endif
 
     bool partyScreen::chooseFlyTarget( ) {
-        auto locs = SAVE::SAV.getActiveFile( ).getFlyPosLocationListForCurrentOW( );
+        auto locs = SAVE::CURRENT_FILE->getFlyPosLocationListForCurrentOW( );
 
         std::vector<std::string> locNames{ };
         for( auto l : locs ) { locNames.push_back( FS::getLocation( l ) ); }
@@ -1068,7 +1064,7 @@ namespace STS {
             if( itm ) {
                 if( _team[ _currentSelection ].getItem( ) ) {
                     auto curItm = _team[ _currentSelection ].getItem( );
-                    SAVE::SAV.getActiveFile( ).m_bag.insert(
+                    SAVE::CURRENT_FILE->m_bag.insert(
                         BAG::toBagType( FS::getItemData( curItm ).m_itemType ), curItm, 1 );
                 }
                 _partyUI->select( _currentSelection );
@@ -1094,8 +1090,8 @@ namespace STS {
             sprintf( BUFFER, GET_STRING( IO::STR_UI_STS_TOOK_ITEM_FROM_PKMN ),
                      FS::getItemName( acI ).c_str( ), _team[ _currentSelection ].m_boxdata.m_name );
             _partyUI->printMessage( BUFFER, acI );
-            SAVE::SAV.getActiveFile( ).m_bag.insert(
-                BAG::toBagType( FS::getItemData( acI ).m_itemType ), acI, 1 );
+            SAVE::CURRENT_FILE->m_bag.insert( BAG::toBagType( FS::getItemData( acI ).m_itemType ),
+                                              acI, 1 );
             waitForInteract( );
             _partyUI->hideMessageBox( );
             computeSelectionChoices( );

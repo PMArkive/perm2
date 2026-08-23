@@ -62,7 +62,7 @@ namespace SPX {
         IO::initOAMTable( false );
 
         bool shiny = rand( ) & 1;
-        SAVE::SAV.getActiveFile( ).setFlag( 27, shiny );
+        SAVE::CURRENT_FILE->setFlag( 27, shiny );
 
         pokemon ralts = pokemon( PKMN_RALTS, 5, 0, 0, shiny * 2 );
         ralts.IVset( 0, 31 );
@@ -406,9 +406,9 @@ namespace SPX {
                     IO::yesNoBox::NO, tick )
                 == IO::yesNoBox::YES ) {
 
-                SAVE::SAV.getActiveFile( ).registerCaughtPkmn( pkmn[ res ].getSpecies( ) );
-                SAVE::SAV.getActiveFile( ).setTeamPkmn( 0, &pkmn[ res ] );
-                SAVE::SAV.getActiveFile( ).setVar( SAVE::V_INITIAL_PKMN_CHOICE, res + 1 );
+                SAVE::CURRENT_FILE->registerCaughtPkmn( pkmn[ res ].getSpecies( ) );
+                SAVE::CURRENT_FILE->setTeamPkmn( 0, &pkmn[ res ] );
+                SAVE::CURRENT_FILE->setVar( SAVE::V_INITIAL_PKMN_CHOICE, res + 1 );
                 break;
             }
         }
@@ -460,7 +460,7 @@ namespace SPX {
                                              { 9, 89 }, { 68, 90 }, { 128, 90 }, { 182, 90 } };
 
             for( u8 i = 0; i < 8; ++i ) {
-                if( SAVE::SAV.getActiveFile( ).m_HOENN_Badges & ( 1 << i ) ) {
+                if( SAVE::CURRENT_FILE->m_HOENN_Badges & ( 1 << i ) ) {
                     tileCnt = IO::loadUIIcon( IO::BADGE_ICON_START[ i ], i, i, tileCnt,
                                               spos[ i ][ 0 ], spos[ i ][ 1 ], 64, 64, false, false,
                                               false, OBJPRIORITY_0, true );
@@ -479,12 +479,12 @@ namespace SPX {
                                              { 36, 88 }, { 96, 88 }, { 156, 88 } };
 
             for( u8 i = 0; i < 7; ++i ) {
-                if( SAVE::SAV.getActiveFile( ).m_FRONTIER_Badges & ( 1 << ( 7 + i ) ) ) {
+                if( SAVE::CURRENT_FILE->m_FRONTIER_Badges & ( 1 << ( 7 + i ) ) ) {
                     tileCnt = IO::loadUIIcon( IO::GOLD_SYMBOL_ICON_START[ i ], i, i, tileCnt,
                                               spos[ i ][ 0 ], spos[ i ][ 1 ], 64, 64, false, false,
                                               false, OBJPRIORITY_0, true );
 
-                } else if( SAVE::SAV.getActiveFile( ).m_FRONTIER_Badges & ( 1 << i ) ) {
+                } else if( SAVE::CURRENT_FILE->m_FRONTIER_Badges & ( 1 << i ) ) {
                     tileCnt = IO::loadUIIcon( IO::SILVER_SYMBOL_ICON_START[ i ], i, i, tileCnt,
                                               spos[ i ][ 0 ], spos[ i ][ 1 ], 64, 64, false, false,
                                               false, OBJPRIORITY_0, true );
@@ -514,7 +514,7 @@ namespace SPX {
         IO::smallFont->setColor( IO::WHITE_IDX, 1 );
         IO::smallFont->setColor( IO::GRAY_IDX, 2 );
 
-        SAVE::SAV.getActiveFile( ).drawTrainersCard( false );
+        SAVE::CURRENT_FILE->drawTrainersCard( false );
 
         u8 currentPage = 0;
 
@@ -543,7 +543,7 @@ namespace SPX {
             }
 
             if( GET_KEY_COOLDOWN( KEY_RIGHT ) || GET_KEY_COOLDOWN( KEY_R ) ) { // next badge case
-                if( SAVE::SAV.getActiveFile( ).hasBadgeCase( currentPage + 1 ) ) {
+                if( SAVE::CURRENT_FILE->hasBadgeCase( currentPage + 1 ) ) {
                     SOUND::playSoundEffect( SFX_SELECT );
                     drawBadges( ++currentPage );
                 }
@@ -551,7 +551,7 @@ namespace SPX {
             } else if( currentPage
                        && ( GET_KEY_COOLDOWN( KEY_LEFT )
                             || GET_KEY_COOLDOWN( KEY_L ) ) ) { // next badge case
-                if( SAVE::SAV.getActiveFile( ).hasBadgeCase( currentPage - 1 ) ) {
+                if( SAVE::CURRENT_FILE->hasBadgeCase( currentPage - 1 ) ) {
                     SOUND::playSoundEffect( SFX_SELECT );
                     drawBadges( --currentPage );
                 }
@@ -567,24 +567,24 @@ namespace SPX {
         // set current player position to position home
         ANIMATE_MAP = false;
 
-        SAVE::SAV.getActiveFile( ).m_currentMap         = 20;
-        SAVE::SAV.getActiveFile( ).m_player.m_direction = MAP::DOWN;
+        SAVE::CURRENT_FILE->m_currentMap         = 20;
+        SAVE::CURRENT_FILE->m_player.m_direction = MAP::DOWN;
 
-        if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
+        if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_RIVAL_APPEARANCE ) ) {
             // TODO: move to FSINFO
-            SAVE::SAV.getActiveFile( ).m_player = MAP::mapPlayer(
-                { 0x2b, 0x89, 3 }, u16( 10 * SAVE::SAV.getActiveFile( ).m_appearance ),
-                MAP::moveMode::WALK );
+            SAVE::CURRENT_FILE->m_player
+                = MAP::mapPlayer( { 0x2b, 0x89, 3 }, u16( 10 * SAVE::CURRENT_FILE->m_appearance ),
+                                  MAP::moveMode::WALK );
         } else {
             // TODO: move to FSINFO
-            SAVE::SAV.getActiveFile( ).m_player = MAP::mapPlayer(
-                { 0x31, 0xa9, 3 }, u16( 10 * SAVE::SAV.getActiveFile( ).m_appearance ),
-                MAP::moveMode::WALK );
+            SAVE::CURRENT_FILE->m_player
+                = MAP::mapPlayer( { 0x31, 0xa9, 3 }, u16( 10 * SAVE::CURRENT_FILE->m_appearance ),
+                                  MAP::moveMode::WALK );
         }
 
         // heal party pkmn
-        for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ); ++i ) {
-            auto tmp = SAVE::SAV.getActiveFile( ).getTeamPkmn( i );
+        for( u8 i = 0; i < SAVE::CURRENT_FILE->getTeamPkmnCount( ); ++i ) {
+            auto tmp = SAVE::CURRENT_FILE->getTeamPkmn( i );
             if( tmp ) {
                 tmp->heal( );
                 // award champion ribbon
@@ -593,14 +593,14 @@ namespace SPX {
         }
 
         // add star to trainers card (if it doesn't exist already)
-        SAVE::SAV.getActiveFile( ).registerAchievement(
+        SAVE::CURRENT_FILE->registerAchievement(
             SAVE::saveGame::playerInfo::ACHIEVEMENT_HALL_OF_FAME );
 
         // add achievement
-        SAVE::SAV.getActiveFile( ).m_lastAchievementDate  = SAVE::CURRENT_DATE;
-        SAVE::SAV.getActiveFile( ).m_lastAchievementEvent = 9; // hall of fame
-                                                               // message
-        SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_GAME_CLEAR, 1 );
+        SAVE::CURRENT_FILE->m_lastAchievementDate  = SAVE::CURRENT_DATE;
+        SAVE::CURRENT_FILE->m_lastAchievementEvent = 9; // hall of fame
+                                                        // message
+        SAVE::CURRENT_FILE->setFlag( SAVE::F_GAME_CLEAR, 1 );
 
         // save game
         u16 lst = -1;
@@ -687,12 +687,12 @@ namespace MAP {
 
     void mapDrawer::runDayCareLady( u8 p_daycare ) {
         char        buffer[ 200 ] = { 0 };
-        boxPokemon* dc1           = &SAVE::SAV.getActiveFile( ).m_dayCarePkmn[ p_daycare * 2 ];
-        boxPokemon* dc2           = &SAVE::SAV.getActiveFile( ).m_dayCarePkmn[ p_daycare * 2 + 1 ];
-        boxPokemon* dce           = &SAVE::SAV.getActiveFile( ).m_dayCareEgg[ p_daycare ];
+        boxPokemon* dc1           = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 ];
+        boxPokemon* dc2           = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 + 1 ];
+        boxPokemon* dce           = &SAVE::CURRENT_FILE->m_dayCareEgg[ p_daycare ];
 
-        u8* dcl1 = &SAVE::SAV.getActiveFile( ).m_dayCareDepositLevel[ p_daycare * 2 ];
-        u8* dcl2 = &SAVE::SAV.getActiveFile( ).m_dayCareDepositLevel[ p_daycare * 2 + 1 ];
+        u8* dcl1 = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 ];
+        u8* dcl2 = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 + 1 ];
 
         if( dce->getSpecies( ) ) {
             // an egg spawned, redirect to jii san
@@ -750,7 +750,7 @@ namespace MAP {
                     }
 
                     // check if there is space in the player's team
-                    if( SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) >= 6 ) {
+                    if( SAVE::CURRENT_FILE->getTeamPkmnCount( ) >= 6 ) {
                         printMapMessage( GET_MAP_STRING( 487 ), MSG_NORMAL );
                         break;
                     }
@@ -764,17 +764,17 @@ namespace MAP {
                             convertMapString( buffer, MSG_NORMAL ).c_str( ), MSG_NORMAL ) ) {
                         IO::init( );
                         // check if the player has enough money
-                        if( SAVE::SAV.getActiveFile( ).m_money >= cost ) {
+                        if( SAVE::CURRENT_FILE->m_money >= cost ) {
                             SOUND::playSoundEffect( SFX_BUY_SUCCESSFUL );
-                            SAVE::SAV.getActiveFile( ).m_money -= cost;
+                            SAVE::CURRENT_FILE->m_money -= cost;
                             snprintf( buffer, 199, GET_MAP_STRING( 490 ), dc1[ takeback ].m_name );
                             printMapMessage( buffer, MSG_NORMAL );
 
                             snprintf( buffer, 199, GET_MAP_STRING( 491 ), dc1[ takeback ].m_name );
                             printMapMessage( buffer, MSG_INFO );
 
-                            SAVE::SAV.getActiveFile( ).setTeamPkmn(
-                                SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ), &pk );
+                            SAVE::CURRENT_FILE->setTeamPkmn(
+                                SAVE::CURRENT_FILE->getTeamPkmnCount( ), &pk );
 
                             dc1[ takeback ]  = boxPokemon( );
                             dcl1[ takeback ] = 0;
@@ -810,8 +810,8 @@ namespace MAP {
             // check if the player has at least 2 pkmn
 
             u8 plyerpkmncnt = 0;
-            for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ); ++i ) {
-                if( !SAVE::SAV.getActiveFile( ).getTeamPkmn( i )->isEgg( ) ) { plyerpkmncnt++; }
+            for( u8 i = 0; i < SAVE::CURRENT_FILE->getTeamPkmnCount( ); ++i ) {
+                if( !SAVE::CURRENT_FILE->getTeamPkmn( i )->isEgg( ) ) { plyerpkmncnt++; }
             }
 
             if( plyerpkmncnt < 2 ) {
@@ -828,9 +828,9 @@ namespace MAP {
             videoSetMode( MODE_5_2D );
             bgUpdate( );
 
-            STS::partyScreen sts = STS::partyScreen( SAVE::SAV.getActiveFile( ).m_pkmnTeam,
-                                                     SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ),
-                                                     false, false, false, 1, true, true, false );
+            STS::partyScreen sts = STS::partyScreen( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                                     SAVE::CURRENT_FILE->getTeamPkmnCount( ), false,
+                                                     false, false, 1, true, true, false );
 
             SOUND::dimVolume( );
 
@@ -853,16 +853,16 @@ namespace MAP {
 
             u8 selpkmn = res.getSelectedPkmn( );
 
-            if( selpkmn >= SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ) ) {
+            if( selpkmn >= SAVE::CURRENT_FILE->getTeamPkmnCount( ) ) {
                 // player aborted
                 printMapMessage( GET_MAP_STRING( 482 ), MSG_NORMAL );
                 break;
             }
 
             plyerpkmncnt = 0;
-            for( u8 i = 0; i < SAVE::SAV.getActiveFile( ).getTeamPkmnCount( ); ++i ) {
+            for( u8 i = 0; i < SAVE::CURRENT_FILE->getTeamPkmnCount( ); ++i ) {
                 if( i == selpkmn ) { continue; }
-                if( SAVE::SAV.getActiveFile( ).getTeamPkmn( i )->canBattle( ) ) { plyerpkmncnt++; }
+                if( SAVE::CURRENT_FILE->getTeamPkmn( i )->canBattle( ) ) { plyerpkmncnt++; }
             }
 
             if( !plyerpkmncnt ) {
@@ -873,13 +873,11 @@ namespace MAP {
 
             // actually deposit the pkmn
 
-            if( SAVE::SAV.getActiveFile( ).getTeamPkmn( selpkmn ) != nullptr ) [[likely]] {
-                dc1[ depositpkmn - 1 ]
-                    = SAVE::SAV.getActiveFile( ).getTeamPkmn( selpkmn )->m_boxdata;
-                dcl1[ depositpkmn - 1 ]
-                    = SAVE::SAV.getActiveFile( ).getTeamPkmn( selpkmn )->m_level;
-                SAVE::SAV.getActiveFile( ).setTeamPkmn( selpkmn, (boxPokemon*) nullptr );
-                SAVE::SAV.getActiveFile( ).consolidatePkmn( );
+            if( SAVE::CURRENT_FILE->getTeamPkmn( selpkmn ) != nullptr ) [[likely]] {
+                dc1[ depositpkmn - 1 ]  = SAVE::CURRENT_FILE->getTeamPkmn( selpkmn )->m_boxdata;
+                dcl1[ depositpkmn - 1 ] = SAVE::CURRENT_FILE->getTeamPkmn( selpkmn )->m_level;
+                SAVE::CURRENT_FILE->setTeamPkmn( selpkmn, (boxPokemon*) nullptr );
+                SAVE::CURRENT_FILE->consolidatePkmn( );
 
                 if( selpkmn == 0 ) { MAP::curMap->removeFollowPkmn( ); }
 
@@ -910,12 +908,12 @@ namespace MAP {
 
     void mapDrawer::runDayCareGuy( u8 p_daycare ) {
         char        buffer[ 200 ] = { 0 };
-        boxPokemon* dc1           = &SAVE::SAV.getActiveFile( ).m_dayCarePkmn[ p_daycare * 2 ];
-        boxPokemon* dc2           = &SAVE::SAV.getActiveFile( ).m_dayCarePkmn[ p_daycare * 2 + 1 ];
-        boxPokemon* dce           = &SAVE::SAV.getActiveFile( ).m_dayCareEgg[ p_daycare ];
+        boxPokemon* dc1           = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 ];
+        boxPokemon* dc2           = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 + 1 ];
+        boxPokemon* dce           = &SAVE::CURRENT_FILE->m_dayCareEgg[ p_daycare ];
 
-        u8* dcl1 = &SAVE::SAV.getActiveFile( ).m_dayCareDepositLevel[ p_daycare * 2 ];
-        u8* dcl2 = &SAVE::SAV.getActiveFile( ).m_dayCareDepositLevel[ p_daycare * 2 + 1 ];
+        u8* dcl1 = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 ];
+        u8* dcl2 = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 + 1 ];
 
         if( dce->getSpecies( ) ) {
             // an egg spawned
@@ -932,8 +930,7 @@ namespace MAP {
                     IO::init( );
                     // throw away the egg
                     *dce = boxPokemon( );
-                    SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_HOENN_DAYCARE_EGG + p_daycare,
-                                                        false );
+                    SAVE::CURRENT_FILE->setFlag( SAVE::F_HOENN_DAYCARE_EGG + p_daycare, false );
                     printMapMessage( GET_MAP_STRING( 466 ), MSG_NORMAL );
                     return;
                 }
@@ -942,7 +939,7 @@ namespace MAP {
             // hand egg to player
 
             // check if they have space for an egg
-            auto teampkmncnt = SAVE::SAV.getActiveFile( ).getTeamPkmnCount( );
+            auto teampkmncnt = SAVE::CURRENT_FILE->getTeamPkmnCount( );
             if( teampkmncnt >= 6 ) {
                 // player has no space left
                 printMapMessage( GET_MAP_STRING( 473 ), MSG_NORMAL );
@@ -955,8 +952,8 @@ namespace MAP {
 
             dce->m_gotPlace = L_DAY_CARE_COUPLE;
 
-            SAVE::SAV.getActiveFile( ).setTeamPkmn( teampkmncnt, dce );
-            SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_HOENN_DAYCARE_EGG + p_daycare, false );
+            SAVE::CURRENT_FILE->setTeamPkmn( teampkmncnt, dce );
+            SAVE::CURRENT_FILE->setFlag( SAVE::F_HOENN_DAYCARE_EGG + p_daycare, false );
             *dce = boxPokemon( );
         } else {
             // no egg

@@ -945,10 +945,9 @@ namespace STS {
                             oam[ SPR_WINDOW_OAM ].gfxIndex, 148 + 32 - 9, 6, 16, 16, false, false,
                             false, OBJPRIORITY_1, false, OBJMODE_NORMAL );
 
-            if( SAVE::SAV.getActiveFile( ).checkFlag( SAVE::F_DEX_OBTAINED ) ) {
+            if( SAVE::CURRENT_FILE->checkFlag( SAVE::F_DEX_OBTAINED ) ) {
                 // Dex No
-                u16 dexno
-                    = SAVE::SAV.getActiveFile( ).getPkmnDisplayDexId( p_pokemon->getSpecies( ) );
+                u16 dexno = SAVE::CURRENT_FILE->getPkmnDisplayDexId( p_pokemon->getSpecies( ) );
 
                 if( dexno != u16( -1 ) ) {
                     snprintf( buffer, 49, "%04hu", dexno );

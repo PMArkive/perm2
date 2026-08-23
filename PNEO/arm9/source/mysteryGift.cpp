@@ -358,10 +358,10 @@ namespace SAVE {
 #ifdef DESQUID
         // reset all WC data
 
-        memset( SAVE::SAV.getActiveFile( ).m_collectedWonderCards, 0,
-                sizeof( SAVE::SAV.getActiveFile( ).m_collectedWonderCards ) );
-        memset( SAVE::SAV.getActiveFile( ).m_storedWonderCards, 0,
-                sizeof( SAVE::SAV.getActiveFile( ).m_storedWonderCards ) );
+        memset( SAVE::CURRENT_FILE->m_collectedWonderCards, 0,
+                sizeof( SAVE::CURRENT_FILE->m_collectedWonderCards ) );
+        memset( SAVE::CURRENT_FILE->m_storedWonderCards, 0,
+                sizeof( SAVE::CURRENT_FILE->m_storedWonderCards ) );
 
         message( "wonder card data deleted" );
         for( u8 k = 0; k < 250; ++k ) { swiWaitForVBlank( ); }
@@ -469,7 +469,7 @@ namespace SAVE {
 
         initTopSprites( false );
 
-        const auto& wc = SAVE::SAV.getActiveFile( ).m_storedWonderCards[ p_cardIdx ];
+        const auto& wc = SAVE::CURRENT_FILE->m_storedWonderCards[ p_cardIdx ];
 
         BG_PALETTE[ IO::BLACK_IDX ] = IO::BLACK2;
         BG_PALETTE[ IO::GRAY_IDX ]  = IO::STEEL_COLOR;
@@ -481,7 +481,7 @@ namespace SAVE {
         }
         if( !p_reverse ) {
             IO::regularFont->printStringC( GET_STRING( IO::STR_UI_WONDERCARD ), 16, 28, false );
-            if( SAVE::SAV.getActiveFile( ).collectedWC( wc.m_id ) ) {
+            if( SAVE::CURRENT_FILE->collectedWC( wc.m_id ) ) {
                 IO::regularFont->printStringC( GET_STRING( IO::STR_UI_THANK_YOU_FOR_PLAYING ), 16,
                                                85, false );
             } else {
@@ -543,10 +543,9 @@ namespace SAVE {
 
             IO::regularFont->setColor( IO::BLACK_IDX, 1 );
             IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-            IO::regularFont->printStringC(
-                GET_WC_STRING( SAVE::SAV.getActiveFile( ).collectedWC( wc.m_id )
-                               + 2 * wc.m_descriptionId ),
-                16, 36, false );
+            IO::regularFont->printStringC( GET_WC_STRING( SAVE::CURRENT_FILE->collectedWC( wc.m_id )
+                                                          + 2 * wc.m_descriptionId ),
+                                           16, 36, false );
         }
     }
 
@@ -565,12 +564,12 @@ namespace SAVE {
             auto             res = cb.getResult(
                 [ & ]( u8 p_slot ) {
                     currentCard = p_slot;
-                    auto& wc    = SAVE::SAV.getActiveFile( ).m_storedWonderCards[ currentCard ];
+                    auto& wc    = SAVE::CURRENT_FILE->m_storedWonderCards[ currentCard ];
 
                     dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
                     wcopts.clear( );
                     wcopts.push_back( IO::STR_UI_WC_FLIP );
-                    if( SAVE::SAV.getActiveFile( ).collectedWC( wc.m_id ) ) {
+                    if( SAVE::CURRENT_FILE->collectedWC( wc.m_id ) ) {
                         wcopts.push_back( IO::STR_UI_WC_TOSS );
                     }
                     wcopts.push_back( IO::STR_UI_CANCEL );
@@ -603,15 +602,14 @@ namespace SAVE {
                 reverse = !reverse;
             } else if( res == 1 && res == wcopts.size( ) - 2 ) {
                 for( u8 i = currentCard; i + 1 < SAVE::MAX_STORED_WC; ++i ) {
-                    memcpy( &SAVE::SAV.getActiveFile( ).m_storedWonderCards[ i ],
-                            &SAVE::SAV.getActiveFile( ).m_storedWonderCards[ i + 1 ],
+                    memcpy( &SAVE::CURRENT_FILE->m_storedWonderCards[ i ],
+                            &SAVE::CURRENT_FILE->m_storedWonderCards[ i + 1 ],
                             sizeof( wonderCard ) );
                 }
-                memset( &SAVE::SAV.getActiveFile( ).m_storedWonderCards[ SAVE::MAX_STORED_WC - 1 ],
-                        0, sizeof( wonderCard ) );
+                memset( &SAVE::CURRENT_FILE->m_storedWonderCards[ SAVE::MAX_STORED_WC - 1 ], 0,
+                        sizeof( wonderCard ) );
 
-                if( SAVE::SAV.getActiveFile( ).m_storedWonderCards[ 0 ].m_type
-                    == SAVE::WCTYPE_NONE ) {
+                if( SAVE::CURRENT_FILE->m_storedWonderCards[ 0 ].m_type == SAVE::WCTYPE_NONE ) {
                     clearText( );
                     hideSpritesSub( );
                     return;
@@ -682,18 +680,18 @@ namespace SAVE {
         bool hasWC     = false;
 
         for( u8 i = 0; i < MAX_STORED_WC; ++i ) {
-            if( SAVE::SAV.getActiveFile( ).m_storedWonderCards[ i ].m_type == SAVE::WCTYPE_NONE ) {
+            if( SAVE::CURRENT_FILE->m_storedWonderCards[ i ].m_type == SAVE::WCTYPE_NONE ) {
                 freespace = i;
                 break;
             }
-            if( SAVE::SAV.getActiveFile( ).m_storedWonderCards[ i ].m_type != SAVE::WCTYPE_NONE
-                && SAVE::SAV.getActiveFile( ).m_storedWonderCards[ i ].m_id == TMP_WC.m_id ) {
+            if( SAVE::CURRENT_FILE->m_storedWonderCards[ i ].m_type != SAVE::WCTYPE_NONE
+                && SAVE::CURRENT_FILE->m_storedWonderCards[ i ].m_id == TMP_WC.m_id ) {
                 hasWC = true;
                 break;
             }
         }
 
-        if( hasWC || SAVE::SAV.getActiveFile( ).collectedWC( TMP_WC.m_id ) ) {
+        if( hasWC || SAVE::CURRENT_FILE->collectedWC( TMP_WC.m_id ) ) {
             // player owns/owned the gift, decline
             message( GET_STRING( IO::STR_UI_GIFT_ALREADY_COLLECTED ), false );
             IO::waitForInteractS( );
@@ -754,16 +752,13 @@ namespace SAVE {
                              true );
         bgSetScale( IO::bg3sub, 1 << 8, 1 << 8 );
         bgUpdate( );
-        memcpy( &SAVE::SAV.getActiveFile( ).m_storedWonderCards[ freespace ], &TMP_WC,
+        memcpy( &SAVE::CURRENT_FILE->m_storedWonderCards[ freespace ], &TMP_WC,
                 sizeof( wonderCard ) );
 
-        SAVE::SAV.getActiveFile( ).m_storedWonderCards[ freespace ].m_year
-            = SAVE::CURRENT_DATE.m_year;
-        SAVE::SAV.getActiveFile( ).m_storedWonderCards[ freespace ].m_month
-            = SAVE::CURRENT_DATE.m_month;
-        SAVE::SAV.getActiveFile( ).m_storedWonderCards[ freespace ].m_day
-            = SAVE::CURRENT_DATE.m_day;
-        SAVE::SAV.getActiveFile( ).setFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT, 1 );
+        SAVE::CURRENT_FILE->m_storedWonderCards[ freespace ].m_year  = SAVE::CURRENT_DATE.m_year;
+        SAVE::CURRENT_FILE->m_storedWonderCards[ freespace ].m_month = SAVE::CURRENT_DATE.m_month;
+        SAVE::CURRENT_FILE->m_storedWonderCards[ freespace ].m_day   = SAVE::CURRENT_DATE.m_day;
+        SAVE::CURRENT_FILE->setFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT, 1 );
 
         IO::loadPKMNSprite( sInfo, 128 - 48, -30, SPR_PKMN_OAM_SUB, SPR_PKMN_PAL_SUB,
                             IO::Oam->oamBuffer[ SPR_PKMN_OAM_SUB ].gfxIndex, true );
@@ -826,7 +821,7 @@ namespace SAVE {
 
         loop( ) {
             std::vector<u16> mainChoices{ IO::STR_UI_RECEIVE_GIFT };
-            if( SAVE::SAV.getActiveFile( ).m_storedWonderCards[ 0 ].m_type != SAVE::WCTYPE_NONE ) {
+            if( SAVE::CURRENT_FILE->m_storedWonderCards[ 0 ].m_type != SAVE::WCTYPE_NONE ) {
                 mainChoices.push_back( IO::STR_UI_CHECK_WC );
             }
             mainChoices.push_back( IO::STR_UI_CANCEL );
@@ -861,7 +856,7 @@ namespace SAVE {
                 // receive event
 
                 // check if empty space is available
-                if( SAVE::SAV.getActiveFile( ).m_storedWonderCards[ SAVE::MAX_STORED_WC - 1 ].m_type
+                if( SAVE::CURRENT_FILE->m_storedWonderCards[ SAVE::MAX_STORED_WC - 1 ].m_type
                     != SAVE::WCTYPE_NONE ) {
                     message( GET_STRING( IO::STR_UI_NO_SPACE ) );
                     IO::waitForInteractS( );

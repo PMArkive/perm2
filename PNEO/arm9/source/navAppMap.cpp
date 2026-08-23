@@ -68,7 +68,7 @@ namespace IO {
         // load player icon
         u16 tileCnt = 0;
 
-        if( !SAVE::SAV.getActiveFile( ).m_appearance ) {
+        if( !SAVE::CURRENT_FILE->m_appearance ) {
             tileCnt = IO::loadUIIcon( IO::ICON::PLAYER0_START, SPR_NAV_APP_RSV_SUB + 1,
                                       SPR_NAV_APP_RSV1_PAL_SUB, tileCnt, _playerX - 8,
                                       _playerY + _mapTopY - 8, 16, 16, false, false, false,
@@ -106,17 +106,15 @@ namespace IO {
     }
 
     void mapNavApp::computePlayerPosition( ) {
-        if( FSDATA.isOWMap( SAVE::SAV.getActiveFile( ).m_currentMap ) ) {
-            if( MAP::MAP_LOCATIONS.m_bank != SAVE::SAV.getActiveFile( ).m_currentMap
+        if( FSDATA.isOWMap( SAVE::CURRENT_FILE->m_currentMap ) ) {
+            if( MAP::MAP_LOCATIONS.m_bank != SAVE::CURRENT_FILE->m_currentMap
                 || !MAP::MAP_LOCATIONS.m_good ) {
-                FS::loadLocationData( SAVE::SAV.getActiveFile( ).m_currentMap );
+                FS::loadLocationData( SAVE::CURRENT_FILE->m_currentMap );
             }
             // player is in OW
-            _playerX = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posX
-                       / MAP::MAP_LOCATIONS.m_mapImageRes;
-            _playerY = SAVE::SAV.getActiveFile( ).m_player.m_pos.m_posY
-                       / MAP::MAP_LOCATIONS.m_mapImageRes;
-            _OWMap = SAVE::SAV.getActiveFile( ).m_currentMap;
+            _playerX = SAVE::CURRENT_FILE->m_player.m_pos.m_posX / MAP::MAP_LOCATIONS.m_mapImageRes;
+            _playerY = SAVE::CURRENT_FILE->m_player.m_pos.m_posY / MAP::MAP_LOCATIONS.m_mapImageRes;
+            _OWMap   = SAVE::CURRENT_FILE->m_currentMap;
 
             _mapTopX = MAP::MAP_LOCATIONS.m_mapImageShiftX;
             _mapTopY = MAP::MAP_LOCATIONS.m_mapImageShiftY;
@@ -126,17 +124,17 @@ namespace IO {
             _mapBotY = _mapTopY
                        + ( MAP::mapLocation::MAP_LOCATION_RES / MAP::MAP_LOCATIONS.m_mapImageRes )
                              * ( MAP::MAP_LOCATIONS.m_owMapSizeY + 1 );
-        } else if( FSDATA.isOWMap( SAVE::SAV.getActiveFile( ).m_lastOWPos.first ) ) {
-            if( MAP::MAP_LOCATIONS.m_bank != SAVE::SAV.getActiveFile( ).m_lastOWPos.first
+        } else if( FSDATA.isOWMap( SAVE::CURRENT_FILE->m_lastOWPos.first ) ) {
+            if( MAP::MAP_LOCATIONS.m_bank != SAVE::CURRENT_FILE->m_lastOWPos.first
                 || !MAP::MAP_LOCATIONS.m_good ) {
-                FS::loadLocationData( SAVE::SAV.getActiveFile( ).m_lastOWPos.first );
+                FS::loadLocationData( SAVE::CURRENT_FILE->m_lastOWPos.first );
             }
 
-            _playerX = SAVE::SAV.getActiveFile( ).m_lastOWPos.second.m_posX
-                       / MAP::MAP_LOCATIONS.m_mapImageRes;
-            _playerY = SAVE::SAV.getActiveFile( ).m_lastOWPos.second.m_posY
-                       / MAP::MAP_LOCATIONS.m_mapImageRes;
-            _OWMap = SAVE::SAV.getActiveFile( ).m_lastOWPos.first;
+            _playerX
+                = SAVE::CURRENT_FILE->m_lastOWPos.second.m_posX / MAP::MAP_LOCATIONS.m_mapImageRes;
+            _playerY
+                = SAVE::CURRENT_FILE->m_lastOWPos.second.m_posY / MAP::MAP_LOCATIONS.m_mapImageRes;
+            _OWMap = SAVE::CURRENT_FILE->m_lastOWPos.first;
 
             _mapTopX = MAP::MAP_LOCATIONS.m_mapImageShiftX;
             _mapTopY = MAP::MAP_LOCATIONS.m_mapImageShiftY;
@@ -190,8 +188,8 @@ namespace IO {
         // Check for fly
         bool flyusable = false;
         for( u8 i = 0; i < 6; ++i ) {
-            if( !SAVE::SAV.getActiveFile( ).m_pkmnTeam[ i ].m_boxdata.m_speciesId ) { break; }
-            auto a = SAVE::SAV.getActiveFile( ).m_pkmnTeam[ i ];
+            if( !SAVE::CURRENT_FILE->m_pkmnTeam[ i ].m_boxdata.m_speciesId ) { break; }
+            auto a = SAVE::CURRENT_FILE->m_pkmnTeam[ i ];
             if( a.isEgg( ) ) { continue; }
             for( u8 j = 0; j < 4; ++j ) {
                 if( a.m_boxdata.m_moves[ j ] == M_FLY && BATTLE::possible( M_FLY, 0 ) ) {
@@ -236,7 +234,7 @@ namespace IO {
         bool canfly = false;
         if( flyusable && _cursorLocationId ) {
             // check if current location has a registered fly position
-            auto fpos = SAVE::SAV.getActiveFile( ).getFlyPosForLocation( _cursorLocationId );
+            auto fpos = SAVE::CURRENT_FILE->getFlyPosForLocation( _cursorLocationId );
             if( fpos.location( ) == _cursorLocationId ) {
                 IO::printRectangle( oam[ SPR_NAV_APP_RSV_SUB + 2 ].x - wd - 4, 10,
                                     oam[ SPR_NAV_APP_RSV_SUB + 2 ].x, 26, p_bottom, IO::BLUE_IDX );
@@ -292,8 +290,7 @@ namespace IO {
                 }
                 if( suc ) {
                     // execute fly
-                    auto fpos
-                        = SAVE::SAV.getActiveFile( ).getFlyPosForLocation( _cursorLocationId );
+                    auto fpos   = SAVE::CURRENT_FILE->getFlyPosForLocation( _cursorLocationId );
                     auto target = MAP::warpPos{
                         fpos.m_targetBank,
                         MAP::position{ fpos.m_targetX, fpos.m_targetY, fpos.m_targetZ } };

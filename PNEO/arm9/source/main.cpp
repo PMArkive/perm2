@@ -276,6 +276,7 @@ START:
         std::memset( &SAVE::SAV, 0, sizeof( SAVE::saveGame ) );
         SAVE::SAV.clear( );
     }
+    SAVE::CURRENT_FILE = &SAVE::SAV.getActiveFile( );
 
 #ifdef DESQUID
     printf( "[ OK ]\nALL GOOD!" );
@@ -283,8 +284,6 @@ START:
     SAVE::startScreen( ).run( );
     IO::clearScreenConsole( false, true );
     IO::clearScreen( false, true );
-
-    SAVE::CURRENT_FILE = &SAVE::SAV.getActiveFile( );
 
     FADE_TOP( );
     SOUND::stopBGM( );

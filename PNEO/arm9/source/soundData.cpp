@@ -46,7 +46,7 @@ namespace SOUND {
 
     void playCry( u16 p_pokemonId, u8 p_formeId, bool ) {
 #ifndef NO_SOUND
-        if( SAVE::SAV.getActiveFile( ).m_options.m_enableSFX ) {
+        if( SAVE::CURRENT_FILE->m_options.m_enableSFX ) {
             u32 len;
             u8* cry = FS::readCry( p_pokemonId, p_formeId, len );
             if( cry == nullptr ) {
@@ -66,7 +66,7 @@ namespace SOUND {
 
     void playSoundEffect( u16 p_id ) {
 #ifndef NO_SOUND
-        if( SAVE::SAV.getActiveFile( ).m_options.m_enableSFX ) {
+        if( SAVE::CURRENT_FILE->m_options.m_enableSFX ) {
             u16 len;
             u8* sfx = FS::readSFX( p_id, len );
             if( sfx == nullptr ) { return; }
