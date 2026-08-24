@@ -89,7 +89,7 @@ endif
 
 #---------------------------------------------------------------------------------
 %.o: %.cpp
-	$(SILENTMSG) CC.7 $(notdir $<)
+	$(SILENTMSG) CXX.7 $(notdir $<)
 	$(ADD_COMPILE_COMMAND) add $(CXX) "$(CPPFLAGS) $(CXXFLAGS) -c $< -o $@" $<
 	$(SILENTCMD)$(CXX) -MMD -MP -MF $(DEPSDIR)/$*.d $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
@@ -156,7 +156,7 @@ CFLAGS	+=	-DFLASHCARD
 endif
 
 CFLAGS	+=	$(INCLUDE) -DARM7
-CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-rtti
+CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-rtti -std=c++23
 
 
 ASFLAGS	:=	-g $(ARCH)

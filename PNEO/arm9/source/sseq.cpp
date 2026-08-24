@@ -1,4 +1,5 @@
 // Based on SSEQ Player by "RocketRobz" (https://github.com/RocketRobz/SSEQPlayer)
+// arm9 sseq
 #ifndef NO_SOUND
 #include <cstdio>
 #include <nds.h>
@@ -23,6 +24,22 @@ namespace SOUND::SSEQ {
     bool SEQ_SWAP_IN_PROGRESS  = false;
 
     bool SEQ_SWAP_AM = false;
+
+    void freeSequenceData( sequenceData *p_userdata ) {
+        if( p_userdata->m_size > 0 && p_userdata->m_data ) {
+            free( p_userdata->m_data );
+            p_userdata->m_size = 0;
+        }
+    }
+
+    void freeSequence( ) {
+        freeSequenceData( &CURRENT_SEQUENCE.m_seq );
+        freeSequenceData( &CURRENT_SEQUENCE.m_bnk );
+        freeSequenceData( CURRENT_SEQUENCE.m_war + 0 );
+        freeSequenceData( CURRENT_SEQUENCE.m_war + 1 );
+        freeSequenceData( CURRENT_SEQUENCE.m_war + 2 );
+        freeSequenceData( CURRENT_SEQUENCE.m_war + 3 );
+    }
 
     void installSoundSys( ) {
         /* Install FIFO */
@@ -79,22 +96,6 @@ namespace SOUND::SSEQ {
         }
     }
 
-    void freeSequenceData( sequenceData *p_userdata ) {
-        if( p_userdata->m_size > 0 && p_userdata->m_data ) {
-            free( p_userdata->m_data );
-            p_userdata->m_size = 0;
-        }
-    }
-
-    void freeSequence( ) {
-        freeSequenceData( &CURRENT_SEQUENCE.m_seq );
-        freeSequenceData( &CURRENT_SEQUENCE.m_bnk );
-        freeSequenceData( CURRENT_SEQUENCE.m_war + 0 );
-        freeSequenceData( CURRENT_SEQUENCE.m_war + 1 );
-        freeSequenceData( CURRENT_SEQUENCE.m_war + 2 );
-        freeSequenceData( CURRENT_SEQUENCE.m_war + 3 );
-    }
-
     bool fadeSwapSequence( u16 p_seqId ) {
         if( !CURRENT_SEQUENCE_ID ) {
             // if no sequence is currently playing, just start playing
@@ -137,34 +138,31 @@ namespace SOUND::SSEQ {
 
         const auto &seq = SSEQ_LIST[ p_seqId ];
 
-        if( !FS::loadSoundSequence( &CURRENT_SEQUENCE.m_seq, seq.m_sseqId ) ) {
+        // Load all resources; on any failure, free what we already loaded
+        auto cleanup = [ & ]( ) {
+            freeSequence( );
             CURRENT_SEQUENCE_ID  = 0;
             SEQ_SWAP_IN_PROGRESS = false;
             ANIMATE_MAP          = oa;
+        };
+
+        if( !FS::loadSoundSequence( &CURRENT_SEQUENCE.m_seq, seq.m_sseqId ) ) {
+            cleanup( );
             return false;
-            // DESQUID_LOG( std::string( "Sound sequence " ) + std::to_string( p_seqId )
-            // + " failed." );
         }
 
         if( !FS::loadSoundBank( &CURRENT_SEQUENCE.m_bnk, seq.m_bank ) ) {
-            CURRENT_SEQUENCE_ID  = 0;
-            SEQ_SWAP_IN_PROGRESS = false;
-            ANIMATE_MAP          = oa;
+            cleanup( );
             return false;
         }
         for( u8 i = 0; i < seq.m_sampleCnt; ++i ) {
-            if( // seq.m_samplesId[ i ]
-                //&&
-                !FS::loadSoundSample( CURRENT_SEQUENCE.m_war + i, seq.m_samplesId[ i ], i ) ) {
-                CURRENT_SEQUENCE_ID  = 0;
-                SEQ_SWAP_IN_PROGRESS = false;
-                ANIMATE_MAP          = oa;
+            if( !FS::loadSoundSample( CURRENT_SEQUENCE.m_war + i, seq.m_samplesId[ i ], i ) ) {
+                cleanup( );
                 return false;
             }
         }
-        CURRENT_SEQUENCE.m_fadeIn = false; // p_fadeIn;
+        CURRENT_SEQUENCE.m_fadeIn = p_fadeIn;
         CURRENT_SEQUENCE_ID       = p_seqId;
-        // printf( "\n PLAY %i %i", p_seqId, p_fadeIn );
 
         fifoSendDatamsg( FIFO_SNDSYS, sizeof( CURRENT_SEQUENCE ), (u8 *) &CURRENT_SEQUENCE );
         ANIMATE_MAP = oa;
@@ -179,6 +177,10 @@ namespace SOUND::SSEQ {
         soundSysMessage msg;
         msg.m_message = SNDSYS_STOPSEQ;
         fifoSendDatamsg( FIFO_SNDSYS, sizeof( msg ), (u8 *) &msg );
+
+        // wait a bit for ARM7 to figure itself out
+        u32 t = 33500;
+        while( !fifoCheckDatamsg( FIFO_RETURN ) && --t ) {}
 
         freeSequence( );
     }
@@ -211,7 +213,8 @@ namespace SOUND::SSEQ {
         msg.m_playInfo   = p_playInfo;
 
         fifoSendDatamsg( FIFO_SNDSYS, sizeof( msg ), (u8 *) &msg );
-        return (int) fifoGetRetValue( FIFO_SNDSYS );
+        int ch = (int) fifoGetRetValue( FIFO_SNDSYS );
+        return ( ch == 0xFFFF ) ? -1 : ch;
     }
 
     void stopSample( int p_handle ) {

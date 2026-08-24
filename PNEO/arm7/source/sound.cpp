@@ -13,7 +13,7 @@ namespace SOUND::SSEQ {
     void adsrTickChannel( int );
     void adsrTick( );
 
-    volatile sequenceStatus SEQ_STATUS = STATUS_STOPPED;
+    volatile sequenceStatus XA_SEQ_STATUS = STATUS_STOPPED;
     volatile int            CUR_BPM;
     volatile int            CUR_VOL;
 
@@ -34,20 +34,30 @@ namespace SOUND::SSEQ {
     void         soundTimer( ) {
         adsrTick( );
 
-        while( TIMER_V > MAX_BPM ) {
+        // spin protection.
+        // Not really needed, I think. In cases where this would help, other stuff is most
+        // likely already so broken that a HW reset is inevitable.
+        int ticks = 0;
+        while( TIMER_V >= MAX_BPM && ticks++ < 8 ) {
             TIMER_V -= MAX_BPM;
             sequenceTick( );
         }
-        TIMER_V += SEQ_BPM;
+        if( ticks == 8 ) [[unlikely]] { TIMER_V = 0; }
+        TIMER_V += __atomic_load_n( &XA_SEQ_BPM, __ATOMIC_ACQUIRE );
     }
 
     adsrState ADSR_CHANNEL[ NUM_CHANNEL ];
 
-    volatile int ADSR_MASTER_VOLUME      = 127;
-    volatile int ADSR_FADE_TARGET_VOLUME = 127;
+    volatile int XA_ADSR_MASTER_VOLUME      = 127;
+    volatile int XA_ADSR_FADE_TARGET_VOLUME = 127;
 
     inline void adsrTick( ) {
-        for( auto i = NUM_BLOCKED_CHANNEL; i < NUM_CHANNEL; ++i ) { adsrTickChannel( i ); }
+        for( auto i = NUM_BLOCKED_CHANNEL; i < NUM_CHANNEL; ++i ) {
+            if( ADSR_CHANNEL[ i ].m_state == adsrState::ADSR_NONE && !SCHANNEL_ACTIVE( i ) ) {
+                continue;
+            }
+            adsrTickChannel( i );
+        }
     }
 
     void adsrTickChannel( int p_channel ) {
@@ -73,6 +83,7 @@ namespace SOUND::SSEQ {
             SCHANNEL_CR( p_channel )           = chstat->m_reg.m_cr;
             chstat->m_ampl                     = -ADSR_THRESHOLD;
             chstat->m_state                    = adsrState::ADSR_ATTACK;
+            [[fallthrough]];
         case adsrState::ADSR_ATTACK:
             chstat->m_ampl = ( chstat->m_attackRate * chstat->m_ampl ) / 255;
             if( chstat->m_ampl == 0 ) { chstat->m_state = adsrState::ADSR_DECAY; }
@@ -87,8 +98,7 @@ namespace SOUND::SSEQ {
         case adsrState::ADSR_RELEASE:
             chstat->m_ampl -= chstat->m_releaseRate;
             if( chstat->m_ampl <= -ADSR_THRESHOLD ) {
-                chstat->m_state = adsrState::ADSR_NONE;
-                // chstat->m_reg.CR = 0;
+                chstat->m_state          = adsrState::ADSR_NONE;
                 chstat->m_count          = 0;
                 chstat->m_track          = -1;
                 SCHANNEL_CR( p_channel ) = 0;
@@ -121,7 +131,7 @@ namespace SOUND::SSEQ {
 #define CONV_VOL( p_a )     ( convertSustain( p_a ) >> 7 )
 #define SOUND_VOLDIV( p_n ) ( ( p_n ) << 8 )
 
-        int totalvol = CONV_VOL( ADSR_MASTER_VOLUME );
+        int totalvol = CONV_VOL( __atomic_load_n( &XA_ADSR_MASTER_VOLUME, __ATOMIC_ACQUIRE ) );
         totalvol += CONV_VOL( chstat->m_vol );
         totalvol += CONV_VOL( chstat->m_expr );
         totalvol += CONV_VOL( chstat->m_vel );
@@ -164,6 +174,9 @@ namespace SOUND::SSEQ {
         const u8 lookup[] = { 0x00, 0x01, 0x05, 0x0E, 0x1A, 0x26, 0x33, 0x3F, 0x49, 0x54,
                               0x5C, 0x64, 0x6D, 0x74, 0x7B, 0x7F, 0x84, 0x89, 0x8F };
 
+        if( p_attack < 0 ) [[unlikely]] { p_attack = 0; }
+        if( p_attack > 0x7F ) [[unlikely]] { p_attack = 0x7F; }
+
         return ( p_attack >= 0x6D ) ? lookup[ 0x7F - p_attack ] : ( 0xFF - p_attack );
     }
 
@@ -194,6 +207,9 @@ namespace SOUND::SSEQ {
             0xFFE7, 0xFFE9, 0xFFEA, 0xFFEC, 0xFFED, 0xFFEF, 0xFFF0, 0xFFF2, 0xFFF3, 0xFFF5, 0xFFF6,
             0xFFF8, 0xFFF9, 0xFFFA, 0xFFFC, 0xFFFD, 0xFFFF, 0x0000 };
 
+        if( p_sustain < 0 ) [[unlikely]] { p_sustain = 0; }
+        if( p_sustain > 0x7F ) [[unlikely]] { p_sustain = 0x7F; }
+
         return ( p_sustain == 0x7F ) ? 0 : -( ( 0x10000 - (int) lookup[ p_sustain ] ) << 7 );
     }
 
@@ -202,6 +218,9 @@ namespace SOUND::SSEQ {
         const s8     lookup[]
             = { 0,  6,  12,  19,  25,  31,  37,  43,  49,  54,  60,  65,  71,  76,  81,  85, 90,
                 94, 98, 102, 106, 109, 112, 115, 117, 120, 122, 123, 125, 126, 126, 127, 127 };
+
+        if( p_arg < 0 ) [[unlikely]] { p_arg = 0; }
+        if( p_arg >= 4 * lut_size ) [[unlikely]] { p_arg = 4 * lut_size - 1; }
 
         if( p_arg < 1 * lut_size ) { return lookup[ p_arg ]; }
         if( p_arg < 2 * lut_size ) { return lookup[ 2 * lut_size - p_arg ]; }
@@ -215,79 +234,78 @@ namespace SOUND::SSEQ {
 
         switch( msg.m_message ) {
         case SNDSYS_VOLUME: {
-            ADSR_MASTER_VOLUME = msg.m_volume & 0x7F;
+            __atomic_store_n( &XA_ADSR_MASTER_VOLUME, msg.m_volume & 0x7F, __ATOMIC_RELEASE );
             return;
         }
 
         case SNDSYS_PLAY_SAMPLE: {
             int ch = nextFreeChannel( 0x40 );
-            if( ch >= 0 ) {
-                // TODO: just a dirty hack right now, needs to be integrated properly later
-
-                auto chstat     = ADSR_CHANNEL + ch;
-                chstat->m_state = adsrState::ADSR_LOCKED;
-
-                auto& sInfo = msg.m_sampleInfo;
-                auto& pInfo = msg.m_playInfo;
-
-                SCHANNEL_SOURCE( ch )       = (u32) msg.m_sample.m_data;
-                SCHANNEL_REPEAT_POINT( ch ) = sInfo.m_loopOffset;
-                SCHANNEL_LENGTH( ch )       = sInfo.m_nonLoopLen;
-                SCHANNEL_TIMER( ch )        = SOUND_FREQ( sInfo.m_sampleRate );
-                SCHANNEL_CR( ch ) = SCHANNEL_ENABLE | SOUND_VOL( pInfo.m_vol )
-                                    | SOUND_PAN( pInfo.m_pan ) | SOUND_FORMAT( sInfo.m_waveType )
-                                    | SOUND_LOOP( sInfo.m_loop );
-
-                /*
-                chstat->m_reg.m_cr = SOUND_FORMAT( sInfo.m_waveType ) | SOUND_LOOP( sInfo.m_loop )
-                                     | SCHANNEL_ENABLE;
-                chstat->m_reg.m_source = (u32) msg.m_sample.m_data;
-                chstat->m_freq         = sInfo.m_sampleRate;
-                chstat->m_reg.m_timer  = -SOUND_FREQ( sInfo.m_sampleRate );
-
-                chstat->m_reg.m_repeatPoint = sInfo.m_loopOffset;
-                chstat->m_reg.m_length      = sInfo.m_nonLoopLen;
-
-                chstat->m_vol         = pInfo.m_vol;
-                chstat->m_vel         = pInfo.m_vel;
-                chstat->m_expr        = pInfo.m_expr;
-                chstat->m_pan         = pInfo.m_pan;
-                chstat->m_modType     = pInfo.m_modType;
-                chstat->m_modDepth    = pInfo.m_modDepth;
-                chstat->m_modRange    = pInfo.m_modRange;
-                chstat->m_modSpeed    = pInfo.m_modSpeed;
-                chstat->m_modDelay    = pInfo.m_modDelay;
-                chstat->m_modDelayCnt = 0;
-                chstat->m_modCounter  = 0;
-                chstat->m_attackRate  = 0;
-                chstat->m_decayRate   = 0;
-                chstat->m_sustainRate = 0;
-                chstat->m_releaseRate = 0;
-                chstat->m_priority    = 64;
-                */
+            if( ch < 0 ) {
+                fifoSendValue32( FIFO_SNDSYS, (u32) ( -1 ) );
+                return;
             }
+
+            auto& sInfo = msg.m_sampleInfo;
+            auto& pInfo = msg.m_playInfo;
+
+            if( !msg.m_sample.m_data || sInfo.m_sampleRate == 0 ) [[unlikely]] {
+                ADSR_CHANNEL[ ch ].m_state = adsrState::ADSR_NONE;
+                fifoSendValue32( FIFO_SNDSYS, (u32) ( -1 ) );
+                return;
+            }
+
+            auto* chstat    = ADSR_CHANNEL + ch;
+            chstat->m_state = adsrState::ADSR_LOCKED;
+
+            SCHANNEL_SOURCE( ch )       = (u32) msg.m_sample.m_data;
+            SCHANNEL_REPEAT_POINT( ch ) = sInfo.m_loopOffset;
+            SCHANNEL_LENGTH( ch )       = sInfo.m_nonLoopLen;
+            SCHANNEL_TIMER( ch )        = SOUND_FREQ( sInfo.m_sampleRate );
+            SCHANNEL_CR( ch ) = SCHANNEL_ENABLE | SOUND_VOL( pInfo.m_vol )
+                                | SOUND_PAN( pInfo.m_pan ) | SOUND_FORMAT( sInfo.m_waveType )
+                                | SOUND_LOOP( sInfo.m_loop );
+
+            chstat->m_vol         = pInfo.m_vol;
+            chstat->m_vel         = pInfo.m_vel;
+            chstat->m_expr        = pInfo.m_expr;
+            chstat->m_pan         = pInfo.m_pan;
+            chstat->m_modType     = pInfo.m_modType;
+            chstat->m_modDepth    = pInfo.m_modDepth;
+            chstat->m_modRange    = pInfo.m_modRange;
+            chstat->m_modSpeed    = pInfo.m_modSpeed;
+            chstat->m_modDelay    = pInfo.m_modDelay;
+            chstat->m_modDelayCnt = 0;
+            chstat->m_modCounter  = 0;
+            chstat->m_attackRate  = 0;
+            chstat->m_decayRate   = 0;
+            chstat->m_sustainRate = 0;
+            chstat->m_releaseRate = 0;
+            chstat->m_priority    = 64;
+            chstat->m_count       = 0;
+            chstat->m_track       = -1;
 
             fifoSendValue32( FIFO_SNDSYS, (u32) ch );
             return;
         }
 
         case SNDSYS_STOP_SAMPLE: {
+            if( msg.m_channel < 0 || msg.m_channel >= NUM_CHANNEL ) [[unlikely]] { return; }
             auto chstat     = ADSR_CHANNEL + msg.m_channel;
             chstat->m_state = adsrState::ADSR_RELEASE;
             return;
         }
 
         case SNDSYS_PAUSESEQ: {
-            if( SEQ_STATUS == STATUS_PLAYING ) {
-                CUR_BPM            = SEQ_BPM;
-                SEQ_BPM            = 0;
-                CUR_VOL            = ADSR_MASTER_VOLUME;
-                ADSR_MASTER_VOLUME = 0;
-                SEQ_STATUS         = STATUS_PAUSED;
+            u32 status = __atomic_load_n( &XA_SEQ_STATUS, __ATOMIC_ACQUIRE );
+            if( status == STATUS_PLAYING ) {
+                CUR_BPM = __atomic_load_n( &XA_SEQ_BPM, __ATOMIC_ACQUIRE );
+                __atomic_store_n( &XA_SEQ_BPM, 0, __ATOMIC_RELEASE );
+                CUR_VOL = __atomic_load_n( &XA_ADSR_MASTER_VOLUME, __ATOMIC_ACQUIRE );
+                __atomic_store_n( &XA_ADSR_MASTER_VOLUME, 0, __ATOMIC_RELEASE );
                 setSequenceStatus( STATUS_PAUSED );
-            } else if( SEQ_STATUS == STATUS_PAUSED ) {
-                SEQ_BPM            = CUR_BPM;
-                ADSR_MASTER_VOLUME = CUR_VOL;
+            } else if( status == STATUS_PAUSED ) {
+                __atomic_store_n( &XA_SEQ_BPM, CUR_BPM, __ATOMIC_RELEASE );
+                __atomic_store_n( &XA_ADSR_MASTER_VOLUME, CUR_VOL, __ATOMIC_RELEASE );
                 setSequenceStatus( STATUS_PLAYING );
             }
             return;

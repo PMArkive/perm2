@@ -2,7 +2,7 @@
 Pokémon neo
 ------------------------------
 
-file        : main.c
+file        : main.cpp
 author      : Philip Wellnitz (modifications)
 description :
 
@@ -60,20 +60,31 @@ distribution.
 #include "sound/sseq.h"
 #endif
 
-#define FADE_SPEED 9
+#define FADE_SPEED          9
+#define FADE_TICK_INTERVAL  2
+#define WIFI_POLL_INTERVAL  1
+#define INPUT_POLL_INTERVAL 1
 
-volatile bool exitflag = false;
+static volatile bool EXIT_FLAG   = false;
+static volatile bool WIFI_DIRTY  = false;
+static volatile bool INPUT_DIRTY = false;
+static volatile u32  VBLANK_CNT  = 0;
 
-void VblankHandler( void ) {
-    Wifi_Update( );
+void VblankHandler( ) {
+    // below sadly doesn't work with current libnds version (gives linker error / -latomic
+    // not available)
+    // __atomic_fetch_add( &VBLANK_CNT, 1, __ATOMIC_RELAXED );
+    __atomic_store_n( &VBLANK_CNT, __atomic_load_n( &VBLANK_CNT, __ATOMIC_RELAXED ) + 1,
+                      __ATOMIC_RELAXED );
+    __atomic_store_n( &WIFI_DIRTY, true, __ATOMIC_RELEASE );
 }
 
 void VcountHandler( ) {
-    inputGetAndSend( );
+    __atomic_store_n( &INPUT_DIRTY, true, __ATOMIC_RELEASE );
 }
 
 void powerButtonCB( ) {
-    exitflag = true;
+    __atomic_store_n( &EXIT_FLAG, true, __ATOMIC_RELEASE );
 }
 
 void soundInit( ) {
@@ -84,18 +95,38 @@ void soundInit( ) {
     REG_MASTER_VOLUME = 127;
 }
 
+#ifndef NO_SOUND
+static void processFade( ) {
+    u32 status = __atomic_load_n( &SOUND::SSEQ::XA_SEQ_STATUS, __ATOMIC_ACQUIRE );
+
+    if( status == SOUND::SSEQ::STATUS_FADE_OUT ) {
+        u32 vol = __atomic_load_n( &SOUND::SSEQ::XA_ADSR_MASTER_VOLUME, __ATOMIC_ACQUIRE );
+        if( !vol ) { return; }
+        u32 next = ( vol <= FADE_SPEED ) ? 0 : ( vol - FADE_SPEED );
+        __atomic_store_n( &SOUND::SSEQ::XA_ADSR_MASTER_VOLUME, next, __ATOMIC_RELEASE );
+        if( !next ) { SOUND::SSEQ::stopSequence( ); }
+    } else if( status == SOUND::SSEQ::STATUS_FADE_IN ) {
+        u32 vol    = __atomic_load_n( &SOUND::SSEQ::XA_ADSR_MASTER_VOLUME, __ATOMIC_ACQUIRE );
+        u32 target = __atomic_load_n( &SOUND::SSEQ::XA_ADSR_FADE_TARGET_VOLUME, __ATOMIC_ACQUIRE );
+        if( vol >= target ) { return; }
+        u32 next = ( vol + FADE_SPEED >= target ) ? target : ( vol + FADE_SPEED );
+        __atomic_store_n( &SOUND::SSEQ::XA_ADSR_MASTER_VOLUME, next, __ATOMIC_RELEASE );
+        if( next == target ) { SOUND::SSEQ::setSequenceStatus( SOUND::SSEQ::STATUS_PLAYING ); }
+    }
+}
+#endif
+
 int main( ) {
     readUserSettings( );
     ledBlink( 0 );
 
     irqInit( );
-    // Start the RTC tracking IRQ
     initClockIRQ( );
     fifoInit( );
     touchInit( );
-    soundInit( );
 
 #ifndef NO_SOUND
+    soundInit( );
     SOUND::SSEQ::installSoundSys( );
 #endif
 
@@ -113,48 +144,30 @@ int main( ) {
 
     setPowerButtonCB( powerButtonCB );
 
-#ifndef NO_SOUND
-    s32 fadeCounter = 0;
-#endif
-
-    // Keep the ARM7 mostly idle
-    while( !exitflag ) {
+    while( !__atomic_load_n( &EXIT_FLAG, __ATOMIC_ACQUIRE ) ) {
         if( 0 == ( REG_KEYINPUT & ( KEY_SELECT | KEY_START | KEY_L | KEY_R ) ) ) {
-            exitflag = true;
+            __atomic_store_n( &EXIT_FLAG, true, __ATOMIC_RELEASE );
+            break;
         }
 
         swiWaitForVBlank( );
-#ifndef NO_SOUND
-        if( SOUND::SSEQ::SEQ_STATUS == SOUND::SSEQ::STATUS_FADE_OUT ) {
-            if( fadeCounter < 24 ) {
-                fadeCounter += 10;
-            } else {
-                fadeCounter -= 24;
-                if( SOUND::SSEQ::ADSR_MASTER_VOLUME <= FADE_SPEED ) {
-                    SOUND::SSEQ::ADSR_MASTER_VOLUME = 0;
-                    SOUND::SSEQ::stopSequence( );
-                    fadeCounter = 0;
-                } else {
-                    SOUND::SSEQ::ADSR_MASTER_VOLUME -= FADE_SPEED;
-                }
-            }
+
+        // WIFI_DIRTY / INPUT_DIRTY are set-to-true-only by IRQ handlers.
+        // A read-then-clear is safe on single-core ARM7: the worst case
+        // is one redundant update call, never a missed one.
+        if( WIFI_DIRTY ) {
+            WIFI_DIRTY = false;
+            Wifi_Update( );
         }
-        if( SOUND::SSEQ::SEQ_STATUS == SOUND::SSEQ::STATUS_FADE_IN ) {
-            if( fadeCounter < 24 ) {
-                fadeCounter += 10;
-            } else {
-                fadeCounter -= 24;
-                if( SOUND::SSEQ::ADSR_MASTER_VOLUME + FADE_SPEED
-                    >= SOUND::SSEQ::ADSR_FADE_TARGET_VOLUME ) {
-                    SOUND::SSEQ::ADSR_MASTER_VOLUME = SOUND::SSEQ::ADSR_FADE_TARGET_VOLUME;
-                    SOUND::SSEQ::setSequenceStatus( SOUND::SSEQ::STATUS_PLAYING );
-                    fadeCounter = 0;
-                } else {
-                    SOUND::SSEQ::ADSR_MASTER_VOLUME += FADE_SPEED;
-                }
-            }
+        if( INPUT_DIRTY ) {
+            INPUT_DIRTY = false;
+            inputGetAndSend( );
         }
 
+#ifndef NO_SOUND
+        if( ( __atomic_load_n( &VBLANK_CNT, __ATOMIC_RELAXED ) % FADE_TICK_INTERVAL ) == 0 ) {
+            processFade( );
+        }
 #endif
     }
     return 0;

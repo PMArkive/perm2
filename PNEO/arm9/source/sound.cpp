@@ -115,9 +115,10 @@ namespace SOUND {
             // TODO: (blockingly) wait for OS to complete?
 
             auto sseqId = SSEQ::BGMIndexForName( p_id );
-            if( sseqId != SSEQ::SSEQ_NONE ) { SSEQ::playSequence( sseqId ); }
-            BGMLoaded  = true;
-            currentBGM = p_id;
+            if( sseqId != SSEQ::SSEQ_NONE && SSEQ::playSequence( sseqId ) ) {
+                BGMLoaded  = true;
+                currentBGM = p_id;
+            }
         } else if( BGMLoaded ) {
             SSEQ::stopSequence( );
             BGMLoaded = false;

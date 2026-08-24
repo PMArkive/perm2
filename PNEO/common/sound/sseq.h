@@ -170,7 +170,12 @@ namespace SOUND::SSEQ {
 #define fifoRetValue( p_ch ) fifoGetValue32( p_ch )
 
     static inline u32 fifoGetRetValue( int p_ch ) {
-        fifoRetWait( p_ch );
+        // Timeout: ~200 ms at 16.78 MHz (≈ 335 000 iterations)
+        // Prevents infinite hang if ARM7 is unresponsive.
+        u32 timeout = 335000;
+        while( !fifoCheckValue32( p_ch ) ) {
+            if( --timeout == 0 ) { return 0xFFFF; }
+        }
         return fifoRetValue( p_ch );
     }
 
@@ -203,11 +208,12 @@ namespace SOUND::SSEQ {
         u8  m_pan;
     };
 
-    constexpr u8 CALLSTACK_SIZE = 3;
-    constexpr u8 MAX_VAR        = 15;
-    constexpr u8 NUM_VARS       = MAX_VAR + 1;
-    constexpr u8 MAX_GLOB_VAR   = 15;
-    constexpr u8 NUM_GLOB_VARS  = MAX_GLOB_VAR + 1;
+    constexpr u8  CALLSTACK_SIZE = 15;
+    constexpr u8  MAX_VAR        = 15;
+    constexpr u8  NUM_VARS       = MAX_VAR + 1;
+    constexpr u8  MAX_GLOB_VAR   = 15;
+    constexpr u8  NUM_GLOB_VARS  = MAX_GLOB_VAR + 1;
+    constexpr u16 DEFAULT_BPM    = 120;
 
     struct trackState {
         int      m_count;
@@ -227,6 +233,7 @@ namespace SOUND::SSEQ {
         s16      m_variables[ NUM_VARS ];
         u8       m_lastConditionTrue;
         u8       m_tiemode;
+        s8       m_transpose;
         u8       m_muteState;
     };
 
@@ -258,7 +265,8 @@ namespace SOUND::SSEQ {
         int m_track;
         u16 m_freq;
         u8  m_modType, m_modSpeed, m_modDepth, m_modRange;
-        u16 m_modDelay, m_modDelayCnt, m_modCounter;
+        u16 m_modDelay, m_modDelayCnt;
+        u32 m_modCounter;
         u8  m_note, m_patch;
         u32 m_sweepLen, m_sweepCnt;
         s16 m_sweepPitch;
@@ -269,13 +277,13 @@ namespace SOUND::SSEQ {
     extern adsrState ADSR_CHANNEL[ NUM_CHANNEL ];
     extern s16       GLOBAL_VARS[ NUM_GLOB_VARS ];
 
-    volatile extern int            SEQ_BPM;
-    volatile extern sequenceStatus SEQ_STATUS;
+    volatile extern int            XA_SEQ_BPM;    // needs atomic acquire/release
+    volatile extern sequenceStatus XA_SEQ_STATUS; // needs atomic acquire/release
 
     void setSequenceStatus( sequenceStatus p_seqStatus );
 
-    volatile extern int ADSR_MASTER_VOLUME;
-    volatile extern int ADSR_FADE_TARGET_VOLUME;
+    volatile extern int XA_ADSR_MASTER_VOLUME;      // needs atomic acquire/release
+    volatile extern int XA_ADSR_FADE_TARGET_VOLUME; // needs atomic acquire/release
 
     void sequenceTick( );
     void trackTick( int p_n );
@@ -287,6 +295,7 @@ namespace SOUND::SSEQ {
 
     inline s8 nextFreeChannel( int p_priority = 0, u8 p_chStart = 0, u8 p_chEnd = NUM_CHANNEL ) {
         for( u8 i = p_chStart; i < p_chEnd; ++i ) {
+            if( ADSR_CHANNEL[ i ].m_state == adsrState::ADSR_LOCKED ) { continue; }
             if( !SCHANNEL_ACTIVE( i ) && ADSR_CHANNEL[ i ].m_state != adsrState::ADSR_START ) {
                 return i;
             }

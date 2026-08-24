@@ -6,14 +6,14 @@
 
 #ifndef NO_SOUND
 namespace SOUND::SSEQ {
-    int          TRACK_CNT         = 0;
-    u8*          SEQUENCE_DATA     = NULL;
-    void*        SEQUENCE_BANK     = NULL;
-    void*        SEQUENCE_WAR[ 4 ] = { NULL, NULL, NULL, NULL };
-    trackState   TRACKS[ NUM_CHANNEL ];
-    int          MESSAGE_SEND_FLAG            = 0;
-    volatile int SEQ_BPM                      = 0;
-    s16          GLOBAL_VARS[ NUM_GLOB_VARS ] = {
+    int                 TRACK_CNT         = 0;
+    u8*                 SEQUENCE_DATA     = NULL;
+    void*               SEQUENCE_BANK     = NULL;
+    void*               SEQUENCE_WAR[ 4 ] = { NULL, NULL, NULL, NULL };
+    trackState          TRACKS[ NUM_CHANNEL ];
+    static volatile int XA_MESSAGE_SEND_FLAG         = 0;
+    volatile int        XA_SEQ_BPM                   = 0;
+    s16                 GLOBAL_VARS[ NUM_GLOB_VARS ] = {
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     };
 
@@ -30,9 +30,14 @@ namespace SOUND::SSEQ {
      */
     int playNote( void* p_bnk, void** p_war, int p_instr, int p_note, int p_priority,
                   playInfo* p_playInfo, int p_duration, int p_track ) {
+        if( p_instr < 0 ) [[unlikely]] { return -1; }
+
         int isPsg   = 0;
         int channel = nextFreeChannel( p_priority );
         if( channel < 0 ) { return -1; }
+
+        // potentially got a channel that that is releasing or avail. If ops below fail,
+        // just leave channel as is to avoid sound glitches.
 
         adsrState* chstat = ADSR_CHANNEL + channel;
 
@@ -95,7 +100,9 @@ namespace SOUND::SSEQ {
         }
 
         if( !isPsg ) {
-            wavinfo            = getWav( p_war[ notedef->m_warid ], notedef->m_wavid );
+            if( notedef->m_warid >= 4 ) [[unlikely]] { return -1; }
+            wavinfo = getWav( p_war[ notedef->m_warid ], notedef->m_wavid );
+            if( !wavinfo ) [[unlikely]] { return -1; }
             chstat->m_reg.m_cr = SOUND_FORMAT( wavinfo->m_waveType ) | SOUND_LOOP( wavinfo->m_loop )
                                  | SCHANNEL_ENABLE;
             chstat->m_reg.m_source = (u32) GETSAMP( wavinfo );
@@ -149,22 +156,23 @@ namespace SOUND::SSEQ {
     }
 
     void setSequenceStatus( sequenceStatus p_seqStatus ) {
-        if( SEQ_STATUS == p_seqStatus ) { return; }
+        u32 status = __atomic_load_n( &XA_SEQ_STATUS, __ATOMIC_ACQUIRE );
+        if( status == p_seqStatus ) { return; }
 
         returnMessage ret;
         ret.m_count = 1;
 
-        if( SEQ_STATUS == STATUS_FADE_IN && p_seqStatus == STATUS_PLAYING ) {
+        if( status == STATUS_FADE_IN && p_seqStatus == STATUS_PLAYING ) {
             // send fade complete ret message
             ret.m_data[ 0 ] = returnMessage::MSG_SEQUENCE_UNFADED;
             fifoSendDatamsg( FIFO_RETURN, sizeof( ret ), (u8*) &ret );
         }
-        if( SEQ_STATUS != STATUS_STOPPED && p_seqStatus == STATUS_STOPPED ) {
+        if( status != STATUS_STOPPED && p_seqStatus == STATUS_STOPPED ) {
             ret.m_data[ 0 ] = returnMessage::MSG_SEQUENCE_STOPPED;
             fifoSendDatamsg( FIFO_RETURN, sizeof( ret ), (u8*) &ret );
         }
 
-        SEQ_STATUS = p_seqStatus;
+        __atomic_store_n( &XA_SEQ_STATUS, p_seqStatus, __ATOMIC_RELEASE );
     }
 
 #define SEQ_READ8( p_pos ) SEQUENCE_DATA[ p_pos ]
@@ -197,12 +205,18 @@ namespace SOUND::SSEQ {
         TRACKS[ p_track ].m_releaseRate         = -1;
         TRACKS[ p_track ].m_retpos              = 0;
         TRACKS[ p_track ].m_tiemode             = 0;
+        TRACKS[ p_track ].m_transpose           = 0;
         TRACKS[ p_track ].m_muteState           = 0;
         for( u8 i = 0; i < NUM_VARS; ++i ) { TRACKS[ p_track ].m_variables[ i ] = -1; }
     }
 
     void playSequence( sequenceData* p_sequence, sequenceData* p_bnk, sequenceData* p_war,
                        bool p_fadeIn ) {
+        if( !p_sequence || !p_sequence->m_data || !p_bnk || !p_bnk->m_data ) [[unlikely]] {
+            __atomic_store_n( &XA_SEQ_STATUS, (u32) STATUS_STOPPED, __ATOMIC_RELEASE );
+            return;
+        }
+
         SEQUENCE_BANK     = p_bnk->m_data;
         SEQUENCE_WAR[ 0 ] = p_war[ 0 ].m_data;
         SEQUENCE_WAR[ 1 ] = p_war[ 1 ].m_data;
@@ -211,7 +225,7 @@ namespace SOUND::SSEQ {
 
         // Some TRACKS alter this, and may cause undesireable effects with playing other
         // TRACKS later.
-        ADSR_MASTER_VOLUME = 127;
+        __atomic_store_n( &XA_ADSR_MASTER_VOLUME, 127, __ATOMIC_RELEASE );
 
         // Load sequence data
         SEQUENCE_DATA = (u8*) p_sequence->m_data + ( (u32*) p_sequence->m_data )[ 6 ];
@@ -222,6 +236,7 @@ namespace SOUND::SSEQ {
         if( *SEQUENCE_DATA == SC_EXTRA_TRACKS ) {
             // Prepare extra TRACKS
             for( pos = 3; SEQ_READ8( pos ) == SC_OPEN_TRACK; TRACK_CNT++, pos += 3 ) {
+                if( TRACK_CNT >= NUM_CHANNEL ) [[unlikely]] { break; }
                 pos += 2;
                 prepareTrack( TRACK_CNT, SEQ_READ24( pos ) );
             }
@@ -229,15 +244,17 @@ namespace SOUND::SSEQ {
 
         // Prepare first track
         prepareTrack( 0, pos );
-        SEQ_BPM           = 120;
-        MESSAGE_SEND_FLAG = 0;
+        __atomic_store_n( &XA_SEQ_BPM, DEFAULT_BPM, __ATOMIC_RELEASE );
+        __atomic_store_n( &XA_MESSAGE_SEND_FLAG, 0, __ATOMIC_RELEASE );
 
         if( p_fadeIn ) {
-            ADSR_FADE_TARGET_VOLUME = ADSR_MASTER_VOLUME;
-            ADSR_MASTER_VOLUME      = 0;
-            SEQ_STATUS              = STATUS_FADE_IN;
+            __atomic_store_n( &XA_ADSR_FADE_TARGET_VOLUME,
+                              __atomic_load_n( &XA_ADSR_MASTER_VOLUME, __ATOMIC_ACQUIRE ),
+                              __ATOMIC_RELEASE );
+            __atomic_store_n( &XA_ADSR_MASTER_VOLUME, 0, __ATOMIC_RELEASE );
+            __atomic_store_n( &XA_SEQ_STATUS, (u32) STATUS_FADE_IN, __ATOMIC_RELEASE );
         } else {
-            SEQ_STATUS = STATUS_PLAYING;
+            __atomic_store_n( &XA_SEQ_STATUS, (u32) STATUS_PLAYING, __ATOMIC_RELEASE );
             returnMessage ret;
             ret.m_count     = 1;
             ret.m_data[ 0 ] = returnMessage::MSG_SEQUENCE_UNFADED;
@@ -246,16 +263,24 @@ namespace SOUND::SSEQ {
     }
 
     void stopSequence( ) {
-        SEQ_BPM = 0; // stop sound_timer
+        __atomic_store_n( &XA_SEQ_BPM, 0, __ATOMIC_RELEASE ); // stop sound_timer
 
         for( u8 i = 0; i < NUM_CHANNEL; ++i ) { // stop p_note
             adsrState* chstat = ADSR_CHANNEL + i;
+            // LOCKED channels are hardware-driven one-shot samples;
+            // they are intentionally NOT stopped here.
             if( chstat->m_state == adsrState::ADSR_LOCKED ) { continue; }
             chstat->m_state  = adsrState::ADSR_NONE;
             chstat->m_count  = 0;
             chstat->m_track  = -1;
             SCHANNEL_CR( i ) = 0;
         }
+
+        // clean up dangling pointers
+        SEQUENCE_DATA = nullptr;
+        SEQUENCE_BANK = nullptr;
+        for( int i = 0; i < 4; ++i ) { SEQUENCE_WAR[ i ] = nullptr; }
+        TRACK_CNT = 0;
 
         setSequenceStatus( STATUS_STOPPED );
     }
@@ -274,30 +299,34 @@ namespace SOUND::SSEQ {
         }
 
         for( u8 i = 0; i < TRACK_CNT; i++ ) {
+            if( TRACKS[ i ].m_trackEnded ) {
+                ended++;
+                continue;
+            }
             trackTick( i );
             if( TRACKS[ i ].m_trackLooped >= 2 ) { looped_twice++; }
-            if( TRACKS[ i ].m_trackEnded > 0 ) { ended++; }
+            if( TRACKS[ i ].m_trackEnded ) { ended++; }
         }
         returnMessage msg;
-        if( !MESSAGE_SEND_FLAG ) {
+        if( !__atomic_load_n( &XA_MESSAGE_SEND_FLAG, __ATOMIC_ACQUIRE ) ) {
             if( looped_twice == TRACK_CNT ) {
-                MESSAGE_SEND_FLAG = 1;
-                msg.m_count       = 1;
-                msg.m_data[ 0 ]   = returnMessage::MSG_SEQUENCE_LOOPED_TWICE;
+                __atomic_store_n( &XA_MESSAGE_SEND_FLAG, 1, __ATOMIC_RELEASE );
+                msg.m_count     = 1;
+                msg.m_data[ 0 ] = returnMessage::MSG_SEQUENCE_LOOPED_TWICE;
                 fifoSendDatamsg( FIFO_RETURN, sizeof( msg ), (u8*) &msg );
                 return;
             }
             if( ended == TRACK_CNT ) {
-                MESSAGE_SEND_FLAG = 1;
-                msg.m_count       = 1;
-                msg.m_data[ 0 ]   = returnMessage::MSG_SEQUENCE_ENDED;
+                __atomic_store_n( &XA_MESSAGE_SEND_FLAG, 1, __ATOMIC_RELEASE );
+                msg.m_count     = 1;
+                msg.m_data[ 0 ] = returnMessage::MSG_SEQUENCE_ENDED;
                 fifoSendDatamsg( FIFO_RETURN, sizeof( msg ), (u8*) &msg );
                 return;
             }
             if( ( looped_twice + ended ) >= TRACK_CNT ) {
-                MESSAGE_SEND_FLAG = 1;
-                msg.m_count       = 1;
-                msg.m_data[ 0 ]   = returnMessage::MSG_SEQUENCE_LOOPED_TWICE;
+                __atomic_store_n( &XA_MESSAGE_SEND_FLAG, 1, __ATOMIC_RELEASE );
+                msg.m_count     = 1;
+                msg.m_data[ 0 ] = returnMessage::MSG_SEQUENCE_LOOPED_TWICE;
                 fifoSendDatamsg( FIFO_RETURN, sizeof( msg ), (u8*) &msg );
                 return;
             }
@@ -306,12 +335,13 @@ namespace SOUND::SSEQ {
 
     int readValue( int* p_pos ) {
         int v = 0;
-        for( ;; ) {
+        for( int i = 0; i < 5; ++i ) {
             int data = SEQ_READ8( *p_pos );
             ( *p_pos )++;
             v = ( v << 7 ) | ( data & 0x7F );
-            if( !( data & 0x80 ) ) break;
+            if( !( data & 0x80 ) ) { return v; }
         }
+        // corrupt stream, try to move on.
         return v;
     }
 
@@ -358,7 +388,13 @@ namespace SOUND::SSEQ {
         p_state->m_sweepPitch += diff >> 16;
 
         if( p_track->m_portatime == 0 ) {
-            p_state->m_sweepLen = ( p_state->m_count * 240 + SEQ_BPM - 1 ) / SEQ_BPM;
+            int seq = __atomic_load_n( &XA_SEQ_BPM, __ATOMIC_ACQUIRE );
+            if( !seq ) [[unlikely]] {
+                p_state->m_sweepLen = ( p_state->m_count * 240 + DEFAULT_BPM - 1 ) / DEFAULT_BPM;
+                __atomic_store_n( &XA_SEQ_BPM, DEFAULT_BPM, __ATOMIC_RELEASE );
+            } else {
+                p_state->m_sweepLen = ( p_state->m_count * 240 + seq - 1 ) / seq;
+            }
         } else {
             u32 sq_time         = p_track->m_portatime * p_track->m_portatime;
             int abs_sp          = p_state->m_sweepPitch;
@@ -367,16 +403,37 @@ namespace SOUND::SSEQ {
         }
     }
 
+    // SSEQ var-byte encoding:  bit 7 = global flag, bits 0-3 = index
+    inline bool varIsGlobal( u8 p_byte ) {
+        return ( p_byte & 0x80 ) != 0;
+    }
+    inline u8 varIndex( u8 p_byte ) {
+        return p_byte & 0x0F;
+    }
+
+    inline s16& varRef( trackState* p_track, u8 p_byte ) {
+        if( varIsGlobal( p_byte ) ) {
+            u8 idx = varIndex( p_byte );
+            if( idx > MAX_GLOB_VAR ) { idx = MAX_GLOB_VAR; }
+            return GLOBAL_VARS[ idx ];
+        }
+        u8 idx = varIndex( p_byte );
+        if( idx >= NUM_VARS ) { idx = NUM_VARS - 1; }
+        return p_track->m_variables[ idx ];
+    }
+
     void trackTick( int p_trackId ) {
-        //        returnMessage msg;
         trackState* track = TRACKS + p_trackId;
+
+        if( track->m_trackEnded ) [[unlikely]] { return; }
 
         if( track->m_count ) {
             track->m_count--;
             if( track->m_count ) { return; }
         }
 
-        bool skipNextCommand = false;
+        static u32 srng            = 0x12345678;
+        bool       skipNextCommand = false;
         while( !track->m_count ) {
             soundCommandType cmd = soundCommandType( SEQ_READ8( track->m_pos ) );
             track->m_pos++;
@@ -389,8 +446,6 @@ namespace SOUND::SSEQ {
             msg.m_data[ 3 ] = SEQ_READ8( track->m_pos + 2 );
             */
             if( cmd < SC_COMMAND_RANGE_START ) {
-                // TODO: implement tie mode
-
                 // p_note-ON
                 u8 vel = SEQ_READ8( track->m_pos );
                 track->m_pos++;
@@ -402,9 +457,16 @@ namespace SOUND::SSEQ {
                 if( track->m_waitmode ) { track->m_count = len; }
 
                 track->m_playInfo.m_vel = vel;
-                int handle = playNote( SEQUENCE_BANK, SEQUENCE_WAR, track->m_patch, cmd,
-                                       track->m_priority, &track->m_playInfo, len, p_trackId );
+                int handle              = playNote( SEQUENCE_BANK, SEQUENCE_WAR, track->m_patch,
+                                                    cmd + track->m_transpose, track->m_priority,
+                                                    &track->m_playInfo, len, p_trackId );
                 if( handle < 0 ) { continue; }
+
+                // tie mode
+                if( track->m_tiemode ) {
+                    ADSR_CHANNEL[ handle ].m_count = 0;
+                    ADSR_CHANNEL[ handle ].m_state = adsrState::ADSR_SUSTAIN;
+                }
             } else
                 switch( cmd ) {
                 default: break;
@@ -444,6 +506,11 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
+                    if( track->m_retpos >= CALLSTACK_SIZE ) [[unlikely]] {
+                        // need to figure out required stack size
+                        track->m_trackEnded = 1;
+                        return;
+                    }
                     int dest                          = SEQ_READ24( track->m_pos );
                     track->m_ret[ track->m_retpos++ ] = track->m_pos + 3;
                     track->m_pos                      = dest;
@@ -455,20 +522,64 @@ namespace SOUND::SSEQ {
                         track->m_pos += 5;
                         continue;
                     }
-                    // TODO
                     // [statusByte] [min16] [max16]
-                    track->m_pos += 5;
+
+                    u8 statusByte = SEQ_READ8( track->m_pos );
+                    track->m_pos++;
+                    s16 lo = SEQ_READ16( track->m_pos );
+                    track->m_pos += 2;
+                    s16 hi = SEQ_READ16( track->m_pos );
+                    track->m_pos += 2;
+
+                    if( hi < lo ) {
+                        s16 tmp = lo;
+                        lo      = hi;
+                        hi      = tmp;
+                    }
+                    u32 range = (u32) ( hi - lo );
+                    if( range == 0 ) { range = 1; }
+
+                    // xorshift32
+                    srng ^= srng << 13;
+                    srng ^= srng >> 17;
+                    srng ^= srng << 5;
+                    s16 rnd = lo + (s16) ( srng % range );
+
+                    // statusByte: 0 = set variable, 1 = set playInfo field
+                    if( statusByte == 0 ) {
+                        // no var index in this opcode; use track's last var( 0 )
+                        track->m_variables[ 0 ] = rnd;
+                    }
                     break;
                 }
                 case SC_PARAMETER_FROM_VARIABLE: {
                     if( skipNextCommand ) [[unlikely]] {
                         skipNextCommand = false;
-                        track->m_pos += 5;
+                        track->m_pos += 4;
                         continue;
                     }
-                    // TODO
-                    // int t = SEQ_READ8( track->m_pos );
-                    track->m_pos += 5;
+
+                    // [statusByte] [varByte] [target16]
+                    u8 statusByte = SEQ_READ8( track->m_pos );
+                    track->m_pos++;
+                    u8 varByte = SEQ_READ8( track->m_pos );
+                    track->m_pos++;
+                    s16 target = SEQ_READ16( track->m_pos );
+                    track->m_pos += 2;
+
+                    s16 srcVal = varRef( track, varByte );
+
+                    if( statusByte == 0 ) {
+                        // write to playInfo field indicated by target
+                        switch( target ) {
+                        case 0: track->m_playInfo.m_vol = (u8) srcVal; break;
+                        case 1: track->m_playInfo.m_vel = (u8) srcVal; break;
+                        case 2: track->m_playInfo.m_expr = (u8) srcVal; break;
+                        case 3: track->m_playInfo.m_pan = (u8) srcVal; break;
+                        default: break;
+                        }
+                        updateSequenceNote( p_trackId, &track->m_playInfo );
+                    }
                     break;
                 }
                 case SC_IF: {
@@ -486,23 +597,16 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    auto shift = SEQ_READ16( track->m_pos );
-                    if( varname <= NUM_VARS ) {
-                        if( shift > 0 ) {
-                            track->m_variables[ varname ] <<= shift;
-                        } else {
-                            track->m_variables[ varname ] >>= shift;
-                        }
-                    } else {
-                        if( shift > 0 ) {
-                            GLOBAL_VARS[ varname - NUM_VARS ] <<= shift;
-                        } else {
-                            GLOBAL_VARS[ varname - NUM_VARS ] >>= shift;
-                        }
-                    }
+                    s16 shift = s16( SEQ_READ16( track->m_pos ) );
                     track->m_pos += 2;
+
+                    if( shift > 0 ) {
+                        varRef( track, varByte ) <<= ( shift > 15 ? 15 : shift );
+                    } else if( shift < 0 ) {
+                        varRef( track, varByte ) >>= ( shift < -15 ? 15 : -shift );
+                    }
                     break;
                 }
                 case SC_SET_VARIABLE: {
@@ -511,13 +615,9 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    u8 varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_variables[ varname ] = SEQ_READ16( track->m_pos );
-                    } else {
-                        GLOBAL_VARS[ varname - NUM_VARS ] = SEQ_READ16( track->m_pos );
-                    }
+                    varRef( track, varByte ) = SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -527,14 +627,9 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-
-                    if( varname <= NUM_VARS ) {
-                        track->m_variables[ varname ] += SEQ_READ16( track->m_pos );
-                    } else {
-                        GLOBAL_VARS[ varname - NUM_VARS ] += SEQ_READ16( track->m_pos );
-                    }
+                    varRef( track, varByte ) += SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -544,14 +639,9 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-
-                    if( varname <= NUM_VARS ) {
-                        track->m_variables[ varname ] -= SEQ_READ16( track->m_pos );
-                    } else {
-                        GLOBAL_VARS[ varname - NUM_VARS ] -= SEQ_READ16( track->m_pos );
-                    }
+                    varRef( track, varByte ) -= SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -561,13 +651,9 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_variables[ varname ] *= SEQ_READ16( track->m_pos );
-                    } else {
-                        GLOBAL_VARS[ varname - NUM_VARS ] *= SEQ_READ16( track->m_pos );
-                    }
+                    varRef( track, varByte ) *= SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -577,16 +663,10 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
                     auto val = SEQ_READ16( track->m_pos );
-                    if( val ) {
-                        if( varname <= NUM_VARS ) {
-                            track->m_variables[ varname ] /= val;
-                        } else {
-                            GLOBAL_VARS[ varname - NUM_VARS ] /= val;
-                        }
-                    }
+                    if( val ) { varRef( track, varByte ) /= val; }
                     track->m_pos += 2;
                     break;
                 }
@@ -596,18 +676,17 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
                     auto bnd = SEQ_READ16( track->m_pos );
-                    auto rnd = 0; // Let's be cheap on randomness
-                    // auto ubnd = bnd > 0 ? bnd : -bnd;
-                    // auto rnd = rand( ) % ubnd;
+                    if( !bnd ) { bnd = 1; }
+                    // xor shift 32
+                    srng ^= srng << 13;
+                    srng ^= srng >> 17;
+                    srng ^= srng << 5;
+                    s16 rnd = (s16) ( ( srng % (u32) ( bnd > 0 ? bnd : -bnd ) ) );
                     if( bnd < 0 ) { rnd = -rnd; }
-                    if( varname <= NUM_VARS ) {
-                        track->m_variables[ varname ] = rnd;
-                    } else {
-                        GLOBAL_VARS[ varname - NUM_VARS ] = rnd;
-                    }
+                    varRef( track, varByte ) = rnd;
                     track->m_pos += 2;
                     break;
                 }
@@ -617,15 +696,10 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_lastConditionTrue
-                            = track->m_variables[ varname ] == SEQ_READ16( track->m_pos );
-                    } else {
-                        track->m_lastConditionTrue
-                            = GLOBAL_VARS[ varname - NUM_VARS ] == SEQ_READ16( track->m_pos );
-                    }
+                    track->m_lastConditionTrue
+                        = varRef( track, varByte ) == SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -635,15 +709,10 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_lastConditionTrue
-                            = track->m_variables[ varname ] >= SEQ_READ16( track->m_pos );
-                    } else {
-                        track->m_lastConditionTrue
-                            = GLOBAL_VARS[ varname - NUM_VARS ] >= SEQ_READ16( track->m_pos );
-                    }
+                    track->m_lastConditionTrue
+                        = varRef( track, varByte ) >= SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -653,15 +722,10 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_lastConditionTrue
-                            = track->m_variables[ varname ] > SEQ_READ16( track->m_pos );
-                    } else {
-                        track->m_lastConditionTrue
-                            = GLOBAL_VARS[ varname - NUM_VARS ] > SEQ_READ16( track->m_pos );
-                    }
+                    track->m_lastConditionTrue
+                        = varRef( track, varByte ) > SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -671,15 +735,10 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_lastConditionTrue
-                            = track->m_variables[ varname ] <= SEQ_READ16( track->m_pos );
-                    } else {
-                        track->m_lastConditionTrue
-                            = GLOBAL_VARS[ varname - NUM_VARS ] <= SEQ_READ16( track->m_pos );
-                    }
+                    track->m_lastConditionTrue
+                        = varRef( track, varByte ) <= SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -689,15 +748,10 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_lastConditionTrue
-                            = track->m_variables[ varname ] < SEQ_READ16( track->m_pos );
-                    } else {
-                        track->m_lastConditionTrue
-                            = GLOBAL_VARS[ varname - NUM_VARS ] < SEQ_READ16( track->m_pos );
-                    }
+                    track->m_lastConditionTrue
+                        = varRef( track, varByte ) < SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -707,15 +761,10 @@ namespace SOUND::SSEQ {
                         track->m_pos += 3;
                         continue;
                     }
-                    auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                    auto varByte = SEQ_READ8( track->m_pos );
                     track->m_pos++;
-                    if( varname <= NUM_VARS ) {
-                        track->m_lastConditionTrue
-                            = track->m_variables[ varname ] != SEQ_READ16( track->m_pos );
-                    } else {
-                        track->m_lastConditionTrue
-                            = GLOBAL_VARS[ varname - NUM_VARS ] != SEQ_READ16( track->m_pos );
-                    }
+                    track->m_lastConditionTrue
+                        = varRef( track, varByte ) != SEQ_READ16( track->m_pos );
                     track->m_pos += 2;
                     break;
                 }
@@ -733,6 +782,10 @@ namespace SOUND::SSEQ {
                     if( skipNextCommand ) [[unlikely]] {
                         skipNextCommand = false;
                         continue;
+                    }
+                    if( !track->m_retpos ) [[unlikely]] {
+                        track->m_trackEnded = 1;
+                        return;
                     }
                     track->m_pos = track->m_ret[ --track->m_retpos ];
                     break;
@@ -765,7 +818,9 @@ namespace SOUND::SSEQ {
                         track->m_pos += 1;
                         continue;
                     }
-                    ADSR_MASTER_VOLUME = SEQ_READ8( track->m_pos );
+
+                    __atomic_store_n( &XA_ADSR_MASTER_VOLUME, SEQ_READ8( track->m_pos ),
+                                      __ATOMIC_RELEASE );
                     track->m_pos++;
                     break;
                 }
@@ -775,7 +830,7 @@ namespace SOUND::SSEQ {
                         track->m_pos += 1;
                         continue;
                     }
-                    track->m_tiemode = SEQ_READ8( track->m_pos );
+                    track->m_transpose = s8( SEQ_READ8( track->m_pos ) );
                     track->m_pos++;
                     break;
                 }
@@ -794,8 +849,8 @@ namespace SOUND::SSEQ {
                 }
                 case SC_PRINT_VAR: {
 #ifdef DESQUID
-                // auto varname = SEQ_READ8( track->m_pos ) & MAX_VAR;
-                // print track->variables[ varname ] to squid eater
+                // auto varByte = SEQ_READ8( track->m_pos ) & MAX_VAR;
+                // print varRef( track, varByte ) to squid eater
 #endif
                     if( skipNextCommand ) [[unlikely]] {
                         skipNextCommand = false;
@@ -979,10 +1034,20 @@ namespace SOUND::SSEQ {
                         skipNextCommand = false;
                         continue;
                     }
-                    int shouldRepeat = 1;
-                    if( track->m_loopcount > 0 ) { shouldRepeat = --track->m_loopcount; }
-                    if( shouldRepeat ) { track->m_pos = track->m_looppos; }
-                    if( shouldRepeat == 1 && track->m_loopcount == 0 ) { track->m_trackLooped++; }
+
+                    if( track->m_loopcount == -1 ) {
+                        // infinite repetitions
+                        track->m_pos = track->m_looppos;
+
+                        track->m_trackLooped++;
+                    } else if( track->m_loopcount > 0 ) {
+                        // finite no of repetitions left
+                        --track->m_loopcount;
+                        track->m_pos = track->m_looppos;
+
+                        // detect if track has looped twice
+                        track->m_trackLooped++;
+                    }
                     break;
                 }
                 case SC_EXPR: {
@@ -1024,13 +1089,13 @@ namespace SOUND::SSEQ {
                         track->m_pos += 2;
                         continue;
                     }
-                    SEQ_BPM = SEQ_READ16( track->m_pos );
+                    u16 bpm = SEQ_READ16( track->m_pos );
+                    __atomic_store_n( &XA_SEQ_BPM, ( !bpm ) ? DEFAULT_BPM : bpm, __ATOMIC_RELEASE );
                     track->m_pos += 2;
                     break;
                 }
                 case SC_END: {
                     track->m_trackEnded = 1;
-                    track->m_pos--;
                     return;
                 }
                 }
