@@ -460,9 +460,18 @@ namespace MAP {
 
     void mapSpriteManager::reorderSprites( bool p_update ) {
         static bool reordering = false;
-
         if( reordering ) { return; }
-        reordering = true;
+        struct guard {
+            bool& flag;
+            explicit guard( bool& p_flag ) : flag( p_flag ) {
+                flag = true;
+            }
+            ~guard( ) {
+                flag = false;
+            }
+            guard( const guard& )            = delete;
+            guard& operator=( const guard& ) = delete;
+        } g( reordering );
 
         for( u8 i = 0; i < MAX_OAM; ++i ) {
             for( u8 j = i + 1; j < MAX_OAM; ++j ) {
@@ -475,7 +484,6 @@ namespace MAP {
         }
 
         if( p_update ) { update( ); }
-        reordering = false;
     }
 
     u8 mapSpriteManager::loadSprite( u16 p_camX, u16 p_camY, u16 p_posX, u16 p_posY, u8 p_posZ,
