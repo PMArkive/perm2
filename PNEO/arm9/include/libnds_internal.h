@@ -41,7 +41,7 @@ typedef struct __TransferRegion {
     struct __bootstub *bootcode;
 } __TransferRegion, *__pTransferRegion;
 
-#define ipc ( (__TransferRegion volatile *) ( 0x02FFF000 ) )
+#define ipc      ( (__TransferRegion volatile *) ( 0x02FFF000 ) )
 #define transfer ( *ipc )
 
 static inline void setTransferInputData( touchPosition *p_touch, u16 p_buttons ) {
@@ -52,6 +52,7 @@ static inline void setTransferInputData( touchPosition *p_touch, u16 p_buttons )
     transfer.touchYpx = p_touch->py;
     transfer.touchZ1  = p_touch->z1;
     transfer.touchZ2  = p_touch->z2;
+    REG_IPC_SYNC;
 }
 static inline __TransferRegion volatile *__transferRegion( ) {
     return &transfer;

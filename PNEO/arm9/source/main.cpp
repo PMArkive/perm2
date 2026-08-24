@@ -88,6 +88,8 @@ bool          RTC_BAD           = false;
 bool          HAD_NEW_GAME      = false;
 bool          RESET_GAME        = false;
 
+static volatile bool RTC_POLL_PENDING = false;
+
 char** ARGV;
 
 bool nitroFSInit( char** p_basepath = nullptr );
@@ -168,58 +170,65 @@ constexpr u8 getMonthBound( u8 p_month, u8 p_year ) {
 }
 
 void vblankIRQ( ) {
-    auto ct      = std::time( nullptr );
-    auto tStruct = std::gmtime( &ct );
     if( ( ++TIME_COUNT % 60 ) == 0 ) {
         if( TIME_COUNT == 120 ) {
-            TIME_COUNT = 0;
-
-            if( RTC_BAD || SAVE::CURRENT_TIME.m_secs == tStruct->tm_sec ) {
-                // RTC is not usable, do it ourselves
-                RTC_BAD = true;
-            }
+            TIME_COUNT       = 0;
+            RTC_POLL_PENDING = true;
         }
-        if( RTC_BAD ) {
-            if( ++SAVE::CURRENT_TIME.m_secs >= 60 ) {
-                SAVE::CURRENT_TIME.m_secs = 0;
-                if( ++SAVE::CURRENT_TIME.m_mins >= 60 ) {
-                    SAVE::CURRENT_TIME.m_mins = 0;
-                    if( ++SAVE::CURRENT_TIME.m_hours >= 24 ) {
-                        SAVE::CURRENT_TIME.m_hours = 0;
-                        if( ++SAVE::CURRENT_DATE.m_day >= getMonthBound(
-                                SAVE::CURRENT_DATE.m_month, SAVE::CURRENT_DATE.m_year ) ) {
-                            SAVE::CURRENT_DATE.m_day = 0;
-                            if( ++SAVE::CURRENT_DATE.m_month >= 12 ) {
-                                SAVE::CURRENT_DATE.m_month = 0;
-                                ++SAVE::CURRENT_DATE.m_year;
-                            }
+        if( IN_GAME ) { SAVE::CURRENT_FILE->increaseTime( ); }
+    }
+
+    if( !ANIMATE_MAP ) { return; }
+    if( IO::LOCATION_TIMER && !--IO::LOCATION_TIMER ) {
+        IO::hideLocation( );
+    } else if( IO::LOCATION_TIMER > 0 && IO::LOCATION_TIMER < 16 ) {
+        IO::hideLocation( IO::LOCATION_TIMER );
+    }
+
+    FRAME_COUNT++;
+    if( ANIMATE_MAP && MAP::curMap ) { MAP::curMap->animateMap( FRAME_COUNT ); }
+}
+
+void pollRTC( ) {
+    if( !RTC_POLL_PENDING ) { return; }
+    RTC_POLL_PENDING = false;
+
+    auto ct      = std::time( nullptr );
+    auto tStruct = std::gmtime( &ct );
+
+    if( tStruct == nullptr ) { return; }
+
+    static u8 prev = 255;
+    if( prev != 255 && tStruct->tm_sec == prev ) { RTC_BAD = true; }
+    prev = tStruct->tm_sec;
+
+    if( RTC_BAD ) {
+        // Advance internal clock manually
+        if( ++SAVE::CURRENT_TIME.m_secs >= 60 ) {
+            SAVE::CURRENT_TIME.m_secs = 0;
+            if( ++SAVE::CURRENT_TIME.m_mins >= 60 ) {
+                SAVE::CURRENT_TIME.m_mins = 0;
+                if( ++SAVE::CURRENT_TIME.m_hours >= 24 ) {
+                    SAVE::CURRENT_TIME.m_hours = 0;
+                    if( ++SAVE::CURRENT_DATE.m_day >= getMonthBound( SAVE::CURRENT_DATE.m_month,
+                                                                     SAVE::CURRENT_DATE.m_year ) ) {
+                        SAVE::CURRENT_DATE.m_day = 0;
+                        if( ++SAVE::CURRENT_DATE.m_month >= 12 ) {
+                            SAVE::CURRENT_DATE.m_month = 0;
+                            ++SAVE::CURRENT_DATE.m_year;
                         }
                     }
                 }
             }
-        } else if( tStruct != nullptr ) {
-            SAVE::CURRENT_TIME.m_hours = tStruct->tm_hour;
-            SAVE::CURRENT_TIME.m_mins  = tStruct->tm_min;
-            SAVE::CURRENT_TIME.m_secs  = tStruct->tm_sec;
-            SAVE::CURRENT_DATE.m_day   = tStruct->tm_mday - 1;
-            SAVE::CURRENT_DATE.m_month = tStruct->tm_mon;
-            SAVE::CURRENT_DATE.m_year  = tStruct->tm_year;
         }
-
-        if( IN_GAME ) { SAVE::CURRENT_FILE->increaseTime( ); }
-    }
-
-    if( !ANIMATE_MAP ) {
-        return;
     } else {
-        if( IO::LOCATION_TIMER && !--IO::LOCATION_TIMER ) {
-            IO::hideLocation( );
-        } else if( IO::LOCATION_TIMER > 0 && IO::LOCATION_TIMER < 16 ) {
-            IO::hideLocation( IO::LOCATION_TIMER );
-        }
+        SAVE::CURRENT_TIME.m_hours = tStruct->tm_hour;
+        SAVE::CURRENT_TIME.m_mins  = tStruct->tm_min;
+        SAVE::CURRENT_TIME.m_secs  = tStruct->tm_sec;
+        SAVE::CURRENT_DATE.m_day   = tStruct->tm_mday - 1;
+        SAVE::CURRENT_DATE.m_month = tStruct->tm_mon;
+        SAVE::CURRENT_DATE.m_year  = tStruct->tm_year;
     }
-    FRAME_COUNT++;
-    if( ANIMATE_MAP && MAP::curMap ) { MAP::curMap->animateMap( FRAME_COUNT ); }
 }
 
 int main( int, char** p_argv ) {
@@ -311,11 +320,12 @@ START:
 
     IN_GAME      = true;
     bool stopped = true;
-    u8   bmp     = false;
+    u8   bmp     = 0;
     cooldown     = COOLDOWN_COUNT;
     u8 heldcnt   = 0;
     loop( ) {
         if( RESET_GAME ) { break; }
+        pollRTC( );
         scanKeys( );
         touchRead( &touch );
         swiWaitForVBlank( );
@@ -441,13 +451,13 @@ START:
                                       SAVE::CURRENT_FILE->m_player.m_movement ) ) {
                 MAP::curMap->allowFollowPokemon( );
                 MAP::curMap->movePlayer( curDir, ( held & KEY_B ) );
-                bmp = false;
+                bmp = 0;
             } else if( !bmp ) {
                 // Play "Bump" sound
                 SOUND::playSoundEffect( SFX_BUMP );
                 swiWaitForVBlank( );
                 MAP::curMap->stopPlayer( curDir );
-                bmp = true;
+                bmp = 1;
             } else if( bmp < 2 ) {
                 swiWaitForVBlank( );
                 swiWaitForVBlank( );
@@ -460,13 +470,12 @@ START:
         if( !stopped ) {
             MAP::curMap->stopPlayer( );
             stopped = true;
-            bmp     = false;
+            bmp     = 0;
             heldcnt = 0;
         }
 
-        // tamatama play cry of wild pkmn
-
-        if( FRAME_COUNT == 72 && rand( ) % 100 < 10 ) {
+        // play cry of wild pkmn from time to time
+        if( FRAME_COUNT == 72 && rand( ) % 100 < 10 && MAP::MAX_PKMN_PER_SLICE ) {
             u8 cr = rand( ) % MAP::MAX_PKMN_PER_SLICE;
             if( MAP::curMap->currentData( ).m_pokemon[ cr ].m_speciesId ) {
                 SOUND::playCry( MAP::curMap->currentData( ).m_pokemon[ cr ].m_speciesId );
@@ -475,7 +484,11 @@ START:
 
         // End
     }
+
+    ANIMATE_MAP = false;
+    swiWaitForVBlank( );
     delete MAP::curMap;
+    MAP::curMap = nullptr;
 
     if( RESET_GAME ) {
         SOUND::stopBGM( );
