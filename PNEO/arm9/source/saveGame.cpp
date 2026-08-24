@@ -122,19 +122,20 @@ namespace SAVE {
 
         // Text
 
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
 
         // "TRAINER'S CARD"
         IO::boldFont->printString( GET_STRING_L( 405, m_options.m_language ), 112, 13, p_bottom,
                                    IO::font::CENTER );
 
         if( achvs < 5 ) {
-            snprintf( buffer, 99, "%s %05hu", GET_STRING_L( 340, m_options.m_language ), m_id );
+            snprintf( buffer.data( ), buffer.size( ), "%s %05hu",
+                      GET_STRING_L( 340, m_options.m_language ), m_id );
         } else {
-            snprintf( buffer, 99, "%05hu", m_id );
+            snprintf( buffer.data( ), buffer.size( ), "%05hu", m_id );
         }
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
-        IO::regularFont->printStringC( buffer, 218, 35, p_bottom, IO::font::RIGHT );
+        IO::regularFont->printStringC( buffer.data( ), 218, 35, p_bottom, IO::font::RIGHT );
 
         IO::regularFont->setColor( IO::BLACK_IDX, 1 );
 
@@ -147,45 +148,48 @@ namespace SAVE {
         if( !p_dummy ) {
             IO::regularFont->printString( GET_STRING_L( 407, m_options.m_language ), 108, 68,
                                           p_bottom );
-            snprintf( buffer, 99, "%hu:%02hhu", m_playTime.m_hours, m_playTime.m_mins );
-            IO::regularFont->printString( buffer, 234, 68, p_bottom, IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), "%hu:%02hhu", m_playTime.m_hours,
+                      m_playTime.m_mins );
+            IO::regularFont->printString( buffer.data( ), 234, 68, p_bottom, IO::font::RIGHT );
 
             // Money
             IO::regularFont->printString( GET_STRING_L( 408, m_options.m_language ), 108, 84,
                                           p_bottom );
-            snprintf( buffer, 99, "$%lu", m_money );
-            IO::regularFont->printString( buffer, 234, 84, p_bottom, IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), "$%lu", m_money );
+            IO::regularFont->printString( buffer.data( ), 234, 84, p_bottom, IO::font::RIGHT );
 
             if( checkFlag( F_DEX_OBTAINED ) ) {
                 // PokeDex
                 IO::regularFont->printString( GET_STRING_L( 409, m_options.m_language ), 108, 100,
                                               p_bottom );
-                snprintf( buffer, 99, "%hu/%hu", getSeenCount( ), getCaughtCount( ) );
-                IO::regularFont->printString( buffer, 234, 100, p_bottom, IO::font::RIGHT );
+                snprintf( buffer.data( ), buffer.size( ), "%hu/%hu", getSeenCount( ),
+                          getCaughtCount( ) );
+                IO::regularFont->printString( buffer.data( ), 234, 100, p_bottom, IO::font::RIGHT );
             }
 
             // Last Badge / Hall of Fame.
             if( m_lastAchievementEvent ) {
-                snprintf( buffer, 99,
+                snprintf( buffer.data( ), buffer.size( ),
                           FS::getAchievement( m_lastAchievementEvent, m_options.m_language ),
                           IO::formatDate( m_lastAchievementDate, m_options.m_language ).c_str( ) );
-                IO::regularFont->printStringC( buffer, 242, 116, p_bottom, IO::font::RIGHT );
+                IO::regularFont->printStringC( buffer.data( ), 242, 116, p_bottom,
+                                               IO::font::RIGHT );
             }
 
             // Last save
             if( m_lastSaveLocation ) {
-                snprintf( buffer, 99, GET_STRING_L( 411, m_options.m_language ),
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING_L( 411, m_options.m_language ),
                           FS::getLocation( m_lastSaveLocation, m_options.m_language ).c_str( ),
                           IO::formatDate( m_lastSaveDate, m_options.m_language ).c_str( ),
                           m_lastSaveTime.m_hours, m_lastSaveTime.m_mins );
-                IO::regularFont->printBreakingStringC( buffer, 242, 132, 230, p_bottom,
+                IO::regularFont->printBreakingStringC( buffer.data( ), 242, 132, 230, p_bottom,
                                                        IO::font::RIGHT );
             }
 
             // Adventure started
-            snprintf( buffer, 99, GET_STRING_L( 410, m_options.m_language ),
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING_L( 410, m_options.m_language ),
                       IO::formatDate( m_startDate, m_options.m_language ).c_str( ) );
-            IO::regularFont->printStringC( buffer, 242, 164, p_bottom, IO::font::RIGHT );
+            IO::regularFont->printStringC( buffer.data( ), 242, 164, p_bottom, IO::font::RIGHT );
         }
         IO::updateOAM( p_bottom );
         IO::fadeScreen( IO::UNFADE_IMMEDIATE, true, true );

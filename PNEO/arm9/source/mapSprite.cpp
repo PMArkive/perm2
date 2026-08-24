@@ -101,10 +101,10 @@ namespace MAP {
         std::memcpy( m_palData, &BG_PALETTE[ 16 * p_bgPalIdx ], 16 * sizeof( u16 ) );
     }
 
-    char buf[ 100 ];
     mapSpriteData::mapSpriteData( u16 p_imageId, u8 p_forme, bool p_shiny, bool p_female ) {
-        FILE* f  = nullptr;
-        bool  cl = true;
+        std::array<char, 100> buf{ };
+        FILE*                 f  = nullptr;
+        bool                  cl = true;
         if( p_imageId > PKMN_SPRITE ) {
             u16  species = p_imageId - PKMN_SPRITE;
             u8   forme   = p_forme;
@@ -112,20 +112,18 @@ namespace MAP {
             bool female  = p_female;
 
             if( !forme ) {
-                // snprintf( buf, 99, "%d/%hu%s%s", species / ITEMS_PER_DIR, species,
-                //          female ? "f" : "", shiny ? "s" : "" );
                 f  = FS::openNPCPBank( species, shiny, female );
                 cl = false;
             } else {
-                snprintf( buf, 99, "%d/%hu_%hhu%s%s", species / ITEMS_PER_DIR, species, forme,
-                          female ? "f" : "", shiny ? "s" : "" );
-                f = FS::open( IO::OWP_PATH, buf, ".rsd" );
+                snprintf( buf.data( ), buf.size( ), "%d/%hu_%hhu%s%s", species / ITEMS_PER_DIR,
+                          species, forme, female ? "f" : "", shiny ? "s" : "" );
+                f = FS::open( IO::OWP_PATH, buf.data( ), ".rsd" );
             }
 
 #ifdef DESQUID_MORE
             if( !f ) {
-                printf( "sf %s %hu\n", buf, p_imageId );
-                IO::printMessage( std::string( "Sprite failed: " ) + buf );
+                printf( "sf %s %hu\n", buf.data( ), p_imageId );
+                IO::printMessage( std::string( "Sprite failed: " ) + buf.data( ) );
             }
 #endif
         } else if( p_imageId < 250 ) {
@@ -465,9 +463,6 @@ namespace MAP {
 
         if( reordering ) { return; }
         reordering = true;
-
-        // sort things via insertion sort; there are only few elements so it should be fast
-        // enough
 
         for( u8 i = 0; i < MAX_OAM; ++i ) {
             for( u8 j = i + 1; j < MAX_OAM; ++j ) {
@@ -832,7 +827,10 @@ namespace MAP {
         }
         translateSprite( SPR_DOOR_OAM, dx, dy, false );
 
-        reorderSprites( false );
+        if( _reorderDirty ) {
+            reorderSprites( false );
+            _reorderDirty = false;
+        }
         update( );
     }
 
@@ -883,8 +881,14 @@ namespace MAP {
                 IO::OamTop->oamBuffer[ SPR_REFLECTION( p_spriteId ) ].y += p_dy;
             }
         }
-        reorderSprites( false );
-        if( p_update ) { update( ); }
+        _reorderDirty = true;
+        if( p_update ) {
+            if( _reorderDirty ) {
+                reorderSprites( false );
+                _reorderDirty = false;
+            }
+            update( );
+        }
     }
 
     void mapSpriteManager::translateSprite( u8 p_spriteId, s8 p_dx, s8 p_dy, bool p_update ) {
@@ -937,8 +941,14 @@ namespace MAP {
                     .c_str( ) );
 #endif
         }
-
-        if( p_update ) { update( ); }
+        _reorderDirty = true;
+        if( p_update ) {
+            if( _reorderDirty ) {
+                reorderSprites( false );
+                _reorderDirty = false;
+            }
+            update( );
+        }
     }
 
     ObjPriority mapSpriteManager::getPriority( u8 p_spriteId ) const {

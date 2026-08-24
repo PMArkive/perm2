@@ -229,7 +229,7 @@ namespace BAG {
                    && p_data->m_effect == 2;
         }
 
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         if( ( p_data->m_itemType & 15 ) == ITEMTYPE_MEDICINE
             || p_data->m_itemType == ITEMTYPE_FORMECHANGE ) {
 
@@ -252,9 +252,9 @@ namespace BAG {
                     }
                     return 0;
                 } ) ) {
-                snprintf( buffer, 99, GET_STRING( IO::STR_UI_BAG_ITEM_USED ),
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_BAG_ITEM_USED ),
                           FS::getItemName( p_itemId ).c_str( ) );
-                _bagUI->printMessage( buffer );
+                _bagUI->printMessage( buffer.data( ) );
                 waitForInteract( );
 
                 auto lstBg = SAVE::CURRENT_FILE->m_lstBag;
@@ -322,11 +322,11 @@ namespace BAG {
         if( p_pokemon.isEgg( ) ) { return false; }
 
         if( p_pokemon.getItem( ) ) {
-            IO::yesNoBox yn;
-            char         buffer[ 100 ];
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_BAG_PKMN_CARRIES_ITEM ),
-                      p_pokemon.m_boxdata.m_name );
-            if( yn.getResult( [ & ]( ) { return _bagUI->printYNMessage( buffer, 254 ); },
+            IO::yesNoBox          yn;
+            std::array<char, 100> buffer{ };
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_BAG_PKMN_CARRIES_ITEM ), p_pokemon.m_boxdata.m_name );
+            if( yn.getResult( [ & ]( ) { return _bagUI->printYNMessage( buffer.data( ), 254 ); },
                               [ & ]( IO::yesNoBox::selection p_sel ) {
                                   _bagUI->printYNMessage( 0, p_sel == IO::yesNoBox::NO );
                               } )
@@ -373,20 +373,20 @@ namespace BAG {
             }
         }
 
-        IO::yesNoBox yn;
-        char         buffer[ 100 ];
-        snprintf( buffer, 99, GET_STRING( IO::STR_UI_BAG_CHOOSE_ITEM ),
+        IO::yesNoBox          yn;
+        std::array<char, 100> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_BAG_CHOOSE_ITEM ),
                   FS::getItemName( p_targetItem ).c_str( ) );
 
         if( _context == MOCK_BATTLE ) {
             // Just wait a couple of frames and return
-            _bagUI->printYNMessage( buffer, 254 );
+            _bagUI->printYNMessage( buffer.data( ), 254 );
             _bagUI->printYNMessage( 0, false );
             for( u8 i = 0; i < 60; ++i ) { swiWaitForVBlank( ); }
             return true;
         }
 
-        if( yn.getResult( [ & ]( ) { return _bagUI->printYNMessage( buffer, 254 ); },
+        if( yn.getResult( [ & ]( ) { return _bagUI->printYNMessage( buffer.data( ), 254 ); },
                           [ & ]( IO::yesNoBox::selection p_sel ) {
                               _bagUI->printYNMessage( 0, p_sel == IO::yesNoBox::NO );
                           } )
@@ -637,7 +637,7 @@ namespace BAG {
         auto curBag     = SAVE::CURRENT_FILE->m_lstBag;
         auto curBagSize = SAVE::CURRENT_FILE->m_bag.size( (bag::bagType) curBag );
 
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
 
         switch( p_choice ) {
         case SELL: {
@@ -679,10 +679,11 @@ namespace BAG {
             }
 
             u32 sellprice = cnt * idata.m_sellPrice;
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_BAG_WILL_BUY_ITEM_FOR ), sellprice );
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_BAG_WILL_BUY_ITEM_FOR ), sellprice );
 
             IO::yesNoBox yn;
-            if( yn.getResult( [ & ]( ) { return _bagUI->printYNMessage( buffer, 254 ); },
+            if( yn.getResult( [ & ]( ) { return _bagUI->printYNMessage( buffer.data( ), 254 ); },
                               [ & ]( IO::yesNoBox::selection p_sel ) {
                                   _bagUI->printYNMessage( 0, p_sel == IO::yesNoBox::NO );
                               } )

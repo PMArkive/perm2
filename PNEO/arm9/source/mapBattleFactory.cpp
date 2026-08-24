@@ -642,10 +642,10 @@ namespace MAP {
             } else {
                 // hand out bp
                 printMapMessage( GET_MAP_STRING( 872 ), MSG_NORMAL );
-                char buffer[ 100 ];
-                snprintf( buffer, 99, GET_MAP_STRING( 873 ), resultBP );
+                std::array<char, 100> buffer{ };
+                snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 873 ), resultBP );
                 SOUND::playSoundEffect( SFX_OBTAIN_ITEM );
-                printMapMessage( buffer, MSG_INFO );
+                printMapMessage( buffer.data( ), MSG_INFO );
                 SAVE::CURRENT_FILE->m_battlePoints
                     = std::min( u16( -1 ), u16( SAVE::CURRENT_FILE->m_battlePoints + resultBP ) );
             }

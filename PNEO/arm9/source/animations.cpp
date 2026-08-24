@@ -172,10 +172,10 @@ namespace IO::ANIM {
         setFrameVis( 1, true );
         updateOAM( false );
 
-        char buffer[ 200 ];
-        snprintf( buffer, 200, GET_STRING( STR_ANIM_EVOLUTION_START ),
+        std::array<char, 200> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( STR_ANIM_EVOLUTION_START ),
                   FS::getDisplayName( p_startSpecies ).c_str( ) );
-        IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
+        IO::regularFont->printStringC( buffer.data( ), 12, 192 - 40, false );
 
         SOUND::playBGM( BGM_EVOLVING );
         // Main Animation
@@ -247,10 +247,10 @@ namespace IO::ANIM {
             SOUND::playCry( p_endSpecies );
             for( u8 i = 0; i < 50; ++i ) { swiWaitForVBlank( ); }
             IO::printRectangle( 0, 192 - 42, 255, 192, false, 0 );
-            snprintf( buffer, 200, GET_STRING( STR_ANIM_EVOLUTION_COMPLETE ),
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( STR_ANIM_EVOLUTION_COMPLETE ),
                       FS::getDisplayName( p_startSpecies ).c_str( ),
                       FS::getDisplayName( p_endSpecies ).c_str( ) );
-            IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
+            IO::regularFont->printStringC( buffer.data( ), 12, 192 - 40, false );
             waitForInteract( );
             SOUND::restartBGM( );
             SAVE::CURRENT_FILE->registerCaughtPkmn( p_endSpecies );
@@ -260,7 +260,7 @@ namespace IO::ANIM {
 
     void tradePkmn( const boxPokemon& p_ownToOther, const boxPokemon& p_otherToMe,
                     const char* p_otherName ) {
-        char buffer[ 200 ];
+        std::array<char, 200> buffer{ };
         vramSetup( );
         swiWaitForVBlank( );
         clearScreen( true, true, true );
@@ -365,17 +365,18 @@ namespace IO::ANIM {
         tileCnt = loadPKMNSprite( pinfoS, PKMN_X, PKMN_Y, 0, 0, tileCnt, false );
         updateOAM( false );
 
-        snprintf( buffer, 199, GET_STRING( STR_ANIM_TRADE_SEND1 ), p_ownToOther.m_name,
-                  p_otherName );
-        IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( STR_ANIM_TRADE_SEND1 ),
+                  p_ownToOther.m_name, p_otherName );
+        IO::regularFont->printStringC( buffer.data( ), 12, 192 - 40, false );
 
         SOUND::playBGM( BGM_EVOLVING );
         for( u8 i = 0; i < 180; ++i ) { swiWaitForVBlank( ); }
 
         SOUND::playCry( p_ownToOther.getSpecies( ) );
         IO::printRectangle( 0, 192 - 42, 255, 192, false, 0 );
-        snprintf( buffer, 199, GET_STRING( STR_ANIM_TRADE_SEND2 ), p_ownToOther.m_name );
-        IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( STR_ANIM_TRADE_SEND2 ),
+                  p_ownToOther.m_name );
+        IO::regularFont->printStringC( buffer.data( ), 12, 192 - 40, false );
         for( u8 i = 0; i < 50; ++i ) { swiWaitForVBlank( ); }
 
         IO::printRectangle( 0, 192 - 42, 255, 192, false, 0 );
@@ -518,14 +519,15 @@ namespace IO::ANIM {
         SOUND::playCry( p_otherToMe.getSpecies( ) );
 
         IO::printRectangle( 0, 192 - 42, 255, 192, false, 0 );
-        snprintf( buffer, 199, GET_STRING( STR_ANIM_TRADE_RECV1 ), p_otherName,
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( STR_ANIM_TRADE_RECV1 ), p_otherName,
                   p_otherToMe.m_name );
-        IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
+        IO::regularFont->printStringC( buffer.data( ), 12, 192 - 40, false );
         for( u8 i = 0; i < 150; ++i ) { swiWaitForVBlank( ); }
 
         IO::printRectangle( 0, 192 - 42, 255, 192, false, 0 );
-        snprintf( buffer, 199, GET_STRING( STR_ANIM_TRADE_RECV2 ), p_otherToMe.m_name );
-        IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( STR_ANIM_TRADE_RECV2 ),
+                  p_otherToMe.m_name );
+        IO::regularFont->printStringC( buffer.data( ), 12, 192 - 40, false );
         for( u8 i = 0; i < 150; ++i ) { swiWaitForVBlank( ); }
         SOUND::restartBGM( );
         SAVE::CURRENT_FILE->registerCaughtPkmn( p_otherToMe.getSpecies( ) );
@@ -586,11 +588,11 @@ namespace IO::ANIM {
         IO::fadeScreen( IO::fadeType::UNFADE, true, true );
 
         SOUND::playBGMOneshot( BGM_OS_EVOLVED );
-        char buffer[ 200 ];
+        std::array<char, 200> buffer{ };
         clearScreen( true, true, true );
-        snprintf( buffer, 200, GET_STRING( STR_ANIM_EGG_HATCH ),
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( STR_ANIM_EGG_HATCH ),
                   FS::getDisplayName( p_pkmn.m_pkmnIdx ).c_str( ) );
-        regularFont->printStringC( buffer, 127, 136, false, font::CENTER );
+        regularFont->printStringC( buffer.data( ), 127, 136, false, font::CENTER );
         setFrameVis( 0, true );
         setFrameVis( 1, false );
         updateOAM( false );

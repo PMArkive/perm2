@@ -549,6 +549,16 @@ namespace SOUND::SSEQ {
                     if( statusByte == 0 ) {
                         // no var index in this opcode; use track's last var( 0 )
                         track->m_variables[ 0 ] = rnd;
+                    } else {
+                        u8 field = varIndex( track->m_variables[ 0 ] & 0x0F );
+                        switch( field ) {
+                        case 0: track->m_playInfo.m_vol = (u8) rnd; break;
+                        case 1: track->m_playInfo.m_vel = (u8) rnd; break;
+                        case 2: track->m_playInfo.m_expr = (u8) rnd; break;
+                        case 3: track->m_playInfo.m_pan = (u8) rnd; break;
+                        default: break;
+                        }
+                        updateSequenceNote( p_trackId, &track->m_playInfo );
                     }
                     break;
                 }
@@ -569,6 +579,7 @@ namespace SOUND::SSEQ {
 
                     s16 srcVal = varRef( track, varByte );
 
+                    // TODO: other statusByte values?
                     if( statusByte == 0 ) {
                         // write to playInfo field indicated by target
                         switch( target ) {

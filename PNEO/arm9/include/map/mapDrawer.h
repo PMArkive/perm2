@@ -232,6 +232,10 @@ namespace MAP {
         static constexpr u8 WARP_TO_LAST_ENTRY     = 0xFF;
         static constexpr u8 PIKACHU_IS_MIMIKYU_MOD = 0xFF;
 
+        static constexpr u8 MAP_LAYER_TOP     = 1;
+        static constexpr u8 MAP_LAYER_TOP_ALT = 2;
+        static constexpr u8 MAP_LAYER_BOTTOM  = 3;
+
         FILE* _currentBank = nullptr;
         FILE* _tileset     = nullptr;
         void  loadNewBank( u8 p_bank );
@@ -242,15 +246,15 @@ namespace MAP {
         direction   _lastPlayerMove     = DOWN;
         direction   _lastFollowPkmnMove = DOWN;
 
-        mapSlice _slices[ 2 ][ 2 ]; //[x][y]
-        u8       _curX, _curY;      // Current main slice from the _slices array
+        mapSlice _slices[ 2 ][ 2 ];    //[x][y]
+        u8       _curX = 0, _curY = 0; // Current main slice from the _slices array
 #define CUR_SLICE _slices[ _curX ][ _curY ]
 
         s8   _weatherScrollX = 0;
         s8   _weatherScrollY = 0;
         bool _weatherFollow  = false;
 
-        bool _scriptRunning; // true while a map script is running.
+        bool _scriptRunning = false; // true while a map script is running.
 
         mapData _data[ 2 ][ 2 ];
 
@@ -308,15 +312,15 @@ namespace MAP {
         bool      _followPkmnIsDisguised    = false;
         bool      _followPkmnDisguiseBusted = false;
 
-        bool _strengthUsed; // Player has used HM Strength and can move boulders
+        bool _strengthUsed = false; // Player has used HM Strength and can move boulders
 
-        u16 _lastrow, // Row to be filled when extending the map to the top
-            _lastcol; // Column to be filled when extending the map to the left
+        u16 _lastrow = 0, // Row to be filled when extending the map to the top
+            _lastcol = 0; // Column to be filled when extending the map to the left
 
-        u16 _cx, _cy; // Cameras's pos
+        u16 _cx = 0, _cy = 0; // Cameras's pos
 
         bool _playerIsFast = false;
-        s8   _fastBike     = false;
+        s8   _fastBike     = 0;
 
         // set of (globx, globy) positions of mapObjects that the player destroyed.
         // gets reset whenever a new map bank is loaded

@@ -414,19 +414,21 @@ namespace IO {
         auto cnt  = std::min( p_amount, SAVE::CURRENT_FILE->m_bag.count(
                                             BAG::toBagType( data.m_itemType ), p_itemId ) );
         SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( data.m_itemType ), p_itemId, cnt );
-        char buffer[ 100 ];
-        auto iname = FS::getItemName( p_itemId );
+        std::array<char, 100> buffer{ };
+        auto                  iname = FS::getItemName( p_itemId );
 
         if( data.m_itemType == BAG::ITEMTYPE_TM ) {
             iname += " " + FS::getMoveName( data.m_param2 );
         }
 
         if( cnt > 1 ) {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_USED_ITEM_X_TIMES ), cnt, iname.c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_USED_ITEM_X_TIMES ),
+                      cnt, iname.c_str( ) );
         } else {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_USED_ITEM ), iname.c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_USED_ITEM ),
+                      iname.c_str( ) );
         }
-        doPrintMessage( buffer, MSG_ITEM, p_itemId, &data );
+        doPrintMessage( buffer.data( ), MSG_ITEM, p_itemId, &data );
         waitForInteract( );
         hideMessageBox( );
     }
@@ -436,20 +438,21 @@ namespace IO {
         auto cnt  = std::min( p_amount, SAVE::CURRENT_FILE->m_bag.count(
                                             BAG::toBagType( data.m_itemType ), p_itemId ) );
         SAVE::CURRENT_FILE->m_bag.erase( BAG::toBagType( data.m_itemType ), p_itemId, cnt );
-        char buffer[ 100 ];
-        auto iname = FS::getItemName( p_itemId );
+        std::array<char, 100> buffer{ };
+        auto                  iname = FS::getItemName( p_itemId );
 
         if( data.m_itemType == BAG::ITEMTYPE_TM ) {
             iname += " " + FS::getMoveName( data.m_param2 );
         }
 
         if( cnt > 1 ) {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_HANDED_OVER_ITEM_X_TIMES ), cnt,
-                      iname.c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_HANDED_OVER_ITEM_X_TIMES ), cnt, iname.c_str( ) );
         } else {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_HANDED_OVER_ITEM ), iname.c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_HANDED_OVER_ITEM ),
+                      iname.c_str( ) );
         }
-        doPrintMessage( buffer, MSG_ITEM, p_itemId, &data );
+        doPrintMessage( buffer.data( ), MSG_ITEM, p_itemId, &data );
         waitForInteract( );
         hideMessageBox( );
     }
@@ -457,8 +460,8 @@ namespace IO {
     void giveItemToPlayer( u16 p_itemId, u16 p_amount ) {
         auto data = FS::getItemData( p_itemId );
         SAVE::CURRENT_FILE->m_bag.insert( BAG::toBagType( data.m_itemType ), p_itemId, p_amount );
-        char buffer[ 100 ];
-        auto iname = FS::getItemName( p_itemId );
+        std::array<char, 100> buffer{ };
+        auto                  iname = FS::getItemName( p_itemId );
 
         if( data.m_itemType == BAG::ITEMTYPE_TM ) {
             iname += " " + FS::getMoveName( data.m_param2 );
@@ -469,26 +472,27 @@ namespace IO {
         }
 
         if( p_amount > 1 ) {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_OBTAINED_ITEM_X_TIMES ), p_amount,
-                      iname.c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_OBTAINED_ITEM_X_TIMES ), p_amount, iname.c_str( ) );
         } else {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_OBTAINED_ITEM ), iname.c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_OBTAINED_ITEM ),
+                      iname.c_str( ) );
         }
         switch( data.m_itemType ) {
         case BAG::ITEMTYPE_KEYITEM: SOUND::playSoundEffect( SFX_OBTAIN_KEY_ITEM ); break;
         case BAG::ITEMTYPE_TM: SOUND::playSoundEffect( SFX_OBTAIN_TM ); break;
         default: SOUND::playSoundEffect( SFX_OBTAIN_ITEM ); break;
         }
-        doPrintMessage( buffer, MSG_ITEM, p_itemId, &data );
+        doPrintMessage( buffer.data( ), MSG_ITEM, p_itemId, &data );
         waitForInteract( );
         auto fmt = std::string( GET_STRING( IO::STR_UI_PUT_ITEM_INTO_BAG ) );
         snprintf(
-            buffer, 99, fmt.c_str( ), iname.c_str( ), BAG::getItemChar( data.m_itemType ),
+            buffer.data( ), 99, fmt.c_str( ), iname.c_str( ), BAG::getItemChar( data.m_itemType ),
             GET_STRING( IO::STR_UI_BAG_PAGE_NAME_START + BAG::toBagType( data.m_itemType ) ) );
         std::memset( TEXT_BUF, 0, sizeof( TEXT_BUF ) );
         std::memset( TEXT_CACHE_1, 0, sizeof( TEXT_CACHE_1 ) );
         std::memset( TEXT_CACHE_2, 0, sizeof( TEXT_CACHE_2 ) );
-        doPrintMessage( buffer, MSG_ITEM, p_itemId, &data );
+        doPrintMessage( buffer.data( ), MSG_ITEM, p_itemId, &data );
         waitForInteract( );
         hideMessageBox( );
     }

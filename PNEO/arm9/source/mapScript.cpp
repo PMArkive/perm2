@@ -96,7 +96,7 @@ namespace MAP {
         u16              choiceBoxMessage = 0;
         u8               choiceBoxMsgType = 0;
 
-        char buffer[ 200 ] = { 0 };
+        std::array<char, 200> buffer{ };
 
         u8   pmartCurr = 0;
         bool martSell  = true;
@@ -827,19 +827,21 @@ namespace MAP {
 
                 // Player obtained <pkmn>
 
-                snprintf( buffer, 199, GET_STRING( 814 ), SAVE::CURRENT_FILE->m_playername,
-                          giftPkmn.m_boxdata.m_name );
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( 814 ),
+                          SAVE::CURRENT_FILE->m_playername, giftPkmn.m_boxdata.m_name );
 
                 SOUND::playSoundEffect( SFX_CAPTURE_SUCCESSFUL );
-                printMapMessage( buffer, MSG_INFO );
+                printMapMessage( buffer.data( ), MSG_INFO );
 
                 // would you like to nickname <pkmn>?
 
                 IO::yesNoBox yn;
-                snprintf( buffer, 199, GET_STRING( 141 ), giftPkmn.m_boxdata.m_name );
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( 141 ),
+                          giftPkmn.m_boxdata.m_name );
                 if( IO::yesNoBox::YES
                     == IO::yesNoBox( ).getResult(
-                        convertMapString( buffer, MSG_INFO_NOCLOSE ).c_str( ), MSG_INFO ) ) {
+                        convertMapString( buffer.data( ), MSG_INFO_NOCLOSE ).c_str( ),
+                        MSG_INFO ) ) {
                     ANIMATE_MAP = false;
                     IO::init( );
                     IO::keyboard kbd;
@@ -864,26 +866,30 @@ namespace MAP {
                     u8 oldbx = SAVE::CURRENT_FILE->m_curBox;
                     u8 nb    = SAVE::CURRENT_FILE->storePkmn( giftPkmn );
                     if( nb != u8( -1 ) ) {
-                        snprintf( buffer, 199, GET_STRING( IO::STR_UI_PKMN_SENT_TO_STORAGE ),
+                        snprintf( buffer.data( ), buffer.size( ),
+                                  GET_STRING( IO::STR_UI_PKMN_SENT_TO_STORAGE ),
                                   giftPkmn.m_boxdata.m_name );
-                        printMapMessage( buffer, MSG_INFO );
+                        printMapMessage( buffer.data( ), MSG_INFO );
 
                         if( oldbx != nb ) {
-                            snprintf( buffer, 199, GET_STRING( IO::STR_UI_STORAGE_BOX_FULL ),
+                            snprintf( buffer.data( ), buffer.size( ),
+                                      GET_STRING( IO::STR_UI_STORAGE_BOX_FULL ),
                                       SAVE::CURRENT_FILE->m_storedPokemon[ oldbx ].m_name );
-                            printMapMessage( buffer, MSG_INFO );
+                            printMapMessage( buffer.data( ), MSG_INFO );
                         }
-                        snprintf( buffer, 199, GET_STRING( IO::STR_UI_STORAGE_BOX_PICKED ),
+                        snprintf( buffer.data( ), buffer.size( ),
+                                  GET_STRING( IO::STR_UI_STORAGE_BOX_PICKED ),
                                   giftPkmn.m_boxdata.m_name,
                                   SAVE::CURRENT_FILE->m_storedPokemon[ nb ].m_name );
-                        printMapMessage( buffer, MSG_INFO );
+                        printMapMessage( buffer.data( ), MSG_INFO );
                         registers[ 0 ] = 1;
                     } else {
                         printMapMessage( GET_STRING( IO::STR_UI_STORAGE_ALL_BOXES_FULL ),
                                          MSG_INFO );
-                        snprintf( buffer, 199, GET_STRING( IO::STR_UI_PKMN_RELEASED ),
+                        snprintf( buffer.data( ), buffer.size( ),
+                                  GET_STRING( IO::STR_UI_PKMN_RELEASED ),
                                   giftPkmn.m_boxdata.m_name );
-                        printMapMessage( buffer, MSG_INFO );
+                        printMapMessage( buffer.data( ), MSG_INFO );
                         registers[ 0 ] = 0;
                     }
                 }
@@ -1090,8 +1096,9 @@ namespace MAP {
                                         buf2 += "\x04";
                                         if( i % 3 == 2 ) { buf2 += " "; }
                                     }
-                                    snprintf( buffer, 199, GET_STRING( 93 ), buf2.c_str( ) );
-                                    IO::printMessage( buffer, MSG_INFO_NOCLOSE, true );
+                                    snprintf( buffer.data( ), buffer.size( ), GET_STRING( 93 ),
+                                              buf2.c_str( ) );
+                                    IO::printMessage( buffer.data( ), MSG_INFO_NOCLOSE, true );
                                 }
                             } ) ) {
                             IO::printMessage( 0, MSG_INFO_NOCLOSE );

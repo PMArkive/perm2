@@ -67,8 +67,8 @@ namespace MAP {
         // play pkmn cry
         SOUND::playCry( _followPkmnData->getSpecies( ), _followPkmnData->getForme( ) );
 
-        u8   emotion       = 0;
-        char buffer[ 200 ] = { 0 };
+        u8                             emotion = 0;
+        std::array<char, PKMNPHRS_LEN> buffer{ };
 
         // first pick a random message type out of:
         //
@@ -116,7 +116,7 @@ namespace MAP {
             default: break;
             }
             if( msg ) {
-                snprintf( buffer, PKMNPHRS_LEN, FS::getPkmnPhrase( msg ),
+                snprintf( buffer.data( ), buffer.size( ), FS::getPkmnPhrase( msg ),
                           _followPkmnData->m_boxdata.m_name );
                 break;
             }
@@ -129,7 +129,7 @@ namespace MAP {
             emotion = rand( ) % 12;
             while( emotion == 10 ) { emotion = rand( ) % 12; } // ignore poison
             u8 msg = rand( ) % 3;
-            snprintf( buffer, PKMNPHRS_LEN, FS::getPkmnPhrase( 3 * emotion + msg ),
+            snprintf( buffer.data( ), buffer.size( ), FS::getPkmnPhrase( 3 * emotion + msg ),
                       _followPkmnData->m_boxdata.m_name );
             break;
         }
@@ -177,7 +177,7 @@ namespace MAP {
                     msg     = 44;
                 }
             }
-            snprintf( buffer, PKMNPHRS_LEN, FS::getPkmnPhrase( msg ),
+            snprintf( buffer.data( ), buffer.size( ), FS::getPkmnPhrase( msg ),
                       _followPkmnData->m_boxdata.m_name );
             break;
         }
@@ -203,7 +203,7 @@ namespace MAP {
                 emotion = 6;
                 msg     = 49;
             }
-            snprintf( buffer, PKMNPHRS_LEN, FS::getPkmnPhrase( msg ),
+            snprintf( buffer.data( ), buffer.size( ), FS::getPkmnPhrase( msg ),
                       _followPkmnData->m_boxdata.m_name );
             break;
         }
@@ -219,7 +219,7 @@ namespace MAP {
         }
 
         // print message
-        printMapMessage( buffer, style( 0 ) );
+        printMapMessage( buffer.data( ), style( 0 ) );
     }
 
     void mapDrawer::interact( ) {

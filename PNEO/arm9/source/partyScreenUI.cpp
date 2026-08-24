@@ -659,16 +659,17 @@ namespace STS {
 
                 IO::smallFont->printString( "!", anchor_x + 5, anchor_y + 33, false );
 
-                char buffer[ 10 ];
-                snprintf( buffer, 8, "%d", _team[ p_pos ].m_level );
+                std::array<char, 10> buffer{ };
+                snprintf( buffer.data( ), buffer.size( ), "%d", _team[ p_pos ].m_level );
 
-                IO::smallFont->printString( buffer, anchor_x + 14, anchor_y + 32, false );
+                IO::smallFont->printString( buffer.data( ), anchor_x + 14, anchor_y + 32, false );
 
-                snprintf( buffer, 8, "%3d", _team[ p_pos ].m_stats.m_curHP );
-                IO::smallFont->printString( buffer, anchor_x + 116 - 32 - 24, anchor_y + 32,
+                snprintf( buffer.data( ), buffer.size( ), "%3d", _team[ p_pos ].m_stats.m_curHP );
+                IO::smallFont->printString( buffer.data( ), anchor_x + 116 - 32 - 24, anchor_y + 32,
                                             false );
-                snprintf( buffer, 8, "/%d", _team[ p_pos ].m_stats.m_maxHP );
-                IO::smallFont->printString( buffer, anchor_x + 116 - 32, anchor_y + 32, false );
+                snprintf( buffer.data( ), buffer.size( ), "/%d", _team[ p_pos ].m_stats.m_maxHP );
+                IO::smallFont->printString( buffer.data( ), anchor_x + 116 - 32, anchor_y + 32,
+                                            false );
 
                 // update sprites
                 oam[ SPR_HP_BAR_OAM( p_pos ) ].isHidden = false;
@@ -744,6 +745,8 @@ namespace STS {
     void partyScreenUI::drawPartyPkmnSub( u8 p_pos, bool p_selected, bool p_redraw,
                                           const char* p_message, bool p_bottom ) {
         SpriteEntry* oam = ( p_bottom ? IO::Oam : IO::OamTop )->oamBuffer;
+
+        std::array<char, 50> buffer{ };
 
         if( p_redraw ) {
             oam[ SPR_ITEM_ICON_OAM_SUB( p_pos ) ].isHidden = true; // item
@@ -831,20 +834,21 @@ namespace STS {
                 if( !_swapping ) {
                     if( !_toSelect ) {
                         auto fmt = std::string( GET_STRING( 57 ) );
-                        snprintf( BUFFER, 49, fmt.c_str( ),
+                        snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
                                   _team[ p_pos ].isEgg( ) ? GET_STRING( 34 )
                                                           : _team[ p_pos ].m_boxdata.m_name );
                     } else {
                         if( _toSelect > 1 ) {
-                            snprintf( BUFFER, 49, GET_STRING( 332 ), _toSelect );
+                            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 332 ),
+                                      _toSelect );
                         } else {
-                            snprintf( BUFFER, 49, GET_STRING( 333 ) );
+                            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 333 ) );
                         }
                     }
                 } else {
-                    snprintf( BUFFER, 49, GET_STRING( 166 ) );
+                    snprintf( buffer.data( ), buffer.size( ), GET_STRING( 166 ) );
                 }
-                IO::regularFont->printString( BUFFER, 32, 2, p_bottom );
+                IO::regularFont->printString( buffer.data( ), 32, 2, p_bottom );
             }
         }
 

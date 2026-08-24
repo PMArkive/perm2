@@ -170,9 +170,9 @@ namespace SOUND::SSEQ {
 #define fifoRetValue( p_ch ) fifoGetValue32( p_ch )
 
     static inline u32 fifoGetRetValue( int p_ch ) {
-        // Timeout: ~200 ms at 16.78 MHz (≈ 335 000 iterations)
+        // Timeout: ~20 ms at 16.78 MHz (≈ 33 500 iterations)
         // Prevents infinite hang if ARM7 is unresponsive.
-        u32 timeout = 335000;
+        u32 timeout = 33500;
         while( !fifoCheckValue32( p_ch ) ) {
             if( --timeout == 0 ) { return 0xFFFF; }
         }

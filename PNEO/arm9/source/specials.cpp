@@ -362,14 +362,14 @@ namespace SPX {
                             pkmn[ res ].isFemale( ) );
             IO::printRectangle( 0, 192 - 42, 255, 192, false, 0 );
 
-            char buffer[ 100 ];
+            std::array<char, 100> buffer{ };
             snprintf(
-                buffer, 99, GET_STRING( 437 ),
+                buffer.data( ), 99, GET_STRING( 437 ),
                 FS::getSpeciesName( pkmn[ res ].getSpecies( ), pkmn[ res ].getForme( ) ).c_str( ),
                 pkmn[ res ].m_boxdata.m_name );
 
             IO::printRectangle( 0, 192 - 42, 255, 192, false, 0 );
-            IO::regularFont->printStringC( buffer, 12, 192 - 40, false );
+            IO::regularFont->printStringC( buffer.data( ), 12, 192 - 40, false );
 
             IO::updateOAM( false );
 
@@ -562,7 +562,7 @@ namespace SPX {
 
     constexpr u8 RIBBON_HOENN_CHAMP = 20;
     void         runHallOfFame( ) {
-        char buffer[ 200 ] = { 0 };
+        std::array<char, 200> buffer{ };
         // fade screen
         // set current player position to position home
         ANIMATE_MAP = false;
@@ -618,8 +618,8 @@ namespace SPX {
                         buf2 += "\x04";
                         if( i % 3 == 2 ) { buf2 += " "; }
                     }
-                    snprintf( buffer, 99, GET_STRING( 93 ), buf2.c_str( ) );
-                    IO::printMessage( buffer, MSG_INFO_NOCLOSE, true );
+                    snprintf( buffer.data( ), buffer.size( ), GET_STRING( 93 ), buf2.c_str( ) );
+                    IO::printMessage( buffer.data( ), MSG_INFO_NOCLOSE, true );
                 }
             } ) ) {
             IO::printMessage( 0, MSG_INFO_NOCLOSE );
@@ -686,10 +686,10 @@ namespace MAP {
     }
 
     void mapDrawer::runDayCareLady( u8 p_daycare ) {
-        char        buffer[ 200 ] = { 0 };
-        boxPokemon* dc1           = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 ];
-        boxPokemon* dc2           = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 + 1 ];
-        boxPokemon* dce           = &SAVE::CURRENT_FILE->m_dayCareEgg[ p_daycare ];
+        std::array<char, 200> buffer{ };
+        boxPokemon*           dc1 = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 ];
+        boxPokemon*           dc2 = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 + 1 ];
+        boxPokemon*           dce = &SAVE::CURRENT_FILE->m_dayCareEgg[ p_daycare ];
 
         u8* dcl1 = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 ];
         u8* dcl2 = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 + 1 ];
@@ -720,8 +720,8 @@ namespace MAP {
                 return;
             }
         } else {
-            snprintf( buffer, 199, GET_MAP_STRING( 479 ), dc1->m_name );
-            printMapMessage( buffer, MSG_NORMAL );
+            snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 479 ), dc1->m_name );
+            printMapMessage( buffer.data( ), MSG_NORMAL );
 
             if( !dc2->getSpecies( ) ) {
                 // ask if player wants to deposit a second pkmn
@@ -757,21 +757,25 @@ namespace MAP {
 
                     pokemon pk   = pokemon( dc1[ takeback ] );
                     u32     cost = ( pk.m_level - dcl1[ takeback ] + 1 ) * 100;
-                    snprintf( buffer, 199, GET_MAP_STRING( 488 ), dc1[ takeback ].m_name, cost );
+                    snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 488 ),
+                              dc1[ takeback ].m_name, cost );
 
                     if( IO::yesNoBox::YES
                         == IO::yesNoBox( ).getResult(
-                            convertMapString( buffer, MSG_NORMAL ).c_str( ), MSG_NORMAL ) ) {
+                            convertMapString( buffer.data( ), MSG_NORMAL ).c_str( ),
+                            MSG_NORMAL ) ) {
                         IO::init( );
                         // check if the player has enough money
                         if( SAVE::CURRENT_FILE->m_money >= cost ) {
                             SOUND::playSoundEffect( SFX_BUY_SUCCESSFUL );
                             SAVE::CURRENT_FILE->m_money -= cost;
-                            snprintf( buffer, 199, GET_MAP_STRING( 490 ), dc1[ takeback ].m_name );
-                            printMapMessage( buffer, MSG_NORMAL );
+                            snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 490 ),
+                                      dc1[ takeback ].m_name );
+                            printMapMessage( buffer.data( ), MSG_NORMAL );
 
-                            snprintf( buffer, 199, GET_MAP_STRING( 491 ), dc1[ takeback ].m_name );
-                            printMapMessage( buffer, MSG_INFO );
+                            snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 491 ),
+                                      dc1[ takeback ].m_name );
+                            printMapMessage( buffer.data( ), MSG_INFO );
 
                             SAVE::CURRENT_FILE->setTeamPkmn(
                                 SAVE::CURRENT_FILE->getTeamPkmnCount( ), &pk );
@@ -881,8 +885,9 @@ namespace MAP {
 
                 if( selpkmn == 0 ) { MAP::curMap->removeFollowPkmn( ); }
 
-                snprintf( buffer, 199, GET_MAP_STRING( 486 ), dc1[ depositpkmn - 1 ].m_name );
-                printMapMessage( buffer, MSG_NORMAL );
+                snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 486 ),
+                          dc1[ depositpkmn - 1 ].m_name );
+                printMapMessage( buffer.data( ), MSG_NORMAL );
             } else {
                 break;
             }
@@ -907,10 +912,10 @@ namespace MAP {
     }
 
     void mapDrawer::runDayCareGuy( u8 p_daycare ) {
-        char        buffer[ 200 ] = { 0 };
-        boxPokemon* dc1           = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 ];
-        boxPokemon* dc2           = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 + 1 ];
-        boxPokemon* dce           = &SAVE::CURRENT_FILE->m_dayCareEgg[ p_daycare ];
+        std::array<char, 200> buffer{ };
+        boxPokemon*           dc1 = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 ];
+        boxPokemon*           dc2 = &SAVE::CURRENT_FILE->m_dayCarePkmn[ p_daycare * 2 + 1 ];
+        boxPokemon*           dce = &SAVE::CURRENT_FILE->m_dayCareEgg[ p_daycare ];
 
         u8* dcl1 = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 ];
         u8* dcl2 = &SAVE::CURRENT_FILE->m_dayCareDepositLevel[ p_daycare * 2 + 1 ];
@@ -967,11 +972,12 @@ namespace MAP {
                 return;
             } else {
                 if( !dc2->getSpecies( ) ) {
-                    snprintf( buffer, 199, GET_MAP_STRING( 467 ), dc1->m_name );
-                    printMapMessage( buffer, MSG_NORMAL );
+                    snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 467 ), dc1->m_name );
+                    printMapMessage( buffer.data( ), MSG_NORMAL );
                 } else {
-                    snprintf( buffer, 199, GET_MAP_STRING( 468 ), dc1->m_name, dc2->m_name );
-                    printMapMessage( buffer, MSG_NORMAL );
+                    snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 468 ), dc1->m_name,
+                              dc2->m_name );
+                    printMapMessage( buffer.data( ), MSG_NORMAL );
 
                     u8 comp = dc1->getCompatibility( *dc2 );
                     printMapMessage( GET_MAP_STRING( 469 + comp ), MSG_NORMAL );

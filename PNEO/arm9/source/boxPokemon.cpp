@@ -682,12 +682,12 @@ void boxPokemon::hatch( ) {
 bool boxPokemon::learnMove( u16 p_move, std::function<void( const char* )> p_message,
                             std::function<u8( boxPokemon*, u16 )> p_getMove,
                             std::function<bool( const char* )>    p_yesNoMessage ) {
-    char buffer[ 100 ];
+    std::array<char, 100> buffer{ };
     if( p_move == m_moves[ 0 ] || p_move == m_moves[ 1 ] || p_move == m_moves[ 2 ]
         || p_move == m_moves[ 3 ] ) {
-        snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_ALREADY_KNOWS_MOVE ), m_name,
-                  FS::getMoveName( p_move ).c_str( ) );
-        p_message( buffer );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_PKMN_ALREADY_KNOWS_MOVE ),
+                  m_name, FS::getMoveName( p_move ).c_str( ) );
+        p_message( buffer.data( ) );
         return false;
     } else if( FS::canLearn( getSpecies( ), getForme( ), p_move, FS::LEARN_TM ) ) {
         auto mdata    = FS::getMoveData( p_move );
@@ -697,51 +697,57 @@ bool boxPokemon::learnMove( u16 p_move, std::function<void( const char* )> p_mes
                 m_moves[ i ] = p_move;
                 m_curPP[ i ] = mdata.m_pp;
 
-                snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_LEARNED_MOVE ), m_name,
+                snprintf( buffer.data( ), buffer.size( ),
+                          GET_STRING( IO::STR_UI_PKMN_LEARNED_MOVE ), m_name,
                           FS::getMoveName( p_move ).c_str( ) );
-                p_message( buffer );
+                p_message( buffer.data( ) );
                 freeSpot = true;
                 break;
             }
         if( !freeSpot ) {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_TRIES_TO_LEARN_MOVE ), m_name,
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_PKMN_TRIES_TO_LEARN_MOVE ), m_name,
                       FS::getMoveName( p_move ).c_str( ) );
-            p_message( buffer );
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_ALREADY_KNOWS_4_MOVES ), m_name );
-            if( p_yesNoMessage( buffer ) ) {
+            p_message( buffer.data( ) );
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_PKMN_ALREADY_KNOWS_4_MOVES ), m_name );
+            if( p_yesNoMessage( buffer.data( ) ) ) {
                 loop( ) {
                     u8 res = p_getMove( this, p_move );
                     if( res < 4 ) {
                         if( BATTLE::isFieldMove( m_moves[ res ] ) ) {
-                            snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_CANT_FORGET_MOVE ),
-                                      m_name, FS::getMoveName( m_moves[ res ] ).c_str( ) );
-                            p_message( buffer );
-                            snprintf( buffer, 99,
+                            snprintf( buffer.data( ), buffer.size( ),
+                                      GET_STRING( IO::STR_UI_PKMN_CANT_FORGET_MOVE ), m_name,
+                                      FS::getMoveName( m_moves[ res ] ).c_str( ) );
+                            p_message( buffer.data( ) );
+                            snprintf( buffer.data( ), buffer.size( ),
                                       GET_STRING( IO::STR_UI_PKMN_ALREADY_KNOWS_4_MOVES ), m_name );
-                            p_message( buffer );
+                            p_message( buffer.data( ) );
                             continue;
                         } else {
                             m_moves[ res ] = p_move;
                             m_curPP[ res ] = std::min( m_curPP[ res ], mdata.m_pp );
 
-                            snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_LEARNED_MOVE ),
-                                      m_name, FS::getMoveName( p_move ).c_str( ) );
-                            p_message( buffer );
+                            snprintf( buffer.data( ), buffer.size( ),
+                                      GET_STRING( IO::STR_UI_PKMN_LEARNED_MOVE ), m_name,
+                                      FS::getMoveName( p_move ).c_str( ) );
+                            p_message( buffer.data( ) );
                         }
                         return true;
                     }
                     break;
                 }
             }
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_DIDNT_LEARN_MOVE ), m_name,
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_PKMN_DIDNT_LEARN_MOVE ), m_name,
                       FS::getMoveName( p_move ).c_str( ) );
-            p_message( buffer );
+            p_message( buffer.data( ) );
             return false;
         }
     } else {
-        snprintf( buffer, 99, GET_STRING( IO::STR_UI_PKMN_CANT_LEARN_MOVE ), m_name,
-                  FS::getMoveName( p_move ).c_str( ) );
-        p_message( buffer );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_PKMN_CANT_LEARN_MOVE ),
+                  m_name, FS::getMoveName( p_move ).c_str( ) );
+        p_message( buffer.data( ) );
         return false;
     }
     return true;

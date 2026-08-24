@@ -34,7 +34,7 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MAP {
     void mapDrawer::pokeblockBlender( u8 p_numNPC, bool p_blendMaster ) {
-        char buffer[ 200 ];
+        std::array<char, 200> buffer{ };
         ANIMATE_MAP = false;
 
         printMapMessage( GET_MAP_STRING( 736 ), MSG_INFO );
@@ -58,14 +58,17 @@ namespace MAP {
                                && _followPkmnData->getForme( ) == 0;
 
             if( canUseRotom ) {
-                snprintf( buffer, 199, GET_MAP_STRING( 738 ), _followPkmnData->m_boxdata.m_name );
-                printMapMessage( buffer, MSG_INFO );
+                snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 738 ),
+                          _followPkmnData->m_boxdata.m_name );
+                printMapMessage( buffer.data( ), MSG_INFO );
 
-                snprintf( buffer, 199, GET_MAP_STRING( 739 ), _followPkmnData->m_boxdata.m_name );
+                snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 739 ),
+                          _followPkmnData->m_boxdata.m_name );
 
                 if( IO::yesNoBox::YES
-                    == IO::yesNoBox( ).getResult( convertMapString( buffer, MSG_INFO ).c_str( ),
-                                                  MSG_INFO_NOCLOSE, false ) ) {
+                    == IO::yesNoBox( ).getResult(
+                        convertMapString( buffer.data( ), MSG_INFO ).c_str( ), MSG_INFO_NOCLOSE,
+                        false ) ) {
 
                     direction olddir = SAVE::CURRENT_FILE->m_player.m_direction;
                     useFollowPkmn( );

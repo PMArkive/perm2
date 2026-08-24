@@ -616,10 +616,10 @@ namespace MAP {
         IO::OamTop->oamBuffer[ SPR_PKMN_OAM ].isHidden = true;
         IO::updateOAM( false );
 
-        char buffer[ 140 ];
-        snprintf( buffer, 139, GET_STRING( 436 ), SAVE::CURRENT_FILE->m_playername,
-                  getBadgeName( p_type, p_badge ) );
-        IO::printMessage( buffer, MSG_INFO );
+        std::array<char, 140> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 436 ),
+                  SAVE::CURRENT_FILE->m_playername, getBadgeName( p_type, p_badge ) );
+        IO::printMessage( buffer.data( ), MSG_INFO );
         SOUND::restartBGM( );
         ANIMATE_MAP = true;
     }

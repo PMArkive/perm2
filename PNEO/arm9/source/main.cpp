@@ -97,8 +97,9 @@ bool nitroFSInit( char** p_basepath = nullptr );
 u8 getCurrentDaytime( ) {
     u8 t = SAVE::CURRENT_TIME.m_hours, m = SAVE::CURRENT_DATE.m_month;
 
-    for( u8 i = 0; i < 5; ++i )
-        if( DAY_TIMES[ m / 4 ][ i ] >= t ) return i;
+    for( u8 i = 0; i < 5; ++i ) {
+        if( DAY_TIMES[ m / 4 ][ i ] >= t ) { return i; }
+    }
     return 2;
 }
 
@@ -297,26 +298,27 @@ START:
     FADE_TOP( );
     SOUND::stopBGM( );
 
-    ANIMATE_MAP = false;
-    // Reset infinity cave on reload
-    SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) = 0;
+    {
+        animateMapGuard amGuard;
+        // Reset infinity cave on reload
+        SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) = 0;
 
-    MAP::curMap->registerOnLocationChangedHandler( SOUND::onLocationChange );
-    MAP::curMap->registerOnMoveModeChangedHandler( SOUND::onMovementTypeChange );
-    MAP::curMap->registerOnWeatherChangedHandler( SOUND::onWeatherChange );
+        MAP::curMap->registerOnLocationChangedHandler( SOUND::onLocationChange );
+        MAP::curMap->registerOnMoveModeChangedHandler( SOUND::onMovementTypeChange );
+        MAP::curMap->registerOnWeatherChangedHandler( SOUND::onWeatherChange );
 
-    IO::init( );
-    //    MAP::curMap->registerOnBankChangedHandler( IO::showNewMap );
-    MAP::curMap->registerOnLocationChangedHandler( IO::showNewLocation );
-    MAP::curMap->draw( OBJPRIORITY_2, false, HAD_NEW_GAME );
+        IO::init( );
+        //    MAP::curMap->registerOnBankChangedHandler( IO::showNewMap );
+        MAP::curMap->registerOnLocationChangedHandler( IO::showNewLocation );
+        MAP::curMap->draw( OBJPRIORITY_2, false, HAD_NEW_GAME );
 
-    // auto curLoc = MAP::curMap->getCurrentLocationId( );
-    // SOUND::onLocationChange( curLoc, false );
-    // for( u8 i = 0; i < 60; ++i ) { swiWaitForVBlank( ); }
-    // IO::showNewLocation( curLoc, false );
+        // auto curLoc = MAP::curMap->getCurrentLocationId( );
+        // SOUND::onLocationChange( curLoc, false );
+        // for( u8 i = 0; i < 60; ++i ) { swiWaitForVBlank( ); }
+        // IO::showNewLocation( curLoc, false );
 
-    irqSet( IRQ_VBLANK, vblankIRQ );
-    ANIMATE_MAP = true;
+        irqSet( IRQ_VBLANK, vblankIRQ );
+    }
 
     IN_GAME      = true;
     bool stopped = true;
@@ -337,8 +339,8 @@ START:
 
             //            time_t     unixTime   = time( NULL );
             //            struct tm* timeStruct = gmtime( (const time_t*) &unixTime );
-            char buffer[ 100 ];
-            snprintf( buffer, 99,
+            std::array<char, 100> buffer{ };
+            snprintf( buffer.data( ), buffer.size( ),
                       "POS %hhu-(%hx,%hx,%hhx). %i:%i, (%02u,%02u)\n"
                       "S-Rou %hhu | %6s (%hu) | %hx %hx | TM %hhu %02hhu :%02hhu ",
                       SAVE::CURRENT_FILE->m_currentMap, SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
@@ -359,7 +361,7 @@ START:
                                 SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                           .m_topbehave,
                       getCurrentDaytime( ), SAVE::CURRENT_TIME.m_hours, SAVE::CURRENT_TIME.m_mins );
-            IO::printMessage( buffer );
+            IO::printMessage( buffer.data( ) );
         }
 #endif
 
@@ -375,21 +377,21 @@ START:
                                 || !BATTLE::possible( a.m_boxdata.m_moves[ j ], param )
                                 || !BATTLE::text( a.m_boxdata.m_moves[ j ], param ) )
                                 continue;
-                            char buffer[ 100 ];
+                            std::array<char, 100> buffer{ };
                             auto mname = FS::getMoveName( a.m_boxdata.m_moves[ j ] );
                             auto fstr  = std::string( GET_STRING( 3 ) );
-                            snprintf( buffer, 99, fstr.c_str( ),
+                            snprintf( buffer.data( ), buffer.size( ), fstr.c_str( ),
                                       GET_STRING( BATTLE::text( a.m_boxdata.m_moves[ j ], param ) ),
                                       mname.c_str( ) );
                             SOUND::playSoundEffect( SFX_CHOOSE );
                             IO::yesNoBox yn;
-                            if( yn.getResult( buffer, MSG_NOCLOSE ) == IO::yesNoBox::YES ) {
+                            if( yn.getResult( buffer.data( ), MSG_NOCLOSE ) == IO::yesNoBox::YES ) {
                                 IO::init( );
                                 IO::printMessage( 0, MSG_NOCLOSE );
                                 swiWaitForVBlank( );
-                                snprintf( buffer, 99, GET_STRING( 99 ), a.m_boxdata.m_name,
-                                          mname.c_str( ) );
-                                IO::printMessage( buffer, MSG_NORMAL );
+                                snprintf( buffer.data( ), buffer.size( ), GET_STRING( 99 ),
+                                          a.m_boxdata.m_name, mname.c_str( ) );
+                                IO::printMessage( buffer.data( ), MSG_NORMAL );
                                 IO::printMessage( 0, MSG_NOCLOSE );
                                 IO::init( );
                                 if( i || !MAP::curMap->useFollowPkmn( ) ) {

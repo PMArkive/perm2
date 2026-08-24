@@ -285,26 +285,27 @@ namespace BAG {
 
         if( !p_itemId || p_data == nullptr ) { return; }
 
-        std::string descr;
-        char        buffer[ 100 ];
+        std::string           descr;
+        std::array<char, 100> buffer{ };
 
         if( p_data->m_itemType != ITEMTYPE_TM ) {
             IO::loadItemIcon( p_itemId, 112, 44, 0, 0, 0, false );
 
             if( p_data->m_itemType & ITEMTYPE_BERRY ) {
-                snprintf( buffer, 90, "%s%hu: %s", GET_STRING( IO::STR_UI_BAG_NUMBER ),
-                          itemToBerry( p_itemId ), FS::getItemName( p_itemId ).c_str( ) );
+                snprintf( buffer.data( ), buffer.size( ), "%s%hu: %s",
+                          GET_STRING( IO::STR_UI_BAG_NUMBER ), itemToBerry( p_itemId ),
+                          FS::getItemName( p_itemId ).c_str( ) );
             } else {
-                FS::getItemName( p_itemId, CURRENT_LANGUAGE, buffer );
+                FS::getItemName( p_itemId, CURRENT_LANGUAGE, buffer.data( ) );
             }
 
-            IO::regularFont->printStringC( buffer, 128, 26, false, IO::font::CENTER );
+            IO::regularFont->printStringC( buffer.data( ), 128, 26, false, IO::font::CENTER );
 
             descr = FS::getItemDescr( p_itemId );
             if( p_data->m_itemType != ITEMTYPE_KEYITEM
                 && p_data->m_itemType != ITEMTYPE_FORMECHANGE ) {
-                snprintf( buffer, 99, "x %d", p_count );
-                IO::regularFont->printStringC( buffer, 146, 52, false );
+                snprintf( buffer.data( ), buffer.size( ), "x %d", p_count );
+                IO::regularFont->printStringC( buffer.data( ), 146, 52, false );
             }
 
             if( p_data->m_itemType & ITEMTYPE_BERRY ) {
@@ -313,12 +314,12 @@ namespace BAG {
                 IO::regularFont->setColor( IO::RED_IDX, 1 );
                 if( data.m_firmness ) {
                     std::string firmness = GET_STRING( 16 + data.m_firmness );
-                    snprintf( buffer, 99, GET_STRING( 16 ), firmness.c_str( ) );
-                    IO::regularFont->printStringC( buffer, 24, 145, false );
+                    snprintf( buffer.data( ), buffer.size( ), GET_STRING( 16 ), firmness.c_str( ) );
+                    IO::regularFont->printStringC( buffer.data( ), 24, 145, false );
                 }
                 IO::regularFont->setColor( IO::BLUE_IDX, 1 );
-                snprintf( buffer, 99, GET_STRING( 23 ), data.m_size / 10.0 );
-                IO::regularFont->printStringC( buffer, 140, 145, false );
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( 23 ), data.m_size / 10.0 );
+                IO::regularFont->printStringC( buffer.data( ), 140, 145, false );
                 IO::regularFont->setColor( IO::BLACK_IDX, 1 );
 
                 u8 poses[ 2 ][ 5 ] = { { 18, 66, 104, 150, 194 }, { 18, 66, 124, 150, 194 } };
@@ -340,8 +341,8 @@ namespace BAG {
             }
         } else {
             if( p_data->m_effect == 2 ) { // TR
-                snprintf( buffer, 99, "x %d", p_count );
-                IO::regularFont->printStringC( buffer, 146, 52, false );
+                snprintf( buffer.data( ), buffer.size( ), "x %d", p_count );
+                IO::regularFont->printStringC( buffer.data( ), 146, 52, false );
             }
 
             descr                 = FS::getMoveDescr( p_data->m_param2 );
@@ -351,9 +352,10 @@ namespace BAG {
             if( tmtype == 1 && BATTLE::isFieldMove( p_data->m_param2 ) ) { tmtype = 0; }
             u16 tileCnt = IO::loadTMIcon( move.m_type, tmtype, 112, 44, 0, 0, 0, false );
 
-            snprintf( buffer, 99, "%s: %s", FS::getItemName( p_itemId ).c_str( ),
+            snprintf( buffer.data( ), buffer.size( ), "%s: %s",
+                      FS::getItemName( p_itemId ).c_str( ),
                       FS::getMoveName( p_data->m_param2 ).c_str( ) );
-            IO::regularFont->printStringC( buffer, 128, 26, false, IO::font::CENTER );
+            IO::regularFont->printStringC( buffer.data( ), 128, 26, false, IO::font::CENTER );
 
             IO::regularFont->printStringC( GET_STRING( IO::STR_UI_BAG_TYPE ), 56, 147, false,
                                            IO::font::RIGHT );
@@ -364,27 +366,31 @@ namespace BAG {
                                            IO::font::RIGHT );
             IO::loadDamageCategoryIcon( move.m_category, 152, 146, 2, 2, tileCnt, false );
 
-            snprintf( buffer, 99, "%s  %2d", GET_STRING( IO::STR_UI_BAG_PP ), move.m_pp );
-            IO::regularFont->printStringC( buffer, 225, 147, false, IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), "%s  %2d", GET_STRING( IO::STR_UI_BAG_PP ),
+                      move.m_pp );
+            IO::regularFont->printStringC( buffer.data( ), 225, 147, false, IO::font::RIGHT );
 
             IO::regularFont->setColor( IO::RED_IDX, 1 );
 
             // power / acc
             if( move.m_basePower ) {
-                snprintf( buffer, 24, GET_STRING( IO::STR_UI_BAG_POWER ), move.m_basePower );
-                IO::regularFont->printStringC( buffer, 80, 166, false, IO::font::CENTER );
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_BAG_POWER ),
+                          move.m_basePower );
+                IO::regularFont->printStringC( buffer.data( ), 80, 166, false, IO::font::CENTER );
             }
 
             if( move.m_accuracy > 0 && move.m_accuracy <= 100 ) {
-                snprintf( buffer, 24, GET_STRING( IO::STR_UI_BAG_ACCURACY ), move.m_accuracy );
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_BAG_ACCURACY ),
+                          move.m_accuracy );
             } else {
-                snprintf( buffer, 24, GET_STRING( IO::STR_UI_BAG_ACCURACY_NO_MISS ) );
+                snprintf( buffer.data( ), buffer.size( ),
+                          GET_STRING( IO::STR_UI_BAG_ACCURACY_NO_MISS ) );
             }
             IO::regularFont->setColor( IO::BLUE_IDX, 1 );
             if( move.m_basePower ) {
-                IO::regularFont->printStringC( buffer, 176, 166, false, IO::font::CENTER );
+                IO::regularFont->printStringC( buffer.data( ), 176, 166, false, IO::font::CENTER );
             } else {
-                IO::regularFont->printStringC( buffer, 128, 166, false, IO::font::CENTER );
+                IO::regularFont->printStringC( buffer.data( ), 128, 166, false, IO::font::CENTER );
             }
             IO::regularFont->setColor( IO::BLACK_IDX, 1 );
         }
@@ -499,14 +505,18 @@ namespace BAG {
                     IO::smallFont->setColor( IO::GRAY_IDX, 1 );
                     IO::smallFont->setColor( 0, 2 );
                     IO::smallFont->printString( "!", 45, SECOND_LINE - 2, true );
-                    char buffer[ 10 ];
-                    snprintf( buffer, 8, "%d", _playerTeam[ i ].m_level );
-                    IO::smallFont->printStringC( buffer, 53, SECOND_LINE - 1, true );
+                    std::array<char, 10> buffer{ };
+                    snprintf( buffer.data( ), buffer.size( ), "%d", _playerTeam[ i ].m_level );
+                    IO::smallFont->printStringC( buffer.data( ), 53, SECOND_LINE - 1, true );
 
-                    snprintf( buffer, 8, "%3d", _playerTeam[ i ].m_stats.m_curHP );
-                    IO::smallFont->printStringC( buffer, 45 + 80 - 44, SECOND_LINE - 1, true );
-                    snprintf( buffer, 8, "/%d", _playerTeam[ i ].m_stats.m_maxHP );
-                    IO::smallFont->printStringC( buffer, 45 + 78 - 20, SECOND_LINE - 1, true );
+                    snprintf( buffer.data( ), buffer.size( ), "%3d",
+                              _playerTeam[ i ].m_stats.m_curHP );
+                    IO::smallFont->printStringC( buffer.data( ), 45 + 80 - 44, SECOND_LINE - 1,
+                                                 true );
+                    snprintf( buffer.data( ), buffer.size( ), "/%d",
+                              _playerTeam[ i ].m_stats.m_maxHP );
+                    IO::smallFont->printStringC( buffer.data( ), 45 + 78 - 20, SECOND_LINE - 1,
+                                                 true );
                 } else if( p_itemId && p_data->m_itemType == ITEMTYPE_EVOLUTION ) {
                     if( _playerTeam[ i ].canEvolve( p_itemId, EVOMETHOD_ITEM ) ) {
                         BG_PALETTE_SUB[ IO::COLOR_IDX ] = IO::GREEN;
@@ -950,12 +960,13 @@ namespace BAG {
         }
         IO::updateOAM( true );
 
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         if( p_data->m_itemType != ITEMTYPE_TM ) {
             bool found = false;
             for( u8 i = 0; i < MAX_ITEMS_PER_PAGE; ++i ) {
                 if( _itemCache[ i ].first == p_item ) {
-                    snprintf( buffer, 99, GET_STRING( IO::STR_UI_BAG_ASK_ITEM_ACTION ),
+                    snprintf( buffer.data( ), buffer.size( ),
+                              GET_STRING( IO::STR_UI_BAG_ASK_ITEM_ACTION ),
                               _itemCache[ i ].second.c_str( ) );
                     found = true;
                     break;
@@ -964,7 +975,8 @@ namespace BAG {
             if( !found ) {
                 for( u8 i = 0; i < MAX_PARTY_PKMN; ++i ) {
                     if( _teamItemCache[ i ].first == p_item ) {
-                        snprintf( buffer, 99, GET_STRING( IO::STR_UI_BAG_ASK_ITEM_ACTION ),
+                        snprintf( buffer.data( ), buffer.size( ),
+                                  GET_STRING( IO::STR_UI_BAG_ASK_ITEM_ACTION ),
                                   _teamItemCache[ i ].second.c_str( ) );
                         found = true;
                         break;
@@ -972,18 +984,19 @@ namespace BAG {
                 }
             }
             if( !found ) [[unlikely]] {
-                snprintf( buffer, 99, GET_STRING( IO::STR_UI_BAG_ASK_ITEM_ACTION ),
+                snprintf( buffer.data( ), buffer.size( ),
+                          GET_STRING( IO::STR_UI_BAG_ASK_ITEM_ACTION ),
                           FS::getItemName( p_item ).c_str( ) );
             }
         } else {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_BAG_ASK_ITEM_ACTION ),
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_BAG_ASK_ITEM_ACTION ),
                       FS::getItemName( p_item ).c_str( ) );
         }
 
         IO::printRectangle( oam[ SPR_MSG_BOX_OAM_SUB ].x, oam[ SPR_MSG_BOX_OAM_SUB ].y,
                             256 - oam[ SPR_MSG_BOX_OAM_SUB ].x, oam[ SPR_MSG_BOX_OAM_SUB ].y + 31,
                             true, 0 );
-        IO::regularFont->printStringC( buffer, 128, oam[ SPR_MSG_BOX_OAM_SUB ].y + 8, true,
+        IO::regularFont->printStringC( buffer.data( ), 128, oam[ SPR_MSG_BOX_OAM_SUB ].y + 8, true,
                                        IO::font::CENTER );
 
         for( u8 i = 0; i < p_texts.size( ); ++i ) {

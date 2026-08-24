@@ -345,20 +345,20 @@ namespace IO {
     }
 
     std::string formatDate( u8 p_date[ 3 ], u8 p_language ) {
-        char buffer[ 20 ];
+        std::array<char, 20> buffer{ };
         switch( p_language ) {
         default:
         case 0: // EN
             // I know that this will "break" in 2100.
-            snprintf( buffer, 19, "%s %hhu, 20%02hhu", FS::MONTHS[ p_date[ 1 ] ][ p_language ],
-                      p_date[ 0 ] + 1, p_date[ 2 ] % 100 );
+            snprintf( buffer.data( ), buffer.size( ), "%s %hhu, 20%02hhu",
+                      FS::MONTHS[ p_date[ 1 ] ][ p_language ], p_date[ 0 ] + 1, p_date[ 2 ] % 100 );
             break;
         case 1: // DE
-            snprintf( buffer, 19, "%hhu. %s 20%02hhu", p_date[ 0 ] + 1,
+            snprintf( buffer.data( ), buffer.size( ), "%hhu. %s 20%02hhu", p_date[ 0 ] + 1,
                       FS::MONTHS[ p_date[ 1 ] ][ p_language ], p_date[ 2 ] );
             break;
         }
-        return std::string( buffer );
+        return std::string( buffer.data( ) );
     }
 
     std::string formatDate( u8 p_date[ 3 ] ) {

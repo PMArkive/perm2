@@ -82,7 +82,7 @@ namespace MAP {
 
     void mapDrawer::nameRater( ) {
         ANIMATE_MAP = false;
-        char buffer[ 200 ];
+        std::array<char, 200> buffer{ };
         // I am the NAME RATER
         printMapMessage( GET_MAP_STRING( 817 ), MSG_NORMAL );
         // Which pkmn should I rename
@@ -121,16 +121,16 @@ namespace MAP {
         // check if player is OT
         if( pkmn->isForeign( ) ) {
             // no rename possible
-            snprintf( buffer, 199, GET_MAP_STRING( 824 ), pkmn->m_boxdata.m_name,
+            snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 824 ), pkmn->m_boxdata.m_name,
                       pkmn->m_boxdata.m_name );
-            printMapMessage( buffer, MSG_NORMAL );
+            printMapMessage( buffer.data( ), MSG_NORMAL );
             ANIMATE_MAP = true;
             return;
         } else {
             // list old name
-            snprintf( buffer, 199, GET_MAP_STRING( 819 ), pkmn->m_boxdata.m_name,
+            snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 819 ), pkmn->m_boxdata.m_name,
                       pkmn->m_boxdata.m_name );
-            printMapMessage( buffer, MSG_NORMAL );
+            printMapMessage( buffer.data( ), MSG_NORMAL );
             // ask for rename
             if( IO::yesNoBox::YES
                 == IO::yesNoBox( ).getResult(
@@ -146,14 +146,14 @@ namespace MAP {
                     strcpy( pkmn->m_boxdata.m_name, nick.c_str( ) );
                     pkmn->m_boxdata.setIsNicknamed( true );
                     // pkmn got new nickname
-                    snprintf( buffer, 199, GET_MAP_STRING( 821 ), pkmn->m_boxdata.m_name,
-                              pkmn->m_boxdata.m_name );
-                    printMapMessage( buffer, MSG_NORMAL );
+                    snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 821 ),
+                              pkmn->m_boxdata.m_name, pkmn->m_boxdata.m_name );
+                    printMapMessage( buffer.data( ), MSG_NORMAL );
                 } else {
                     // pkmn got same nickname
-                    snprintf( buffer, 199, GET_MAP_STRING( 823 ), pkmn->m_boxdata.m_name,
-                              pkmn->m_boxdata.m_name );
-                    printMapMessage( buffer, MSG_NORMAL );
+                    snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( 823 ),
+                              pkmn->m_boxdata.m_name, pkmn->m_boxdata.m_name );
+                    printMapMessage( buffer.data( ), MSG_NORMAL );
                 }
             } else {
                 // aborted
@@ -165,7 +165,7 @@ namespace MAP {
     }
 
     void mapDrawer::mysteryGiftClerk( ) {
-        char buffer[ 200 ];
+        std::array<char, 200> buffer{ };
         ANIMATE_MAP = false;
 
         if( !SAVE::CURRENT_FILE->checkFlag( SAVE::F_UNCOLLECTED_MYSTERY_EVENT ) ) {
@@ -227,9 +227,10 @@ namespace MAP {
                     SAVE::CURRENT_FILE->setTeamPkmn( SAVE::CURRENT_FILE->getTeamPkmnCount( ),
                                                      &giftPkmn );
 
-                    snprintf( buffer, 199, GET_MAP_STRING( IO::STR_MAP_MY_RECEIVE ),
+                    snprintf( buffer.data( ), buffer.size( ),
+                              GET_MAP_STRING( IO::STR_MAP_MY_RECEIVE ),
                               FS::getDisplayName( wc.m_data.m_pkmn.m_species ).c_str( ) );
-                    printMapMessage( buffer, MSG_INFO );
+                    printMapMessage( buffer.data( ), MSG_INFO );
                     SAVE::CURRENT_FILE->registerCollectedWC( wc.m_id );
 
                     break;

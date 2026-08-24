@@ -1049,8 +1049,8 @@ namespace BATTLE {
 
     std::string battleUI::getPkmnName( pokemon* p_pokemon, bool p_opponent,
                                        bool p_sentenceStart ) const {
-        char        buffer[ 50 ];
-        std::string fmt = "%s";
+        std::array<char, 50> buffer{ };
+        std::string          fmt = "%s";
         if( p_opponent && _isWildBattle ) {
             if( p_sentenceStart ) {
                 fmt = std::string( GET_STRING( 311 ) );
@@ -1064,15 +1064,15 @@ namespace BATTLE {
                 fmt = std::string( GET_STRING( 310 ) );
             }
         }
-        snprintf( buffer, 49, fmt.c_str( ), p_pokemon->m_boxdata.m_name );
-        return std::string( buffer );
+        snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), p_pokemon->m_boxdata.m_name );
+        return std::string( buffer.data( ) );
     }
 
     void battleUI::logBoosts( pokemon* p_pokemon, bool p_opponent, u8 p_slot, boosts p_intended,
                               boosts p_actual ) {
-        char buffer[ 100 ];
-        auto pkmnstr = getPkmnName( p_pokemon, p_opponent );
-        bool up      = false;
+        std::array<char, 100> buffer{ };
+        auto                  pkmnstr = getPkmnName( p_pokemon, p_opponent );
+        bool                  up      = false;
         for( u8 i = 0; i < 8; ++i ) {
             if( p_intended.getBoost( i ) > 0 ) {
                 auto bt = p_actual.getBoost( i );
@@ -1093,22 +1093,22 @@ namespace BATTLE {
                 auto bt = p_actual.getBoost( i );
                 if( bt == 0 ) {
                     auto fmt = std::string( GET_STRING( 256 ) );
-                    snprintf( buffer, 99, fmt.c_str( ), pkmnstr.c_str( ), GET_STRING( 248 + i ),
-                              pkmnstr.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), pkmnstr.c_str( ),
+                              GET_STRING( 248 + i ), pkmnstr.c_str( ) );
                 } else if( bt == 1 ) {
                     auto fmt = std::string( GET_STRING( 257 ) );
-                    snprintf( buffer, 99, fmt.c_str( ), pkmnstr.c_str( ), GET_STRING( 248 + i ),
-                              pkmnstr.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), pkmnstr.c_str( ),
+                              GET_STRING( 248 + i ), pkmnstr.c_str( ) );
                 } else if( bt == 2 ) {
                     auto fmt = std::string( GET_STRING( 258 ) );
-                    snprintf( buffer, 99, fmt.c_str( ), pkmnstr.c_str( ), GET_STRING( 248 + i ),
-                              pkmnstr.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), pkmnstr.c_str( ),
+                              GET_STRING( 248 + i ), pkmnstr.c_str( ) );
                 } else if( bt >= 3 ) {
                     auto fmt = std::string( GET_STRING( 259 ) );
-                    snprintf( buffer, 99, fmt.c_str( ), pkmnstr.c_str( ), GET_STRING( 248 + i ),
-                              pkmnstr.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), pkmnstr.c_str( ),
+                              GET_STRING( 248 + i ), pkmnstr.c_str( ) );
                 }
-                log( std::string( buffer ) );
+                log( std::string( buffer.data( ) ) );
             }
         }
 
@@ -1133,22 +1133,22 @@ namespace BATTLE {
                 auto bt = p_actual.getBoost( i );
                 if( bt == 0 ) {
                     auto fmt = std::string( GET_STRING( 256 ) );
-                    snprintf( buffer, 99, fmt.c_str( ), pkmnstr.c_str( ), GET_STRING( 248 + i ),
-                              pkmnstr.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), pkmnstr.c_str( ),
+                              GET_STRING( 248 + i ), pkmnstr.c_str( ) );
                 } else if( bt == -1 ) {
                     auto fmt = std::string( GET_STRING( 260 ) );
-                    snprintf( buffer, 99, fmt.c_str( ), pkmnstr.c_str( ), GET_STRING( 248 + i ),
-                              pkmnstr.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), pkmnstr.c_str( ),
+                              GET_STRING( 248 + i ), pkmnstr.c_str( ) );
                 } else if( bt == -2 ) {
                     auto fmt = std::string( GET_STRING( 261 ) );
-                    snprintf( buffer, 99, fmt.c_str( ), pkmnstr.c_str( ), GET_STRING( 248 + i ),
-                              pkmnstr.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), pkmnstr.c_str( ),
+                              GET_STRING( 248 + i ), pkmnstr.c_str( ) );
                 } else if( bt <= -3 ) {
                     auto fmt = std::string( GET_STRING( 262 ) );
-                    snprintf( buffer, 99, fmt.c_str( ), pkmnstr.c_str( ), GET_STRING( 248 + i ),
-                              pkmnstr.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), pkmnstr.c_str( ),
+                              GET_STRING( 248 + i ), pkmnstr.c_str( ) );
                 }
-                log( std::string( buffer ) );
+                log( std::string( buffer.data( ) ) );
             }
         }
         for( u8 i = 0; i < 30; ++i ) { swiWaitForVBlank( ); }
@@ -1165,11 +1165,11 @@ namespace BATTLE {
         for( u8 i = 0; i < 3; ++i ) { oam[ SPR_ABILITY_OAM( !p_opponent ) + i ].isHidden = false; }
         IO::updateOAM( false );
 
-        char buffer[ 100 ];
-        snprintf( buffer, 99, GET_STRING( 393 ), p_pokemon->m_boxdata.m_name,
+        std::array<char, 100> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 393 ), p_pokemon->m_boxdata.m_name,
                   FS::getItemName( p_pokemon->getItem( ) ).c_str( ), p_pokemon->m_boxdata.m_name );
 
-        IO::regularFont->printStringC( buffer, 128 + ( p_opponent ? 18 : -32 ),
+        IO::regularFont->printStringC( buffer.data( ), 128 + ( p_opponent ? 18 : -32 ),
                                        oam[ SPR_ABILITY_OAM( !p_opponent ) ].y + 1, false,
                                        p_opponent ? IO::font::LEFT : IO::font::RIGHT, 14, -14 );
 
@@ -1193,12 +1193,12 @@ namespace BATTLE {
         for( u8 i = 0; i < 3; ++i ) { oam[ SPR_ABILITY_OAM( !p_opponent ) + i ].isHidden = false; }
         IO::updateOAM( false );
 
-        char buffer[ 100 ];
-        snprintf( buffer, 99, GET_STRING( 393 ), p_pokemon->m_boxdata.m_name,
+        std::array<char, 100> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 393 ), p_pokemon->m_boxdata.m_name,
                   FS::getAbilityName( p_pokemon->getAbility( ) ).c_str( ),
                   p_pokemon->m_boxdata.m_name );
 
-        IO::regularFont->printStringC( buffer, 128 + ( p_opponent ? 18 : -32 ),
+        IO::regularFont->printStringC( buffer.data( ), 128 + ( p_opponent ? 18 : -32 ),
                                        oam[ SPR_ABILITY_OAM( !p_opponent ) ].y + 1, false,
                                        p_opponent ? IO::font::LEFT : IO::font::RIGHT, 14, -14 );
 
@@ -1214,35 +1214,39 @@ namespace BATTLE {
     }
 
     void battleUI::logForewarn( pokemon* p_pokemon, bool p_opponent, u16 p_move ) {
-        char buffer[ 50 ];
-        auto fmt = std::string( GET_STRING( 396 ) );
-        snprintf( buffer, 49, fmt.c_str( ), getPkmnName( p_pokemon, p_opponent ).c_str( ),
+        std::array<char, 50> buffer{ };
+        auto                 fmt = std::string( GET_STRING( 396 ) );
+        snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
+                  getPkmnName( p_pokemon, p_opponent ).c_str( ),
                   FS::getMoveName( p_move ).c_str( ) );
-        log( std::string( buffer ) );
+        log( std::string( buffer.data( ) ) );
     }
 
     void battleUI::logAnticipation( pokemon* p_pokemon, bool p_opponent ) {
-        char buffer[ 50 ];
-        auto fmt = std::string( GET_STRING( 397 ) );
-        snprintf( buffer, 49, fmt.c_str( ), getPkmnName( p_pokemon, p_opponent ).c_str( ) );
-        log( std::string( buffer ) );
+        std::array<char, 50> buffer{ };
+        auto                 fmt = std::string( GET_STRING( 397 ) );
+        snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
+                  getPkmnName( p_pokemon, p_opponent ).c_str( ) );
+        log( std::string( buffer.data( ) ) );
     }
 
     void battleUI::logFrisk( pokemon* p_pokemon, bool p_opponent, std::vector<u16> p_itms ) {
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         if( p_itms.size( ) == 1 ) {
             auto fmt = std::string( GET_STRING( 398 ) );
-            snprintf( buffer, 99, fmt.c_str( ), getPkmnName( p_pokemon, p_opponent ).c_str( ),
+            snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
+                      getPkmnName( p_pokemon, p_opponent ).c_str( ),
                       FS::getItemName( p_itms[ 0 ] ).c_str( ) );
         } else if( p_itms.size( ) == 2 ) {
             auto fmt = std::string( GET_STRING( 399 ) );
-            snprintf( buffer, 99, fmt.c_str( ), getPkmnName( p_pokemon, p_opponent ).c_str( ),
+            snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
+                      getPkmnName( p_pokemon, p_opponent ).c_str( ),
                       FS::getItemName( p_itms[ 0 ] ).c_str( ),
                       FS::getItemName( p_itms[ 1 ] ).c_str( ) );
         } else {
             return;
         }
-        log( std::string( buffer ) );
+        log( std::string( buffer.data( ) ) );
     }
 
     void battleUI::updatePkmnStats( bool p_opponent, u8 p_pos, pokemon* p_pokemon, bool p_redraw ) {
@@ -1398,11 +1402,12 @@ namespace BATTLE {
             }
             IO::smallFont->setColor( 250, 1 );
             IO::smallFont->setColor( 251, 2 );
-            char buffer[ 10 ];
-            snprintf( buffer, 8, "%3d", p_pokemon->m_stats.m_curHP );
-            IO::smallFont->printString( buffer, anchorx + 96 - 32 - 28, anchory + 9, false );
-            snprintf( buffer, 8, "/%d", p_pokemon->m_stats.m_maxHP );
-            IO::smallFont->printString( buffer, anchorx + 96 - 32 - 4, anchory + 9, false );
+            std::array<char, 10> buffer{ };
+            snprintf( buffer.data( ), buffer.size( ), "%3d", p_pokemon->m_stats.m_curHP );
+            IO::smallFont->printString( buffer.data( ), anchorx + 96 - 32 - 28, anchory + 9,
+                                        false );
+            snprintf( buffer.data( ), buffer.size( ), "/%d", p_pokemon->m_stats.m_maxHP );
+            IO::smallFont->printString( buffer.data( ), anchorx + 96 - 32 - 4, anchory + 9, false );
         }
 
         // Status / shiny
@@ -1551,8 +1556,8 @@ namespace BATTLE {
     }
 
     void battleUI::faintPkmn( bool p_opponent, u8 p_pos, pokemon* p_pokemon ) {
-        SpriteEntry* oam = IO::OamTop->oamBuffer;
-        char         buffer[ 100 ];
+        SpriteEntry*          oam = IO::OamTop->oamBuffer;
+        std::array<char, 100> buffer{ };
         SOUND::playSoundEffect( SFX_BATTLE_FAINT );
 
         for( u8 i = 0; i < 4; ++i ) {
@@ -1574,13 +1579,14 @@ namespace BATTLE {
 
         auto fmt = std::string( GET_STRING( 289 ) );
         if( p_pokemon != nullptr ) [[likely]] {
-            snprintf( buffer, 99, fmt.c_str( ), getPkmnName( p_pokemon, p_opponent ).c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
+                      getPkmnName( p_pokemon, p_opponent ).c_str( ) );
         } else {
 #ifdef DESQUID
-            snprintf( buffer, 99, fmt.c_str( ), "[it's a nullptr]" );
+            snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ), "[it's a nullptr]" );
 #endif
         }
-        log( std::string( buffer ) );
+        log( std::string( buffer.data( ) ) );
     }
 
     void battleUI::loadPkmnSprite( bool p_opponent, u8 p_pos, pokemon* p_pokemon ) {
@@ -1741,9 +1747,9 @@ namespace BATTLE {
         _curHP[ 0 ][ 0 ] = 0;
         updatePkmnStats( true, 0, p_pokemon );
 
-        char buffer[ 50 ];
-        snprintf( buffer, 49, GET_STRING( 394 ), p_pokemon->m_boxdata.m_name );
-        log( std::string( buffer ) );
+        std::array<char, 50> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 394 ), p_pokemon->m_boxdata.m_name );
+        log( std::string( buffer.data( ) ) );
     }
 
     void battleUI::startTrainerBattle( battleTrainer* p_trainer ) {
@@ -1770,12 +1776,12 @@ namespace BATTLE {
         oam[ SPR_PKMN_START_OAM( 0 ) ].rotationIndex = 5;
 
         IO::updateOAM( false );
-        char buffer[ 50 ];
-        auto fmt = std::string( GET_STRING( 143 ) );
-        snprintf( buffer, 49, fmt.c_str( ),
+        std::array<char, 50> buffer{ };
+        auto                 fmt = std::string( GET_STRING( 143 ) );
+        snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
                   FS::getTrainerClassName( _battleTrainer->getClass( ) ).c_str( ),
                   _battleTrainer->m_strings.m_name );
-        log( std::string( buffer ) );
+        log( std::string( buffer.data( ) ) );
 
         // Slide trainer out
 
@@ -1801,16 +1807,17 @@ namespace BATTLE {
         REG_BLDALPHA_SUB = 0xff | ( 0x02 << 8 );
         bgUpdate( );
 
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         if( p_opponent ) {
             auto fmt = std::string( GET_STRING( 263 ) );
-            snprintf( buffer, 99, fmt.c_str( ),
+            snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
                       FS::getTrainerClassName( _battleTrainer->getClass( ) ).c_str( ),
                       _battleTrainer->m_strings.m_name, p_pokemon->m_boxdata.m_name );
-            log( std::string( buffer ) );
+            log( std::string( buffer.data( ) ) );
         } else {
-            snprintf( buffer, 99, GET_STRING( 395 ), p_pokemon->m_boxdata.m_name );
-            log( std::string( buffer ) );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 395 ),
+                      p_pokemon->m_boxdata.m_name );
+            log( std::string( buffer.data( ) ) );
         }
 
         // play pokeball animation
@@ -1841,9 +1848,9 @@ namespace BATTLE {
         REG_BLDALPHA_SUB = 0xff | ( 0x02 << 8 );
         bgUpdate( );
 
-        char buffer[ 100 ];
-        snprintf( buffer, 99, GET_STRING( 395 ), p_pokemon->m_boxdata.m_name );
-        log( std::string( buffer ) );
+        std::array<char, 100> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 395 ), p_pokemon->m_boxdata.m_name );
+        log( std::string( buffer.data( ) ) );
 
         // No ball animation, pkmn slides in from left
 
@@ -1948,16 +1955,17 @@ namespace BATTLE {
     }
 
     void battleUI::recallPkmn( bool p_opponent, u8 p_pos, pokemon* p_pokemon, bool p_forced ) {
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         if( p_opponent && _battleTrainer != nullptr ) {
             // TODO
-            //            snprintf( buffer, 99, GET_STRING( 274 + p_forced ),
+            //            snprintf( buffer.data(), buffer.size(), GET_STRING( 274 + p_forced ),
             //                    FS::getTrainerClassName( _battleTrainer->getClass( ) ).c_str( ),
             //                    _battleTrainer->m_strings.m_name, p_pokemon->m_boxdata.m_name );
-            //            log( std::string( buffer ) );
+            //            log( std::string( buffer.data()) );
         } else {
-            snprintf( buffer, 99, GET_STRING( 272 + p_forced ), p_pokemon->m_boxdata.m_name );
-            log( std::string( buffer ) );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 272 + p_forced ),
+                      p_pokemon->m_boxdata.m_name );
+            log( std::string( buffer.data( ) ) );
         }
 
         // Hide pkmn and status
@@ -1969,34 +1977,34 @@ namespace BATTLE {
     }
 
     void battleUI::prepareMove( pokemon* p_pokemon, bool p_opponent, u8 p_pos, battleMove p_move ) {
-        auto pkmnstr  = getPkmnName( p_pokemon, p_opponent );
-        bool hidepkmn = true;
-        char buffer[ 100 ];
+        auto                  pkmnstr  = getPkmnName( p_pokemon, p_opponent );
+        bool                  hidepkmn = true;
+        std::array<char, 100> buffer{ };
         switch( p_move.m_param ) {
         case M_DIVE:
-            snprintf( buffer, 99, GET_STRING( 540 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 540 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
             break;
         case M_DIG:
-            snprintf( buffer, 99, GET_STRING( 541 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 541 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
             break;
         case M_FLY:
-            snprintf( buffer, 99, GET_STRING( 542 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 542 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
             break;
         case M_BOUNCE:
-            snprintf( buffer, 99, GET_STRING( 543 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 543 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
             break;
         case M_SKY_DROP:
-            snprintf( buffer, 99, GET_STRING( 544 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 544 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
             break;
         case M_PHANTOM_FORCE:
         case M_SHADOW_FORCE:
-            snprintf( buffer, 99, GET_STRING( 545 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 545 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
             break;
         default: hidepkmn = false; break;
         }
@@ -2005,8 +2013,8 @@ namespace BATTLE {
 
     std::vector<std::pair<IO::inputTarget, u8>>
     battleUI::showMoveSelection( pokemon* p_pokemon, u8 p_slot, u8 p_highlightedButton ) {
-        SpriteEntry* oam = IO::Oam->oamBuffer;
-        char         buffer[ 100 ];
+        SpriteEntry*          oam = IO::Oam->oamBuffer;
+        std::array<char, 100> buffer{ };
 
         std::vector<std::pair<IO::inputTarget, u8>> res
             = std::vector<std::pair<IO::inputTarget, u8>>( );
@@ -2091,9 +2099,11 @@ namespace BATTLE {
                                            oam[ SPR_BATTLE_BAG_OAM_SUB ].y + 9, true,
                                            IO::font::CENTER );
 
-            snprintf( buffer, 99, GET_STRING( 162 ), p_pokemon->m_boxdata.m_name );
-            IO::regularFont->printStringC( buffer, 128, oam[ SPR_SMALL_MESSAGE_OAM_SUB ].y + 4,
-                                           true, IO::font::CENTER );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 162 ),
+                      p_pokemon->m_boxdata.m_name );
+            IO::regularFont->printStringC( buffer.data( ), 128,
+                                           oam[ SPR_SMALL_MESSAGE_OAM_SUB ].y + 4, true,
+                                           IO::font::CENTER );
         }
         if( p_highlightedButton == 0 ) {
             IO::loadUIIcon( IO::ICON::BATTLE_FITE_2_START, SPR_BATTLE_FITE_OAM_SUB + 1,
@@ -2326,23 +2336,41 @@ namespace BATTLE {
         // TODO
         (void) p_slot;
 
-        auto pkmnstr = getPkmnName( p_pokemon, p_opponent );
-        char buffer[ 100 ];
+        auto                  pkmnstr = getPkmnName( p_pokemon, p_opponent );
+        std::array<char, 100> buffer{ };
 
         switch( p_status ) {
-        case VS_CONFUSION: snprintf( buffer, 99, GET_STRING( 661 ), pkmnstr.c_str( ) ); break;
-        case VS_LASERFOCUS: snprintf( buffer, 99, GET_STRING( 662 ), pkmnstr.c_str( ) ); break;
-        case VS_MAGNETRISE: snprintf( buffer, 99, GET_STRING( 663 ), pkmnstr.c_str( ) ); break;
-        case VS_AQUARING: snprintf( buffer, 99, GET_STRING( 664 ), pkmnstr.c_str( ) ); break;
-        case VS_FOCUSENERGY: snprintf( buffer, 99, GET_STRING( 665 ), pkmnstr.c_str( ) ); break;
-        case VS_INGRAIN: snprintf( buffer, 99, GET_STRING( 666 ), pkmnstr.c_str( ) ); break;
+        case VS_CONFUSION:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 661 ), pkmnstr.c_str( ) );
+            break;
+        case VS_LASERFOCUS:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 662 ), pkmnstr.c_str( ) );
+            break;
+        case VS_MAGNETRISE:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 663 ), pkmnstr.c_str( ) );
+            break;
+        case VS_AQUARING:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 664 ), pkmnstr.c_str( ) );
+            break;
+        case VS_FOCUSENERGY:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 665 ), pkmnstr.c_str( ) );
+            break;
+        case VS_INGRAIN:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 666 ), pkmnstr.c_str( ) );
+            break;
         case VS_FORESIGHT:
-        case VS_MIRACLEEYE: snprintf( buffer, 99, GET_STRING( 667 ), pkmnstr.c_str( ) ); break;
-        case VS_LEECHSEED: snprintf( buffer, 99, GET_STRING( 668 ), pkmnstr.c_str( ) ); break;
-        case VS_PROTECT: snprintf( buffer, 99, GET_STRING( 674 ), pkmnstr.c_str( ) ); break;
+        case VS_MIRACLEEYE:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 667 ), pkmnstr.c_str( ) );
+            break;
+        case VS_LEECHSEED:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 668 ), pkmnstr.c_str( ) );
+            break;
+        case VS_PROTECT:
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 674 ), pkmnstr.c_str( ) );
+            break;
         default: return;
         }
-        log( buffer );
+        log( buffer.data( ) );
     }
 
     void battleUI::animateVolatileStatusCondition( pokemon* p_pokemon, bool p_opponent, u8 p_slot,
@@ -2358,32 +2386,32 @@ namespace BATTLE {
                                               u8 p_status ) {
         (void) p_slot;
 
-        auto pkmnstr = getPkmnName( p_pokemon, p_opponent );
-        char buffer[ 100 ];
+        auto                  pkmnstr = getPkmnName( p_pokemon, p_opponent );
+        std::array<char, 100> buffer{ };
 
         if( p_status == POISON ) {
-            snprintf( buffer, 99, GET_STRING( 655 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 655 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == TOXIC ) {
-            snprintf( buffer, 99, GET_STRING( 656 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 656 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == BURN ) {
-            snprintf( buffer, 99, GET_STRING( 657 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 657 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == SLEEP ) {
-            snprintf( buffer, 99, GET_STRING( 659 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 659 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == FROZEN ) {
-            snprintf( buffer, 99, GET_STRING( 658 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 658 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == PARALYSIS ) {
-            snprintf( buffer, 99, GET_STRING( 660 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 660 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
     }
 
@@ -2391,32 +2419,32 @@ namespace BATTLE {
                                            u8 p_status ) {
         (void) p_slot;
 
-        auto pkmnstr = getPkmnName( p_pokemon, p_opponent );
-        char buffer[ 100 ];
+        auto                  pkmnstr = getPkmnName( p_pokemon, p_opponent );
+        std::array<char, 100> buffer{ };
 
         if( p_status == POISON ) {
-            snprintf( buffer, 99, GET_STRING( 529 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 529 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == TOXIC ) {
-            snprintf( buffer, 99, GET_STRING( 530 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 530 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == BURN ) {
-            snprintf( buffer, 99, GET_STRING( 531 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 531 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == SLEEP ) {
-            snprintf( buffer, 99, GET_STRING( 299 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 299 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == FROZEN ) {
-            snprintf( buffer, 99, GET_STRING( 297 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 297 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
         if( p_status == PARALYSIS ) {
-            snprintf( buffer, 99, GET_STRING( 301 ), pkmnstr.c_str( ) );
-            log( buffer );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 301 ), pkmnstr.c_str( ) );
+            log( buffer.data( ) );
         }
     }
 
@@ -2426,9 +2454,9 @@ namespace BATTLE {
                                    bool p_megaButtonActive ) {
         (void) p_megaButtonActive;
 
-        auto         res = std::vector<std::pair<IO::inputTarget, u8>>( );
-        SpriteEntry* oam = IO::Oam->oamBuffer;
-        char         buffer[ 100 ];
+        auto                  res = std::vector<std::pair<IO::inputTarget, u8>>( );
+        SpriteEntry*          oam = IO::Oam->oamBuffer;
+        std::array<char, 100> buffer{ };
 
         // hide yn choice boxes here b/c learn move.
         for( u8 i = 0; i < 4; i++ ) {
@@ -2546,9 +2574,9 @@ namespace BATTLE {
                 if( !p_pokemon->getMove( i ) ) continue;
                 auto mname = FS::getMoveName( p_pokemon->getMove( i ) );
                 if( mname.length( ) > 18 ) {
-                    snprintf( buffer, 20, "%s.", mname.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), "%s.", mname.c_str( ) );
                 } else {
-                    snprintf( buffer, 20, "%s", mname.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), "%s", mname.c_str( ) );
                 }
 
                 if( !p_canUseMove[ i ] ) {
@@ -2556,13 +2584,14 @@ namespace BATTLE {
                 } else {
                     IO::regularFont->setColor( IO::WHITE_IDX, 1 );
                 }
-                IO::regularFont->printStringC( buffer, oam[ SPR_MOVE_OAM_SUB( i ) ].x + 48,
+                IO::regularFont->printStringC( buffer.data( ), oam[ SPR_MOVE_OAM_SUB( i ) ].x + 48,
                                                oam[ SPR_MOVE_OAM_SUB( i ) ].y + 7, true,
                                                IO::font::CENTER );
 
-                snprintf( buffer, 49, GET_STRING( 377 ), p_pokemon->m_curPP[ i ],
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( 377 ),
+                          p_pokemon->m_curPP[ i ],
                           s8( mdatas[ i ].m_pp * ( ( 5 + p_pokemon->PPupget( i ) ) / 5.0 ) ) );
-                IO::smallFont->printStringC( buffer, oam[ SPR_MOVE_OAM_SUB( i ) ].x + 84,
+                IO::smallFont->printStringC( buffer.data( ), oam[ SPR_MOVE_OAM_SUB( i ) ].x + 84,
                                              oam[ SPR_MOVE_OAM_SUB( i ) ].y + 13, true,
                                              IO::font::RIGHT );
             }
@@ -2603,9 +2632,9 @@ namespace BATTLE {
                                    std::function<pokemon*( bool, u8 )> p_getPkmn,
                                    u8                                  p_highlightedButton ) {
 
-        auto         res = std::vector<std::pair<IO::inputTarget, u8>>( );
-        SpriteEntry* oam = IO::Oam->oamBuffer;
-        char         buffer[ 100 ];
+        auto                  res = std::vector<std::pair<IO::inputTarget, u8>>( );
+        SpriteEntry*          oam = IO::Oam->oamBuffer;
+        std::array<char, 100> buffer{ };
 
         // hide yn choice boxes here b/c learn move.
         for( u8 i = 0; i < 4; i++ ) {
@@ -2703,10 +2732,10 @@ namespace BATTLE {
                 auto pk = p_getPkmn( i < 2, ( i < 2 ) ^ ( i % 2 ) );
                 if( pk == nullptr ) { continue; }
 
-                snprintf( buffer, 20, "%s", pk->m_boxdata.m_name );
+                snprintf( buffer.data( ), buffer.size( ), "%s", pk->m_boxdata.m_name );
 
                 IO::regularFont->setColor( IO::WHITE_IDX, 1 );
-                IO::regularFont->printStringC( buffer, oam[ SPR_MOVE_OAM_SUB( i ) ].x + 48,
+                IO::regularFont->printStringC( buffer.data( ), oam[ SPR_MOVE_OAM_SUB( i ) ].x + 48,
                                                oam[ SPR_MOVE_OAM_SUB( i ) ].y + 7, true,
                                                IO::font::CENTER );
             }
@@ -2854,14 +2883,14 @@ namespace BATTLE {
     }
 
     void battleUI::handleCapture( pokemon* p_pokemon ) {
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
 
         showTopMessagePkmn( p_pokemon );
         printTopMessage( 0, true );
 
         IO::yesNoBox yn;
-        snprintf( buffer, 99, GET_STRING( 141 ), p_pokemon->m_boxdata.m_name );
-        printTopMessage( buffer, false );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 141 ), p_pokemon->m_boxdata.m_name );
+        printTopMessage( buffer.data( ), false );
 
         if( yn.getResult( [ & ]( ) { return printYNMessage( 254 ); },
                           [ & ]( IO::yesNoBox::selection p_selection ) {

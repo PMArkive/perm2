@@ -239,7 +239,7 @@ namespace BAG {
     }
 
     void pokeblockUI::initBlockView( u16* p_pokeblockCount ) {
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
 
         dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
@@ -287,10 +287,10 @@ namespace BAG {
                 IO::Oam->oamBuffer[ SPR_POKEBLOCK_BG_OAM_SUB + t ].rotationIndex = 0;
 
                 if( p_pokeblockCount[ t ] < 99 ) {
-                    snprintf( buffer, 99, "%u", p_pokeblockCount[ t ] );
-                    IO::boldFont->printStringC( buffer, POKEBLOCK_X + POKEBLOCK_SIZE_X * x + 15,
-                                                POKEBLOCK_Y + POKEBLOCK_SIZE_Y * y + 7, true,
-                                                IO::font::CENTER );
+                    snprintf( buffer.data( ), buffer.size( ), "%u", p_pokeblockCount[ t ] );
+                    IO::boldFont->printStringC(
+                        buffer.data( ), POKEBLOCK_X + POKEBLOCK_SIZE_X * x + 15,
+                        POKEBLOCK_Y + POKEBLOCK_SIZE_Y * y + 7, true, IO::font::CENTER );
                 } else {
                     IO::boldFont->printStringC( "99", POKEBLOCK_X + POKEBLOCK_SIZE_X * x + 15,
                                                 POKEBLOCK_Y + POKEBLOCK_SIZE_Y * y + 7, true,
@@ -394,18 +394,21 @@ namespace BAG {
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
         IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 
-        char buffer[ 200 ];
+        std::array<char, 200> buffer{ };
         auto str = pokeblock::strengthModifier( pokeblockType{ p_blockType },
                                                 _playerTeam[ p_pkmnIdx ].getNature( ) );
         if( str == LIKED_FALVOR ) {
-            snprintf( buffer, 199, GET_STRING( 797 ), _playerTeam[ p_pkmnIdx ].m_boxdata.m_name );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 797 ),
+                      _playerTeam[ p_pkmnIdx ].m_boxdata.m_name );
         } else if( str == NORMAL_FALVOR ) {
-            snprintf( buffer, 199, GET_STRING( 798 ), _playerTeam[ p_pkmnIdx ].m_boxdata.m_name );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 798 ),
+                      _playerTeam[ p_pkmnIdx ].m_boxdata.m_name );
         } else if( str == DISLIKED_FALVOR ) {
-            snprintf( buffer, 199, GET_STRING( 799 ), _playerTeam[ p_pkmnIdx ].m_boxdata.m_name );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 799 ),
+                      _playerTeam[ p_pkmnIdx ].m_boxdata.m_name );
         }
 
-        IO::regularFont->printStringC( buffer, 128, 108, false, IO::font::CENTER );
+        IO::regularFont->printStringC( buffer.data( ), 128, 108, false, IO::font::CENTER );
 
         for( u8 i = 0; i < 90; ++i ) { swiWaitForVBlank( ); }
 
@@ -429,7 +432,7 @@ namespace BAG {
         IO::printRectangle( 0, IO::OamTop->oamBuffer[ SPR_POKEBLOCK_OAM_TOP ].y, 255, 192, false,
                             0 );
         if( p_blockOwned ) {
-            char buffer[ 100 ];
+            std::array<char, 100> buffer{ };
 
             // draw info on top
             IO::loadPokeblockIcon( p_blockType, IO::OamTop->oamBuffer[ SPR_POKEBLOCK_OAM_TOP ].x,
@@ -451,17 +454,17 @@ namespace BAG {
 
             // Flavor
             IO::regularFont->setColor( IO::BLUE_IDX, 1 );
-            snprintf( buffer, 99, GET_STRING( 791 ),
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 791 ),
                       pokeblock::flavorStrength( pokeblockType{ p_blockType } ) );
-            IO::regularFont->printStringC( buffer, 64 + 48,
+            IO::regularFont->printStringC( buffer.data( ), 64 + 48,
                                            IO::OamTop->oamBuffer[ SPR_POKEBLOCK_OAM_TOP ].y + 32,
                                            false, IO::font::CENTER );
 
             // Strength
             IO::regularFont->setColor( IO::RED_IDX, 1 );
-            snprintf( buffer, 99, GET_STRING( 792 ),
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 792 ),
                       pokeblock::smoothness( pokeblockType{ p_blockType } ) );
-            IO::regularFont->printStringC( buffer, 128 + 64,
+            IO::regularFont->printStringC( buffer.data( ), 128 + 64,
                                            IO::OamTop->oamBuffer[ SPR_POKEBLOCK_OAM_TOP ].y + 32,
                                            false, IO::font::CENTER );
         } else {
@@ -542,7 +545,7 @@ namespace BAG {
     }
 
     void pokeblockUI::selectPkmn( u8 p_pkmnIdx, u8 p_blockType ) {
-        char buffer[ 50 ];
+        std::array<char, 50> buffer{ };
         BG_PALETTE_SUB[ 241 ] = IO::RGB( 12, 30, 12 ); // hp bar green 1
         BG_PALETTE_SUB[ 242 ] = IO::RGB( 3, 23, 4 );   // hp bar green 2
         BG_PALETTE_SUB[ 245 ] = IO::RGB( 30, 15, 12 ); // hp bar red 1
@@ -716,9 +719,9 @@ namespace BAG {
 
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
         IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-        snprintf( buffer, 49, GET_STRING( IO::STR_UI_STS_SHEEN ),
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_STS_SHEEN ),
                   _playerTeam[ p_pkmnIdx ].m_boxdata.m_contestStats[ 5 ] );
-        IO::regularFont->printStringC( buffer, INFO_X - 7 + 128, INFO_Y + 20 + 15 * 7, true,
+        IO::regularFont->printStringC( buffer.data( ), INFO_X - 7 + 128, INFO_Y + 20 + 15 * 7, true,
                                        IO::font::RIGHT );
         IO::updateOAM( true );
     }

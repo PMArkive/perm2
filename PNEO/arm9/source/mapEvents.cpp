@@ -111,9 +111,10 @@ namespace MAP {
                     return;
                 }
                 if( battleres != BATTLE::battle::BATTLE_CAPTURE ) {
-                    char buffer[ 100 ];
-                    snprintf( buffer, 99, GET_STRING( 672 ), WILD_PKMN.m_boxdata.m_name );
-                    printMapMessage( std::string( buffer ), MSG_NORMAL );
+                    std::array<char, 100> buffer{ };
+                    snprintf( buffer.data( ), buffer.size( ), GET_STRING( 672 ),
+                              WILD_PKMN.m_boxdata.m_name );
+                    printMapMessage( std::string( buffer.data( ) ), MSG_NORMAL );
                 }
             }
             break;
@@ -349,10 +350,10 @@ namespace MAP {
                         ANIMATE_MAP = true;
                         SOUND::restoreVolume( );
                         if( itm ) {
-                            char buffer[ 100 ];
-                            snprintf( buffer, 99, GET_STRING( 572 ),
+                            std::array<char, 100> buffer{ };
+                            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 572 ),
                                       FS::getItemName( itm ).c_str( ) );
-                            IO::printMessage( buffer, MSG_INFO );
+                            IO::printMessage( buffer.data( ), MSG_INFO );
                         }
                         return;
                     } else {
@@ -406,23 +407,23 @@ namespace MAP {
                     continue;
                 }
 
-                char buffer[ 100 ];
+                std::array<char, 100> buffer{ };
 
                 switch( stage ) {
                 case 0:
                 case 1:
                 case 2:
                 case 3:
-                    snprintf( buffer, 99, GET_STRING( 565 + stage ),
+                    snprintf( buffer.data( ), buffer.size( ), GET_STRING( 565 + stage ),
                               FS::getItemName( BAG::berryToItem( berryType ) ).c_str( ) );
                     break;
                 case 4:
-                    snprintf( buffer, 99, GET_STRING( 569 ),
+                    snprintf( buffer.data( ), buffer.size( ), GET_STRING( 569 ),
                               FS::getItemName( BAG::berryToItem( berryType ) ).c_str( ), yield );
                     break;
                 default: continue;
                 }
-                IO::printMessage( buffer, MSG_INFO_CONT );
+                IO::printMessage( buffer.data( ), MSG_INFO_CONT );
                 if( stage == 4 ) {
                     // Berries can be harvested
                     if( IO::yesNoBox( ).getResult( GET_STRING( 570 ), MSG_INFO_NOCLOSE )

@@ -422,14 +422,14 @@ namespace MAP {
         u16 slot = dist( p_globX, p_globY, _tracerLastPos.m_posX, _tracerLastPos.m_posY );
 
 #ifdef DESQUID_MORE
-        char buffer[ 100 ];
-        sprintf( buffer,
+        std::array<char, 100> buffer{ };
+        sprintf( buffer.data( ),
                  "checking %hx for %hx: %hx;"
                  "\nslot %hu = d( (%hx, %hx) - (%hx, %hx) )",
                  _tracerPositions[ TRACER_AREA ], ( 1 << TRACER_AREA ),
                  _tracerPositions[ TRACER_AREA ] & ( 1 << TRACER_AREA ), slot, p_globX, p_globY,
                  _tracerLastPos.m_posX, _tracerLastPos.m_posY );
-        DESQUID_LOG( buffer );
+        DESQUID_LOG( buffer.data( ) );
 #endif
         if( slot > TRACER_AREA ) { return NO_TRACER_PKMN; }
 
@@ -531,10 +531,10 @@ namespace MAP {
 
             _tracerPositions[ ry + TRACER_AREA ] |= ( 1 << ( rx + TRACER_AREA ) );
 #ifdef DESQUID_MORE
-            char buffer[ 100 ];
-            sprintf( buffer, "ch %hu tpos %hhi %hhi %hx", _tracerChain, rx, ry,
-                     _tracerPositions[ ry + TRACER_AREA ] );
-            DESQUID_LOG( buffer );
+            std::array<char, 100> buffer{ };
+            snprintf( buffer.data( ), buffer.size( ), "ch %hu tpos %hhi %hhi %hx", _tracerChain, rx,
+                      ry, _tracerPositions[ ry + TRACER_AREA ] );
+            DESQUID_LOG( buffer.data( ) );
 #endif
         }
 

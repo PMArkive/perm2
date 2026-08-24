@@ -292,7 +292,7 @@ namespace BAG {
     }
 
     bool use( const u16 p_itemId, std::function<void( const char* )> p_message, bool p_dryRun ) {
-        char buffer[ 50 ];
+        std::array<char, 50> buffer{ };
         if( !p_dryRun ) {
             if( SAVE::CURRENT_FILE->m_lstUsedItem != p_itemId ) {
                 SAVE::CURRENT_FILE->m_lstUsedItem = p_itemId;
@@ -358,23 +358,23 @@ namespace BAG {
             return true;
         case I_SOOT_SACK:
             if( !p_dryRun ) {
-                snprintf( buffer, 50, GET_STRING( IO::STR_UI_ASH_COUNT ),
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_ASH_COUNT ),
                           SAVE::CURRENT_FILE->m_ashCount );
-                p_message( buffer );
+                p_message( buffer.data( ) );
             }
             return true;
         case I_COIN_CASE:
             if( !p_dryRun ) {
-                snprintf( buffer, 50, GET_STRING( IO::STR_UI_COIN_COUNT ),
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_COIN_COUNT ),
                           SAVE::CURRENT_FILE->m_coins );
-                p_message( buffer );
+                p_message( buffer.data( ) );
             }
             return true;
         case I_POINT_CARD:
             if( !p_dryRun ) {
-                snprintf( buffer, 50, GET_STRING( IO::STR_UI_BP_COUNT ),
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_BP_COUNT ),
                           SAVE::CURRENT_FILE->m_battlePoints );
-                p_message( buffer );
+                p_message( buffer.data( ) );
             }
             return true;
         case I_ESCAPE_ROPE:

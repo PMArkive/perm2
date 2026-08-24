@@ -575,14 +575,14 @@ namespace SPX {
     }
 
     char* toString( int p_num ) {
-        static char buffer[ 50 ];
-        snprintf( buffer, 19, "%i", p_num );
-        return buffer;
+        static std::array<char, 50> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), "%i", p_num );
+        return buffer.data( );
     }
 
     void scoreBoard( u8 p_miss_count[ 4 ], u8 p_hit_count[ 4 ], u8 p_perfect_count[ 4 ],
                      u16 p_mxSpeed, u8 p_npctier, u8 p_berries[ 4 ] ) {
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         // update statistics on top and rpm counter on bottom
 
         dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
@@ -717,18 +717,19 @@ namespace SPX {
         if( p_mxSpeed && bonus ) {
             IO::boldFont->printStringC( GET_STRING( 805 ), 224, TOP_Y, false, IO::font::CENTER );
 
-            snprintf( buffer, 199, GET_STRING( 806 ), bonus );
-            IO::boldFont->printStringC( buffer, 250, 112, false, IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 806 ), bonus );
+            IO::boldFont->printStringC( buffer.data( ), 250, 112, false, IO::font::RIGHT );
         }
         // max RPM
-        snprintf( buffer, 199, GET_STRING( 807 ), speedToRPM100( p_mxSpeed ) / 100.0 );
-        IO::boldFont->printStringC( buffer, 6, 112, false );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 807 ),
+                  speedToRPM100( p_mxSpeed ) / 100.0 );
+        IO::boldFont->printStringC( buffer.data( ), 6, 112, false );
         IO::updateOAM( false );
     }
 
     void updateStats( u8 p_miss_count[ 4 ], u8 p_hit_count[ 4 ], u8 p_perfect_count[ 4 ],
                       u16 p_mxSpeed, u8 p_npctier, u8 p_berries[ 4 ] ) {
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         // update statistics on top and rpm counter on bottom
 
         dmaFillWords( 0, bgGetGfxPtr( IO::bg2 ), COMPLETE_SCREEN );
@@ -774,35 +775,37 @@ namespace SPX {
         IO::updateOAM( false );
 
 #ifdef DESQUID_MORE
-        snprintf( buffer, 199, "Berry Strength: %hhu", computeBaseLevel( p_berries ) );
-        IO::regularFont->printStringC( buffer, 6, 26, false );
+        snprintf( buffer.data( ), buffer.size( ), "Berry Strength: %hhu",
+                  computeBaseLevel( p_berries ) );
+        IO::regularFont->printStringC( buffer.data( ), 6, 26, false );
 
         if( bonus ) {
             // bonus
-            snprintf( buffer, 199, "Bonus: %hhu", bonus );
-            IO::regularFont->printStringC( buffer, 128, 26, false );
+            snprintf( buffer.data( ), buffer.size( ), "Bonus: %hhu", bonus );
+            IO::regularFont->printStringC( buffer.data( ), 128, 26, false );
         }
 
         // max RPM
-        snprintf( buffer, 199, "Max RPM: %06.2f", speedToRPM100( p_mxSpeed ) / 100.0 );
-        IO::regularFont->printStringC( buffer, 6, 6, false );
+        snprintf( buffer.data( ), buffer.size( ), "Max RPM: %06.2f",
+                  speedToRPM100( p_mxSpeed ) / 100.0 );
+        IO::regularFont->printStringC( buffer.data( ), 6, 6, false );
 
-        snprintf( buffer, 199, "Sheen: %hhu",
+        snprintf( buffer.data( ), buffer.size( ), "Sheen: %hhu",
                   computeBaseSmoothness( p_berries, speedToRPM100( p_mxSpeed ) ) );
-        IO::regularFont->printStringC( buffer, 128, 6, false );
+        IO::regularFont->printStringC( buffer.data( ), 128, 6, false );
 #endif
 
         IO::regularFont->setColor( IO::BLACK_IDX, 1 );
         // compute expected output
         auto result = computeBlockType( p_berries, bonus, speedToRPM100( p_mxSpeed ) );
-        char sbuffer[ 60 ];
-        snprintf( sbuffer, 59, GET_STRING( u8( result ) + 742 ) );
-        snprintf( buffer, 199, GET_STRING( 808 ), player, sbuffer );
-        IO::regularFont->printStringC( buffer, 16, 133, false );
+        std::array<char, 60> sbuffer{ };
+        snprintf( sbuffer.data( ), sbuffer.size( ), GET_STRING( u8( result ) + 742 ) );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 808 ), player, sbuffer.data( ) );
+        IO::regularFont->printStringC( buffer.data( ), 16, 133, false );
     }
 
     void updateRPM( u16 p_speed ) {
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         // rpm counter on bottom:
         static u16 last_speed = 0;
         if( p_speed != last_speed ) {
@@ -810,8 +813,8 @@ namespace SPX {
             last_speed = p_speed;
             IO::boldFont->setColor( 0, 1 );
             IO::boldFont->setColor( TEXT_COLOR_IDX, 2 );
-            snprintf( buffer, 99, "%06.2f", speedToRPM100( p_speed ) / 100.0 );
-            IO::boldFont->printStringC( buffer, 148, 161, true, IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), "%06.2f", speedToRPM100( p_speed ) / 100.0 );
+            IO::boldFont->printStringC( buffer.data( ), 148, 161, true, IO::font::RIGHT );
         }
     }
 
@@ -1156,7 +1159,7 @@ namespace SPX {
 
     void displayResult( BAG::pokeblockType p_type, u8 p_amount, bool p_overheat ) {
         // add p_numNPC pokeblocks of type result to bag
-        char buffer[ 200 ];
+        std::array<char, 200> buffer{ };
         IO::regularFont->setColor( IO::BLACK_IDX, 1 );
 
         if( p_overheat ) {
@@ -1167,10 +1170,10 @@ namespace SPX {
 
         IO::printRectangle( 0, 0, 255, 24, false, 0 );
         IO::regularFont->printString( GET_STRING( 803 ), 128, 5, false, IO::font::CENTER );
-        char sbuffer[ 60 ];
-        snprintf( sbuffer, 59, GET_STRING( u8( p_type ) + 742 ) );
-        snprintf( buffer, 199, GET_STRING( 801 ), p_amount, sbuffer );
-        IO::regularFont->printStringC( buffer, 16, 133, false );
+        std::array<char, 60> sbuffer{ };
+        snprintf( sbuffer.data( ), sbuffer.size( ), GET_STRING( u8( p_type ) + 742 ) );
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( 801 ), p_amount, sbuffer.data( ) );
+        IO::regularFont->printStringC( buffer.data( ), 16, 133, false );
 
         // remove lid, show resulting block
         IO::Oam->oamBuffer[ SPR_LID_SUB_OAM ].isSizeDouble  = false;

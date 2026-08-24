@@ -357,9 +357,10 @@ namespace IO {
                            IO::yesNoBox::NO ) );
 
             if( p_showMoney ) {
-                char buffer[ 100 ];
-                snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEY ), SAVE::CURRENT_FILE->m_money );
-                IO::regularFont->printStringC( buffer, 2, 2, true, IO::font::LEFT );
+                std::array<char, 100> buffer{ };
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_MONEY ),
+                          SAVE::CURRENT_FILE->m_money );
+                IO::regularFont->printStringC( buffer.data( ), 2, 2, true, IO::font::LEFT );
             }
         }
 
@@ -711,18 +712,19 @@ namespace IO {
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
         IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         if( p_paymentMethod < 3 ) {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEYTYPE_START + p_paymentMethod ),
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_MONEYTYPE_START + p_paymentMethod ),
                       p_paymentMethod == 0
                           ? SAVE::CURRENT_FILE->m_money
                           : ( p_paymentMethod == 1 ? SAVE::CURRENT_FILE->m_battlePoints
                                                    : SAVE::CURRENT_FILE->m_coins ) );
         } else if( p_paymentMethod == 3 ) {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEYTYPE_ASH ),
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_MONEYTYPE_ASH ),
                       SAVE::CURRENT_FILE->m_ashCount );
         }
-        IO::regularFont->printStringC( buffer, 2, 2, true, IO::font::LEFT );
+        IO::regularFont->printStringC( buffer.data( ), 2, 2, true, IO::font::LEFT );
 
         auto& oam = IO::Oam->oamBuffer;
 
@@ -779,12 +781,13 @@ namespace IO {
                                                IO::font::RIGHT );
             }
 
-            snprintf( buffer, 90, GET_STRING( IO::STR_UI_MONEYTYPE_START_PAY + p_paymentMethod ),
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_MONEYTYPE_START_PAY + p_paymentMethod ),
                       p_offeredItems[ p_firstItem + i ].second );
             IO::regularFont->setColor( 0, 2 );
-            IO::regularFont->printStringC( buffer, oam[ SPR_CHOICE_START_OAM_SUB( i ) ].x + 114,
-                                           oam[ SPR_CHOICE_START_OAM_SUB( i ) ].y + 16, true,
-                                           IO::font::RIGHT );
+            IO::regularFont->printStringC(
+                buffer.data( ), oam[ SPR_CHOICE_START_OAM_SUB( i ) ].x + 114,
+                oam[ SPR_CHOICE_START_OAM_SUB( i ) ].y + 16, true, IO::font::RIGHT );
 
             IO::regularFont->setColor( IO::GRAY_IDX, 2 );
             res.push_back(
@@ -830,9 +833,9 @@ namespace IO {
         }
 
         // page no
-        snprintf( buffer, 90, "%i / %i", p_firstItem / NUM_CB_CHOICES + 1,
+        snprintf( buffer.data( ), buffer.size( ), "%i / %i", p_firstItem / NUM_CB_CHOICES + 1,
                   ( num_items - 1 ) / NUM_CB_CHOICES + 1 );
-        IO::regularFont->printStringC( buffer, 128, oam[ SPR_PAGE_BG_OAM_SUB ].y + 8, true,
+        IO::regularFont->printStringC( buffer.data( ), 128, oam[ SPR_PAGE_BG_OAM_SUB ].y + 8, true,
                                        IO::font::CENTER );
 
         IO::updateOAM( true );
@@ -855,11 +858,11 @@ namespace IO {
         } else {
             IO::printRectangle( 128, 0, 255, 40, true, 0 );
 
-            char buffer[ 100 ];
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_ITEMCOUNT_IN_BAG ),
+            std::array<char, 100> buffer{ };
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_ITEMCOUNT_IN_BAG ),
                       SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( p_itemData.m_itemType ),
                                                        p_item.first ) );
-            IO::regularFont->printStringC( buffer, 254, 2, true, IO::font::RIGHT );
+            IO::regularFont->printStringC( buffer.data( ), 254, 2, true, IO::font::RIGHT );
 
             selectMenuItem( p_selection % NUM_CB_CHOICES );
             doPrintMessage( p_descr.c_str( ), MSG_MART_ITEM, p_item.first, &p_itemData );
@@ -1021,10 +1024,10 @@ namespace IO {
         IO::regularFont->setColor( IO::WHITE_IDX, 1 );
         IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 
-        char buffer[ 100 ];
-        snprintf( buffer, 99, GET_STRING( IO::STR_UI_MONEYTYPE_MONEY ),
+        std::array<char, 100> buffer{ };
+        snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_MONEYTYPE_MONEY ),
                   SAVE::CURRENT_FILE->m_money );
-        IO::regularFont->printStringC( buffer, 2, 2, true, IO::font::LEFT );
+        IO::regularFont->printStringC( buffer.data( ), 2, 2, true, IO::font::LEFT );
 
         auto& oam = IO::Oam->oamBuffer;
 
@@ -1115,19 +1118,19 @@ namespace IO {
                 u8 lv = calcLevel( dcstart[ i ], &data ), oldlv = dclstart[ i ];
 
                 if( lv - oldlv > 0 ) {
-                    snprintf( buffer, 95, "Lv.%hhu (+%hu)", lv, lv - oldlv );
+                    snprintf( buffer.data( ), buffer.size( ), "Lv.%hhu (+%hu)", lv, lv - oldlv );
                 } else {
-                    snprintf( buffer, 95, "Lv.%hhu", lv );
+                    snprintf( buffer.data( ), buffer.size( ), "Lv.%hhu", lv );
                 }
-                IO::regularFont->printStringC( buffer, oam[ SPR_CHOICE_START_OAM_SUB( i ) ].x + 70,
-                                               oam[ SPR_CHOICE_START_OAM_SUB( i ) ].y + 16, true,
-                                               IO::font::CENTER );
+                IO::regularFont->printStringC(
+                    buffer.data( ), oam[ SPR_CHOICE_START_OAM_SUB( i ) ].x + 70,
+                    oam[ SPR_CHOICE_START_OAM_SUB( i ) ].y + 16, true, IO::font::CENTER );
 
                 IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 
                 // iv
                 for( u8 j = 0; j < 6; ++j ) {
-                    snprintf( buffer, 49, "%hu", dcstart[ i ].IVget( j ) );
+                    snprintf( buffer.data( ), buffer.size( ), "%hu", dcstart[ i ].IVget( j ) );
 
                     if( j && NatMod[ u8( dcstart[ i ].getNature( ) ) ][ j - 1 ] == 9 ) {
                         IO::regularFont->setColor( IO::BLUE_IDX, 2 );
@@ -1137,7 +1140,8 @@ namespace IO {
                         IO::regularFont->setColor( IO::GRAY_IDX, 2 );
                     }
                     IO::regularFont->printStringC(
-                        buffer, oam[ SPR_CHOICE_START_OAM_SUB( i ) ].x + 36 + 40 * ( j % 3 ),
+                        buffer.data( ),
+                        oam[ SPR_CHOICE_START_OAM_SUB( i ) ].x + 36 + 40 * ( j % 3 ),
                         142 + ( 14 * ( j / 3 ) ), true, IO::font::RIGHT );
                     IO::regularFont->printStringC( GET_STRING( IO::STR_UI_PKMN_STAT_START + j ),
                                                    oam[ SPR_CHOICE_START_OAM_SUB( i ) ].x + 4
@@ -1151,16 +1155,17 @@ namespace IO {
                     if( dcstart[ i ].getMove( j ) ) {
                         auto mname = FS::getMoveName( dcstart[ i ].getMove( j ) );
                         if( mname.length( ) > 18 ) {
-                            snprintf( buffer, 20, "%s.", mname.c_str( ) );
+                            snprintf( buffer.data( ), buffer.size( ), "%s.", mname.c_str( ) );
                         } else {
-                            snprintf( buffer, 20, "%s", mname.c_str( ) );
+                            snprintf( buffer.data( ), buffer.size( ), "%s", mname.c_str( ) );
                         }
                     } else {
-                        snprintf( buffer, 20, GET_STRING( IO::STR_UI_NONE ) );
+                        snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_NONE ) );
                     }
-                    IO::regularFont->printStringC(
-                        buffer, 64 + 128 * i, oam[ SPR_CHOICE_START_OAM_SUB( i ) ].y + 36 + 14 * j,
-                        true, IO::font::CENTER );
+                    IO::regularFont->printStringC( buffer.data( ), 64 + 128 * i,
+                                                   oam[ SPR_CHOICE_START_OAM_SUB( i ) ].y + 36
+                                                       + 14 * j,
+                                                   true, IO::font::CENTER );
                 }
 
                 res.push_back(

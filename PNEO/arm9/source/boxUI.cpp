@@ -650,14 +650,14 @@ namespace BOX {
             writeLineTop( FS::getDisplayName( p_pokemon->getSpecies( ) ).c_str( ), 0 );
 
             IO::regularFont->setColor( 0, 2 );
-            char buffer[ 50 ];
+            std::array<char, 50> buffer{ };
             // dex no
             u16 dexno = SAVE::CURRENT_FILE->getPkmnDisplayDexId( p_pokemon->getSpecies( ) );
 
             if( dexno != u16( -1 ) ) {
-                snprintf( buffer, 49, "%04hu", dexno );
+                snprintf( buffer.data( ), buffer.size( ), "%04hu", dexno );
             } else {
-                snprintf( buffer, 49, "????" );
+                snprintf( buffer.data( ), buffer.size( ), "????" );
             }
             IO::regularFont->printStringC( GET_STRING( 337 ), INFO_X + 12, INFO_Y + 27, false );
             if( p_pokemon->isShiny( ) ) {
@@ -668,7 +668,7 @@ namespace BOX {
                 IO::regularFont->setColor( IO::COLOR_IDX, 2 );
             }
             IO::regularFont->printStringC(
-                buffer, IO::regularFont->stringWidthC( GET_STRING( 337 ) ) + INFO_X + 16,
+                buffer.data( ), IO::regularFont->stringWidthC( GET_STRING( 337 ) ) + INFO_X + 16,
                 INFO_Y + 27, false );
             IO::regularFont->setColor( IO::BLACK_IDX, 1 );
             IO::regularFont->setColor( 0, 2 );

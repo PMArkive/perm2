@@ -288,6 +288,8 @@ namespace MAP {
         }
 
       private:
+        bool _reorderDirty;
+
         managedSprite _player;         // 32x32
         managedSprite _playerPlatform; // 32x32
 

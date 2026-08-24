@@ -903,7 +903,7 @@ namespace STS {
         FS::readPictureData( bgGetGfxPtr( IO::bg2sub ), "nitro:/PICS/", "statussub", 0, 256 * 192,
                              true );
         // dmaCopy( statussubBitmap, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
-        char buffer[ 50 ];
+        std::array<char, 50> buffer{ };
 
         if( _currentPage == 2 ) {
             IO::loadUIIcon( IO::ICON::INFOPAGE3_START, SPR_INFOPAGE_START_OAM + 7, SPR_INFOPAGE_PAL,
@@ -950,12 +950,12 @@ namespace STS {
                 u16 dexno = SAVE::CURRENT_FILE->getPkmnDisplayDexId( p_pokemon->getSpecies( ) );
 
                 if( dexno != u16( -1 ) ) {
-                    snprintf( buffer, 49, "%04hu", dexno );
+                    snprintf( buffer.data( ), buffer.size( ), "%04hu", dexno );
                 } else {
-                    snprintf( buffer, 49, "????" );
+                    snprintf( buffer.data( ), buffer.size( ), "????" );
                 }
-                writeLineTop( GET_STRING( IO::STR_UI_STS_SPECIES_IDX ), buffer, 0, IO::WHITE_IDX,
-                              p_pokemon->isShiny( ) ? IO::RED2_IDX : IO::BLACK_IDX );
+                writeLineTop( GET_STRING( IO::STR_UI_STS_SPECIES_IDX ), buffer.data( ), 0,
+                              IO::WHITE_IDX, p_pokemon->isShiny( ) ? IO::RED2_IDX : IO::BLACK_IDX );
             }
             // Species Name
             writeLineTop( GET_STRING( IO::STR_UI_STS_SPECIES_NAME ),
@@ -976,8 +976,8 @@ namespace STS {
             // OT
             writeLineTop( GET_STRING( IO::STR_UI_STS_OT ), p_pokemon->m_boxdata.m_oT, 3 );
             // Id
-            snprintf( buffer, 49, "%05hu", p_pokemon->m_boxdata.m_oTId );
-            writeLineTop( GET_STRING( IO::STR_UI_STS_ID ), buffer, 4 );
+            snprintf( buffer.data( ), buffer.size( ), "%05hu", p_pokemon->m_boxdata.m_oTId );
+            writeLineTop( GET_STRING( IO::STR_UI_STS_ID ), buffer.data( ), 4 );
             // Exp
             writeLineTop( GET_STRING( IO::STR_UI_STS_EXP ),
                           std::to_string( p_pokemon->m_boxdata.m_experienceGained ).c_str( ), 6 );
@@ -1094,26 +1094,30 @@ namespace STS {
                 }
             } else if( p_pokemon->isForeign( ) ) {
                 if( p_pokemon->m_boxdata.m_fateful ) {
-                    snprintf( buffer, 49, GET_STRING( IO::STR_UI_STS_APP_FATEFUL_ENC_AT_LEVEL ),
+                    snprintf( buffer.data( ), buffer.size( ),
+                              GET_STRING( IO::STR_UI_STS_APP_FATEFUL_ENC_AT_LEVEL ),
                               p_pokemon->m_boxdata.m_gotLevel );
-                    IO::regularFont->printStringC( buffer, INFO_X_SUB + 12,
+                    IO::regularFont->printStringC( buffer.data( ), INFO_X_SUB + 12,
                                                    INFO_LINE_SUB( currentLine++ ), true );
                 } else {
-                    snprintf( buffer, 49, GET_STRING( IO::STR_UI_STS_APP_MET_AT_LEVEL ),
+                    snprintf( buffer.data( ), buffer.size( ),
+                              GET_STRING( IO::STR_UI_STS_APP_MET_AT_LEVEL ),
                               p_pokemon->m_boxdata.m_gotLevel );
-                    IO::regularFont->printStringC( buffer, INFO_X_SUB + 12,
+                    IO::regularFont->printStringC( buffer.data( ), INFO_X_SUB + 12,
                                                    INFO_LINE_SUB( currentLine++ ), true );
                 }
             } else {
                 if( p_pokemon->m_boxdata.m_fateful ) {
-                    snprintf( buffer, 49, GET_STRING( IO::STR_UI_STS_FATEFUL_ENC_AT_LEVEL ),
+                    snprintf( buffer.data( ), buffer.size( ),
+                              GET_STRING( IO::STR_UI_STS_FATEFUL_ENC_AT_LEVEL ),
                               p_pokemon->m_boxdata.m_gotLevel );
-                    IO::regularFont->printStringC( buffer, INFO_X_SUB + 12,
+                    IO::regularFont->printStringC( buffer.data( ), INFO_X_SUB + 12,
                                                    INFO_LINE_SUB( currentLine++ ), true );
                 } else {
-                    snprintf( buffer, 49, GET_STRING( IO::STR_UI_STS_MET_AT_LEVEL ),
+                    snprintf( buffer.data( ), buffer.size( ),
+                              GET_STRING( IO::STR_UI_STS_MET_AT_LEVEL ),
                               p_pokemon->m_boxdata.m_gotLevel );
-                    IO::regularFont->printStringC( buffer, INFO_X_SUB + 12,
+                    IO::regularFont->printStringC( buffer.data( ), INFO_X_SUB + 12,
                                                    INFO_LINE_SUB( currentLine++ ), true );
                 }
             }
@@ -1129,13 +1133,13 @@ namespace STS {
                                                INFO_LINE_SUB( currentLine ), true );
 
                 fmt = std::string( GET_STRING( IO::STR_UI_STS_LIKES_SUFFIX ) );
-                snprintf( buffer, 49, fmt.c_str( ),
+                snprintf( buffer.data( ), buffer.size( ), fmt.c_str( ),
                           GET_STRING( IO::STR_UI_STS_TASTES_START
                                       + p_pokemon->m_boxdata.getTasteStr( ) ) );
                 IO::regularFont->setColor( IO::BLUE2_IDX, 1 );
                 IO::regularFont->setColor( IO::BLUE_IDX, 2 );
                 IO::regularFont->printStringC(
-                    buffer,
+                    buffer.data( ),
                     INFO_X_SUB + 12
                         + IO::regularFont->stringWidthC( GET_STRING( IO::STR_UI_STS_LIKES ) ),
                     INFO_LINE_SUB( currentLine ), true );
@@ -1146,7 +1150,7 @@ namespace STS {
                     fmt.c_str( ),
                     INFO_X_SUB + 12
                         + IO::regularFont->stringWidthC( GET_STRING( IO::STR_UI_STS_LIKES ) )
-                        + IO::regularFont->stringWidthC( buffer ),
+                        + IO::regularFont->stringWidthC( buffer.data( ) ),
                     INFO_LINE_SUB( currentLine ), true );
             }
 
@@ -1215,26 +1219,27 @@ namespace STS {
             IO::regularFont->printString( GET_STRING( IO::STR_UI_PKMN_STAT_LONG_HP ), INFO_X - 7,
                                           INFO_Y + 3, false );
 
-            snprintf( buffer, 49, "%hu/%hu", p_pokemon->IVget( 0 ), p_pokemon->EVget( 0 ) );
+            snprintf( buffer.data( ), buffer.size( ), "%hu/%hu", p_pokemon->IVget( 0 ),
+                      p_pokemon->EVget( 0 ) );
             IO::regularFont->setColor( IO::BLACK_IDX, 1 );
             IO::regularFont->setColor( 0, 2 );
-            IO::regularFont->printStringC( buffer, INFO_X - 8 + 128, INFO_Y + 4, false,
+            IO::regularFont->printStringC( buffer.data( ), INFO_X - 8 + 128, INFO_Y + 4, false,
                                            IO::font::RIGHT );
 
             IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-            snprintf( buffer, 49, "%hu/%hu", p_pokemon->m_stats.m_curHP,
+            snprintf( buffer.data( ), buffer.size( ), "%hu/%hu", p_pokemon->m_stats.m_curHP,
                       p_pokemon->m_stats.m_maxHP );
-            IO::regularFont->printStringC( buffer, INFO_X - 7 + 72, INFO_Y + 3, false,
+            IO::regularFont->printStringC( buffer.data( ), INFO_X - 7 + 72, INFO_Y + 3, false,
                                            IO::font::CENTER );
 
             u16 evtotal = p_pokemon->EVget( 0 );
             for( u8 i = 0; i < 5; ++i ) {
-                snprintf( buffer, 49, "%hu/%hu", p_pokemon->IVget( i + 1 ),
+                snprintf( buffer.data( ), buffer.size( ), "%hu/%hu", p_pokemon->IVget( i + 1 ),
                           p_pokemon->EVget( i + 1 ) );
                 evtotal += p_pokemon->EVget( i + 1 );
                 IO::regularFont->setColor( IO::BLACK_IDX, 1 );
                 IO::regularFont->setColor( 0, 2 );
-                IO::regularFont->printStringC( buffer, INFO_X - 7 + 128,
+                IO::regularFont->printStringC( buffer.data( ), INFO_X - 7 + 128,
                                                INFO_Y + 12 + 15 * ( i + 1 ), false,
                                                IO::font::RIGHT );
 
@@ -1248,9 +1253,10 @@ namespace STS {
                 writeLineTop( GET_STRING( IO::STR_UI_PKMN_STAT_LONG_START + 1 + i ), "", i + 1 );
 
                 IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-                snprintf( buffer, 49, "%hu", p_pokemon->getStat( i + 1 ) );
-                IO::regularFont->printString( buffer, INFO_X - 7 + 68, INFO_Y + 11 + 15 * ( i + 1 ),
-                                              false, IO::font::CENTER );
+                snprintf( buffer.data( ), buffer.size( ), "%hu", p_pokemon->getStat( i + 1 ) );
+                IO::regularFont->printString( buffer.data( ), INFO_X - 7 + 68,
+                                              INFO_Y + 11 + 15 * ( i + 1 ), false,
+                                              IO::font::CENTER );
             }
 
             // EV total / Happiness
@@ -1258,10 +1264,11 @@ namespace STS {
             IO::regularFont->setColor( IO::BLACK_IDX, 4 );
             IO::regularFont->setColor( IO::COLOR_IDX, 3 );
 
-            snprintf( buffer, 49, "\x01 %hu \x02 %hu", p_pokemon->m_boxdata.m_steps, evtotal );
+            snprintf( buffer.data( ), buffer.size( ), "\x01 %hu \x02 %hu",
+                      p_pokemon->m_boxdata.m_steps, evtotal );
 
-            IO::regularFont->printStringC( buffer, INFO_X - 7 + 128, INFO_Y + 12 + 15 * 7, false,
-                                           IO::font::RIGHT );
+            IO::regularFont->printStringC( buffer.data( ), INFO_X - 7 + 128, INFO_Y + 12 + 15 * 7,
+                                           false, IO::font::RIGHT );
 
             // BOTTOM
 
@@ -1329,20 +1336,20 @@ namespace STS {
 
                 auto mname = FS::getMoveName( p_pokemon->getMove( i ) );
                 if( mname.length( ) > 18 ) {
-                    snprintf( buffer, 20, "%s.", mname.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), "%s.", mname.c_str( ) );
                 } else {
-                    snprintf( buffer, 20, "%s", mname.c_str( ) );
+                    snprintf( buffer.data( ), buffer.size( ), "%s", mname.c_str( ) );
                 }
 
-                IO::regularFont->printStringC( buffer, oamSub[ SPR_MOVE_OAM_SUB( i ) ].x + 48,
-                                               oamSub[ SPR_MOVE_OAM_SUB( i ) ].y + 7, true,
-                                               IO::font::CENTER );
+                IO::regularFont->printStringC(
+                    buffer.data( ), oamSub[ SPR_MOVE_OAM_SUB( i ) ].x + 48,
+                    oamSub[ SPR_MOVE_OAM_SUB( i ) ].y + 7, true, IO::font::CENTER );
 
                 snprintf(
-                    buffer, 49, GET_STRING( IO::STR_UI_STS_PP_FORMAT ),
+                    buffer.data( ), 49, GET_STRING( IO::STR_UI_STS_PP_FORMAT ),
                     p_pokemon->m_boxdata.m_curPP[ i ],
                     s8( _moves[ i ].m_pp * ( ( 5 + p_pokemon->m_boxdata.PPupget( i ) ) / 5.0 ) ) );
-                IO::smallFont->printStringC( buffer, oamSub[ SPR_MOVE_OAM_SUB( i ) ].x + 91,
+                IO::smallFont->printStringC( buffer.data( ), oamSub[ SPR_MOVE_OAM_SUB( i ) ].x + 91,
                                              oamSub[ SPR_MOVE_OAM_SUB( i ) ].y + 13, true,
                                              IO::font::RIGHT );
             }
@@ -1437,10 +1444,10 @@ namespace STS {
                 IO::drawLine( x, y - 1, x2, y2 - 1, false, 242 );
             }
 
-            snprintf( buffer, 49, GET_STRING( IO::STR_UI_STS_SHEEN ),
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_STS_SHEEN ),
                       p_pokemon->m_boxdata.m_contestStats[ 5 ] );
-            IO::regularFont->printStringC( buffer, INFO_X - 7 + 128, INFO_Y + 20 + 15 * 7, false,
-                                           IO::font::RIGHT );
+            IO::regularFont->printStringC( buffer.data( ), INFO_X - 7 + 128, INFO_Y + 20 + 15 * 7,
+                                           false, IO::font::RIGHT );
 
             // BOTTOM
 
@@ -1461,8 +1468,9 @@ namespace STS {
                 IO::regularFont->printStringC( GET_STRING( IO::STR_UI_STS_NO_RIBBONS ), 128, 84,
                                                true, IO::font::CENTER );
             } else {
-                snprintf( buffer, 49, GET_STRING( IO::STR_UI_STS_RIBBONS ), ribs.size( ) );
-                IO::regularFont->printStringC( buffer, 32, 156, true );
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_STS_RIBBONS ),
+                          ribs.size( ) );
+                IO::regularFont->printStringC( buffer.data( ), 32, 156, true );
 
                 // load up to 12 ribbons
                 for( u8 i = 0; i < 12; ++i ) {
@@ -1601,7 +1609,7 @@ namespace STS {
 
     void statusScreenUI::showDetails( pokemon* p_pokemon, u8 p_page, u8 p_detailsPage ) {
         _currentPage = -1;
-        char buffer[ 50 ];
+        std::array<char, 50> buffer{ };
         switch( p_page ) {
         case 1: {
             // highlight move
@@ -1654,26 +1662,29 @@ namespace STS {
                     INFO_X_SUB - 8, INFO_Y_SUB + 3 - 2, 200, true, IO::font::LEFT, 13 );
 
                 // power / acc
-                char buffer2[ 25 ] = { 0 }, buffer3[ 25 ] = { 0 };
+                std::array<char, 25> buffer2{ }, buffer3{ };
 
                 if( p_pokemon->getMove( p_detailsPage ) == M_HIDDEN_POWER ) {
-                    snprintf( buffer2, 24, GET_STRING( IO::STR_UI_BAG_POWER ),
+                    snprintf( buffer2.data( ), buffer2.size( ), GET_STRING( IO::STR_UI_BAG_POWER ),
                               p_pokemon->getHPPower( ) );
                 } else if( _moves[ p_detailsPage ].m_basePower ) {
-                    snprintf( buffer2, 24, GET_STRING( IO::STR_UI_BAG_POWER ),
+                    snprintf( buffer2.data( ), buffer2.size( ), GET_STRING( IO::STR_UI_BAG_POWER ),
                               _moves[ p_detailsPage ].m_basePower );
                 }
                 if( _moves[ p_detailsPage ].m_accuracy > 0
                     && _moves[ p_detailsPage ].m_accuracy <= 100 ) {
-                    snprintf( buffer3, 24, GET_STRING( IO::STR_UI_BAG_ACCURACY ),
+                    snprintf( buffer3.data( ), buffer3.size( ),
+                              GET_STRING( IO::STR_UI_BAG_ACCURACY ),
                               _moves[ p_detailsPage ].m_accuracy );
                 } else {
-                    snprintf( buffer3, 24, GET_STRING( IO::STR_UI_BAG_ACCURACY_NO_MISS ) );
+                    snprintf( buffer3.data( ), buffer3.size( ),
+                              GET_STRING( IO::STR_UI_BAG_ACCURACY_NO_MISS ) );
                 }
 
-                snprintf( buffer, 49, "%s %s", buffer2, buffer3 );
-                IO::regularFont->printStringC( buffer, INFO_X_SUB + 190 - 8, INFO_Y_SUB + 58 - 2,
-                                               true, IO::font::RIGHT );
+                snprintf( buffer.data( ), buffer.size( ), "%s %s", buffer2.data( ),
+                          buffer3.data( ) );
+                IO::regularFont->printStringC( buffer.data( ), INFO_X_SUB + 190 - 8,
+                                               INFO_Y_SUB + 58 - 2, true, IO::font::RIGHT );
             } else {
                 // restore ability
                 IO::regularFont->setColor( IO::COLOR_IDX, 1 );
@@ -1737,8 +1748,9 @@ namespace STS {
                                                true, IO::font::CENTER );
                 return;
             } else {
-                snprintf( buffer, 49, GET_STRING( IO::STR_UI_STS_RIBBONS ), ribs.size( ) );
-                IO::regularFont->printStringC( buffer, 32, 156, true );
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_STS_RIBBONS ),
+                          ribs.size( ) );
+                IO::regularFont->printStringC( buffer.data( ), 32, 156, true );
             }
 
             if( p_detailsPage != (u8) -1 ) {

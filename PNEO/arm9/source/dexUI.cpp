@@ -331,7 +331,7 @@ namespace DEX {
 
     std::vector<std::pair<IO::inputTarget, u8>> dexUI::drawModeChoice( bool p_showLocalDex,
                                                                        bool p_showNationalDex ) {
-        char buffer[ 10 ];
+        std::array<char, 10> buffer{ };
         IO::fadeScreen( IO::CLEAR_DARK_IMMEDIATE, true, true );
 
         std::vector<std::pair<IO::inputTarget, u8>> res
@@ -436,10 +436,14 @@ namespace DEX {
             IO::regularFont->printStringC( GET_STRING( 580 ), 128 - 32, y + 21 + 14, true,
                                            IO::font::LEFT );
 
-            snprintf( buffer, 9, "%hu", SAVE::CURRENT_FILE->getLocalSeenCount( ) );
-            IO::regularFont->printStringC( buffer, 128 + 31, y + 21, true, IO::font::RIGHT );
-            snprintf( buffer, 9, "%hu", SAVE::CURRENT_FILE->getLocalCaughtCount( ) );
-            IO::regularFont->printStringC( buffer, 128 + 31, y + 21 + 14, true, IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), "%hu",
+                      SAVE::CURRENT_FILE->getLocalSeenCount( ) );
+            IO::regularFont->printStringC( buffer.data( ), 128 + 31, y + 21, true,
+                                           IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), "%hu",
+                      SAVE::CURRENT_FILE->getLocalCaughtCount( ) );
+            IO::regularFont->printStringC( buffer.data( ), 128 + 31, y + 21 + 14, true,
+                                           IO::font::RIGHT );
             IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 
             res.push_back( std::pair( IO::inputTarget( x, y, 255 - x, y + 20 ), 0 ) );
@@ -477,10 +481,13 @@ namespace DEX {
             IO::regularFont->printStringC( GET_STRING( 580 ), 128 - 32, y + 21 + 14, true,
                                            IO::font::LEFT );
 
-            snprintf( buffer, 9, "%hu", SAVE::CURRENT_FILE->getSeenCount( ) );
-            IO::regularFont->printStringC( buffer, 128 + 31, y + 21, true, IO::font::RIGHT );
-            snprintf( buffer, 9, "%hu", SAVE::CURRENT_FILE->getCaughtCount( ) );
-            IO::regularFont->printStringC( buffer, 128 + 31, y + 21 + 14, true, IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), "%hu", SAVE::CURRENT_FILE->getSeenCount( ) );
+            IO::regularFont->printStringC( buffer.data( ), 128 + 31, y + 21, true,
+                                           IO::font::RIGHT );
+            snprintf( buffer.data( ), buffer.size( ), "%hu",
+                      SAVE::CURRENT_FILE->getCaughtCount( ) );
+            IO::regularFont->printStringC( buffer.data( ), 128 + 31, y + 21 + 14, true,
+                                           IO::font::RIGHT );
             IO::regularFont->setColor( IO::GRAY_IDX, 2 );
 
             res.push_back( std::pair( IO::inputTarget( x, y, 255 - x, y + 20 ), 1 ) );
@@ -523,8 +530,7 @@ namespace DEX {
         if( p_newMode > 1 ) { return; }
         _mode = p_newMode;
 
-        char buffer[ 90 ];
-
+        std::array<char, 100> buffer{ };
         initSubSprites( );
         IO::printRectangle( 0, 6, 97, 22, false, 0 );
         IO::printRectangle( 20, 0, 235, 22, true, 0 );
@@ -532,22 +538,24 @@ namespace DEX {
             IO::regularFont->printStringC( GET_STRING( 577 ), 94 / 2 + 1, 5, false,
                                            IO::font::CENTER );
             localInitSub( true );
-            std::snprintf( buffer, 89, GET_STRING( 583 ),
+            std::snprintf( buffer.data( ), buffer.size( ), GET_STRING( 583 ),
                            SAVE::CURRENT_FILE->getLocalSeenCount( ) );
-            IO::regularFont->printStringC( buffer, 74, 2, true, IO::font::CENTER );
-            std::snprintf( buffer, 89, GET_STRING( 584 ),
+            IO::regularFont->printStringC( buffer.data( ), 74, 2, true, IO::font::CENTER );
+            std::snprintf( buffer.data( ), buffer.size( ), GET_STRING( 584 ),
                            SAVE::CURRENT_FILE->getLocalCaughtCount( ) );
-            IO::regularFont->printStringC( buffer, 54 + 128, 2, true, IO::font::CENTER );
+            IO::regularFont->printStringC( buffer.data( ), 54 + 128, 2, true, IO::font::CENTER );
 
             _nationalSelectedIdx = 0;
             _localSelectedPage   = -1;
         } else if( p_newMode == 1 ) { // national dex
             IO::regularFont->printStringC( GET_STRING( 578 ), 94 / 2 + 1, 5, false,
                                            IO::font::CENTER );
-            std::snprintf( buffer, 89, GET_STRING( 583 ), SAVE::CURRENT_FILE->getSeenCount( ) );
-            IO::regularFont->printStringC( buffer, 74, 2, true, IO::font::CENTER );
-            std::snprintf( buffer, 89, GET_STRING( 584 ), SAVE::CURRENT_FILE->getCaughtCount( ) );
-            IO::regularFont->printStringC( buffer, 54 + 128, 2, true, IO::font::CENTER );
+            std::snprintf( buffer.data( ), buffer.size( ), GET_STRING( 583 ),
+                           SAVE::CURRENT_FILE->getSeenCount( ) );
+            IO::regularFont->printStringC( buffer.data( ), 74, 2, true, IO::font::CENTER );
+            std::snprintf( buffer.data( ), buffer.size( ), GET_STRING( 584 ),
+                           SAVE::CURRENT_FILE->getCaughtCount( ) );
+            IO::regularFont->printStringC( buffer.data( ), 54 + 128, 2, true, IO::font::CENTER );
 
             _nationalSelectedIdx = 0;
             _localSelectedPage   = -1;
@@ -572,7 +580,7 @@ namespace DEX {
         bool seen   = SAVE::CURRENT_FILE->seen( p_pkmn.m_pkmnIdx );
         bool caught = SAVE::CURRENT_FILE->caught( p_pkmn.m_pkmnIdx );
 
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
 
         if( p_page == 1 ) {
             for( u8 i = 0; i < 30; ++i ) { oamTop[ i + SPR_STAR_START_OAM ].isHidden = true; }
@@ -588,9 +596,9 @@ namespace DEX {
 
             auto daytime = getCurrentDaytime( );
 
-            snprintf( buffer, 90, "map%hhu.wp", _OWbank );
+            snprintf( buffer.data( ), buffer.size( ), "map%hhu.wp", _OWbank );
             FS::readPictureData( p_bottom ? bgGetGfxPtr( IO::bg3sub ) : bgGetGfxPtr( IO::bg3 ),
-                                 "nitro:/PICS/DEX/", buffer, 2 * 230, 6, 49152, p_bottom );
+                                 "nitro:/PICS/DEX/", buffer.data( ), 2 * 230, 6, 49152, p_bottom );
 
             IO::printRectangle( 20, 32, 235, 192, p_bottom, 0 );
 
@@ -676,13 +684,13 @@ namespace DEX {
 
             // dex no
             if( _mode ) {
-                snprintf( buffer, 99, "%04hu%c", p_pkmn.m_pkmnIdx,
+                snprintf( buffer.data( ), buffer.size( ), "%04hu%c", p_pkmn.m_pkmnIdx,
                           p_pkmn.m_forme ? 'a' + p_pkmn.m_forme - 1 : 0 );
             } else {
-                snprintf( buffer, 99, "%03hu%c", getDexNo( p_pkmn.m_pkmnIdx ),
+                snprintf( buffer.data( ), buffer.size( ), "%03hu%c", getDexNo( p_pkmn.m_pkmnIdx ),
                           p_pkmn.m_forme ? 'a' + p_pkmn.m_forme - 1 : 0 );
             }
-            IO::regularFont->printStringC( buffer, 36, 176, p_bottom, IO::font::LEFT );
+            IO::regularFont->printStringC( buffer.data( ), 36, 176, p_bottom, IO::font::LEFT );
 
             // pkmn name
             if( seen || caught ) {
@@ -758,13 +766,13 @@ namespace DEX {
 
             // dex no
             if( _mode ) {
-                snprintf( buffer, 99, "%04hu%c", p_pkmn.m_pkmnIdx,
+                snprintf( buffer.data( ), buffer.size( ), "%04hu%c", p_pkmn.m_pkmnIdx,
                           p_pkmn.m_forme ? 'a' + p_pkmn.m_forme - 1 : 0 );
             } else {
-                snprintf( buffer, 99, "%03hu%c", getDexNo( p_pkmn.m_pkmnIdx ),
+                snprintf( buffer.data( ), buffer.size( ), "%03hu%c", getDexNo( p_pkmn.m_pkmnIdx ),
                           p_pkmn.m_forme ? 'a' + p_pkmn.m_forme - 1 : 0 );
             }
-            IO::regularFont->printStringC( buffer, 36, 112, p_bottom, IO::font::LEFT );
+            IO::regularFont->printStringC( buffer.data( ), 36, 112, p_bottom, IO::font::LEFT );
 
             // pokeball icon if pkmn caught
             oamTop[ SPR_CAUGHT_OAM ].y = SPR_CAUGHT_Y;
@@ -782,11 +790,12 @@ namespace DEX {
             IO::regularFont->setColor( IO::BLACK_IDX, 1 );
             IO::regularFont->setColor( 0, 2 );
             if( caught ) {
-                snprintf( buffer, 99, GET_STRING( 582 ),
+                snprintf( buffer.data( ), buffer.size( ), GET_STRING( 582 ),
                           FS::getSpeciesName( p_pkmn.m_pkmnIdx, p_pkmn.m_forme ).c_str( ),
                           data.m_baseForme.m_size / 10.0, data.m_baseForme.m_weight / 10.0 );
                 IO::regularFont->setColor( IO::GRAY_IDX, 1 );
-                IO::regularFont->printStringC( buffer, 128, 128, p_bottom, IO::font::CENTER );
+                IO::regularFont->printStringC( buffer.data( ), 128, 128, p_bottom,
+                                               IO::font::CENTER );
                 IO::regularFont->setColor( IO::BLACK_IDX, 1 );
                 IO::regularFont->printBreakingStringC(
                     FS::getDexEntry( p_pkmn.m_pkmnIdx, p_pkmn.m_forme ).c_str( ), 128, 141, 214,
@@ -891,12 +900,12 @@ namespace DEX {
         } else {
             if( !_mode && !p_isHidden && ispkmn ) {
                 // load dex no (only in local dex mode
-                char buffer[ 20 ];
+                std::array<char, 20> buffer{ };
                 if( _mode ) {
-                    snprintf( buffer, 19, "%04hu%c", p_pkmnIdx,
+                    snprintf( buffer.data( ), buffer.size( ), "%04hu%c", p_pkmnIdx,
                               p_pkmnForme ? 'a' + p_pkmnForme - 1 : 0 );
                 } else {
-                    snprintf( buffer, 19, "%03hu%c", getDexNo( p_pkmnIdx ),
+                    snprintf( buffer.data( ), buffer.size( ), "%03hu%c", getDexNo( p_pkmnIdx ),
                               p_pkmnForme ? 'a' + p_pkmnForme - 1 : 0 );
                 }
 
@@ -904,7 +913,7 @@ namespace DEX {
 
                 IO::regularFont->setColor( 1, 1 );
                 IO::regularFont->setColor( 0, 2 );
-                IO::regularFont->printStringBC( buffer, TEXT_PAL, IO::TEXT_BUF, 32,
+                IO::regularFont->printStringBC( buffer.data( ), TEXT_PAL, IO::TEXT_BUF, 32,
                                                 IO::font::CENTER, 0, 32 );
                 IO::loadSpriteB( p_OAMstart + 1, oam[ p_OAMstart + 1 ].gfxIndex, p_x - 1, p_y + 25,
                                  32, 32, IO::TEXT_BUF, 32 * 32 / 2, false, false, false,
@@ -947,7 +956,7 @@ namespace DEX {
         bool         caught = SAVE::CURRENT_FILE->caught( p_pkmnIdx );
         SpriteEntry* oam    = p_bottom ? IO::Oam->oamBuffer : IO::OamTop->oamBuffer;
 
-        char buffer[ 10 ];
+        std::array<char, 10> buffer{ };
 
         // load pkmn icon w/ corresponding bg
         loadPkmnEntry( p_pkmnIdx, 0, oamStart, SPR_NAT_DX_HIDDEN( p_OAMslot ),
@@ -965,9 +974,9 @@ namespace DEX {
 
             IO::regularFont->setColor( 1, 1 );
             IO::regularFont->setColor( 0, 2 );
-            snprintf( buffer, 9, "%04hu", p_pkmnIdx );
-            IO::regularFont->printStringBC( buffer, TEXT_PAL, IO::TEXT_BUF, 32, IO::font::LEFT, 0,
-                                            32 );
+            snprintf( buffer.data( ), buffer.size( ), "%04hu", p_pkmnIdx );
+            IO::regularFont->printStringBC( buffer.data( ), TEXT_PAL, IO::TEXT_BUF, 32,
+                                            IO::font::LEFT, 0, 32 );
             IO::loadSpriteB( oamStart + 5, oam[ oamStart + 5 ].gfxIndex,
                              SPR_NAT_DX_BG_POS_X( p_OAMslot ) + 40,
                              SPR_NAT_DX_BG_POS_Y( p_OAMslot ) + 32, 32, 16, IO::TEXT_BUF,

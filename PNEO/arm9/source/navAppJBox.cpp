@@ -64,7 +64,7 @@ namespace IO {
     }
 
     void jboxNavApp::load( bool p_bottom ) {
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
 
         auto ptr3 = !p_bottom ? bgGetGfxPtr( IO::bg3 ) : bgGetGfxPtr( IO::bg3sub );
         auto pal  = !p_bottom ? BG_PALETTE : BG_PALETTE_SUB;
@@ -144,14 +144,15 @@ namespace IO {
 
         auto s1 = std::string( GET_STRING( IO::STR_UI_JBOX_LUDICOBOX ) );
         if( _currentSong && SOUND::SSEQ::existsBGM( _currentSong ) ) {
-            snprintf( buffer, 99, "%s: %s", s1.c_str( ), FS::getBGMName( _currentSong ).c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ), "%s: %s", s1.c_str( ),
+                      FS::getBGMName( _currentSong ).c_str( ) );
         } else {
-            snprintf( buffer, 99, "%s: %s", s1.c_str( ),
+            snprintf( buffer.data( ), buffer.size( ), "%s: %s", s1.c_str( ),
                       GET_STRING( _currentMode == JMODE_SHOW_RECORD
                                       ? IO::STR_UI_JBOX_CHOOSE_RECORD
                                       : IO::STR_UI_JBOX_CHOOSE_SONG ) );
         }
-        IO::regularFont->printStringC( buffer, 12, 10, p_bottom, IO::font::LEFT );
+        IO::regularFont->printStringC( buffer.data( ), 12, 10, p_bottom, IO::font::LEFT );
     }
 
     void jboxNavApp::hoverButton( u16 p_btn, bool p_bottom ) {
@@ -202,16 +203,16 @@ namespace IO {
     void jboxNavApp::selectSong( u16 p_idx, bool p_bottom ) {
         SOUND::playCry( PKMN_LUDICOLO );
 
-        char buffer[ 100 ];
+        std::array<char, 100> buffer{ };
         if( !p_idx || !SOUND::SSEQ::existsBGM( _currentSong ) ) {
             auto s1 = std::string( GET_STRING( IO::STR_UI_JBOX_LUDICOBOX ) );
             SOUND::setJBoxBGM( SOUND::JBOX_DISABLED );
-            snprintf( buffer, 99, "%s: %s", s1.c_str( ),
+            snprintf( buffer.data( ), buffer.size( ), "%s: %s", s1.c_str( ),
                       GET_STRING( _currentMode == JMODE_SHOW_RECORD
                                       ? IO::STR_UI_JBOX_CHOOSE_RECORD
                                       : IO::STR_UI_JBOX_CHOOSE_SONG ) );
             IO::printRectangle( 45, 10, 200, 30, p_bottom, 0 );
-            IO::regularFont->printStringC( buffer, 12, 10, p_bottom, IO::font::LEFT );
+            IO::regularFont->printStringC( buffer.data( ), 12, 10, p_bottom, IO::font::LEFT );
             return;
         }
 
@@ -223,9 +224,10 @@ namespace IO {
             _currentSong = p_idx;
             auto s1      = std::string( GET_STRING( IO::STR_UI_JBOX_LUDICOBOX ) );
             SOUND::setJBoxBGM( _currentSong );
-            snprintf( buffer, 99, "%s: %s", s1.c_str( ), FS::getBGMName( _currentSong ).c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ), "%s: %s", s1.c_str( ),
+                      FS::getBGMName( _currentSong ).c_str( ) );
             IO::printRectangle( 45, 10, 200, 30, p_bottom, 0 );
-            IO::regularFont->printStringC( buffer, 12, 10, p_bottom, IO::font::LEFT );
+            IO::regularFont->printStringC( buffer.data( ), 12, 10, p_bottom, IO::font::LEFT );
         }
     }
 

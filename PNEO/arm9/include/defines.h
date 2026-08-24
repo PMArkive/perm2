@@ -26,6 +26,7 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -204,3 +205,25 @@ constexpr u32 DEFAULT_SPRITE_PID = 0x88888888;
 
 #define IN_DEX( pidx ) \
     ( SAVE::SAV.getActiveFile( ).m_caughtPkmn[ ( pidx ) / 8 ] & ( 1 << ( ( pidx ) % 8 ) ) )
+
+struct animateMapGuard {
+    animateMapGuard( ) {
+        ANIMATE_MAP = false;
+    }
+    ~animateMapGuard( ) {
+        ANIMATE_MAP = true;
+    }
+    animateMapGuard( const animateMapGuard& )            = delete;
+    animateMapGuard& operator=( const animateMapGuard& ) = delete;
+};
+
+struct drawTimeGuard {
+    drawTimeGuard( ) {
+        DRAW_TIME = false;
+    }
+    ~drawTimeGuard( ) {
+        DRAW_TIME = true;
+    }
+    drawTimeGuard( const drawTimeGuard& )            = delete;
+    drawTimeGuard& operator=( const drawTimeGuard& ) = delete;
+};

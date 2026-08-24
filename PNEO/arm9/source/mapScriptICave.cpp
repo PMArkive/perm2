@@ -265,10 +265,10 @@ namespace MAP {
     }
 
     bool mapDrawer::gateCheckInfinityCave( ) {
-        u16  curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
-        u16  cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
-        u16  mapX = curx / SIZE, mapY = cury / SIZE;
-        char buffer[ 200 ] = { 0 };
+        u16                   curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+        u16                   cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+        u16                   mapX = curx / SIZE, mapY = cury / SIZE;
+        std::array<char, 200> buffer{ };
 
         if( !SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) ) {
             IO::printMessage( GET_MAP_STRING( IO::STR_MAP_ICAVE_REPORT_REQS_MET_AFTER ), MSG_INFO );
@@ -287,9 +287,9 @@ namespace MAP {
         u8 green  = ( infinityCaveReqs >> 16 ) & 255;
         u8 yellow = ( infinityCaveReqs >> 24 ) & 255;
 
-        snprintf( buffer, 199, GET_MAP_STRING( IO::STR_MAP_ICAVE_REPORT_REQS ), red, blue, yellow,
-                  green );
-        IO::printMessage( buffer, MSG_INFO );
+        snprintf( buffer.data( ), buffer.size( ), GET_MAP_STRING( IO::STR_MAP_ICAVE_REPORT_REQS ),
+                  red, blue, yellow, green );
+        IO::printMessage( buffer.data( ), MSG_INFO );
 
         // check if player has required shards
         bool clear = blue <= SAVE::CURRENT_FILE->m_bag.count(

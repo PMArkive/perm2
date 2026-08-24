@@ -54,9 +54,10 @@ namespace MAP {
 
         if( !p_f || !p_tileset ) {
 #ifdef DESQUID
-            char buffer[ 50 ];
-            snprintf( buffer, 49, "Map %d/%d,%d does not exist or TS broken", p_map, p_y, p_x );
-            IO::printMessage( buffer, MSG_INFO );
+            std::array<char, 50> buffer{ };
+            snprintf( buffer.data( ), buffer.size( ), "Map %d/%d,%d does not exist or TS broken",
+                      p_map, p_y, p_x );
+            IO::printMessage( buffer.data( ), MSG_INFO );
             swiWaitForVBlank( );
 #endif
             mapExists = false;

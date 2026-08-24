@@ -593,8 +593,8 @@ namespace IO {
                         if( stat != lst ) {
                             lst = stat;
                             printMessage( 0, MSG_INFO_NOCLOSE );
-                            char        buffer[ 100 ];
-                            std::string buf2 = "";
+                            std::array<char, 100> buffer{ };
+                            std::string           buf2 = "";
                             for( u8 i = 0; i < stat; ++i ) {
                                 buf2 += "\x03";
                                 if( i % 3 == 2 ) { buf2 += " "; }
@@ -603,9 +603,10 @@ namespace IO {
                                 buf2 += "\x04";
                                 if( i % 3 == 2 ) { buf2 += " "; }
                             }
-                            snprintf( buffer, 99, GET_STRING( IO::STR_UI_SAVING_A_LOT_OF_DATA ),
+                            snprintf( buffer.data( ), buffer.size( ),
+                                      GET_STRING( IO::STR_UI_SAVING_A_LOT_OF_DATA ),
                                       buf2.c_str( ) );
-                            doPrintMessage( buffer, MSG_INFO_NOCLOSE, 0, 0, true );
+                            doPrintMessage( buffer.data( ), MSG_INFO_NOCLOSE, 0, 0, true );
                         }
                     } ) ) {
                     printMessage( 0, MSG_INFO_NOCLOSE );
@@ -688,8 +689,8 @@ namespace IO {
 
         if( p_paymentMethod == 3 ) { mx = 1; }
 
-        char buffer[ 100 ];
-        s32  res = 0;
+        std::array<char, 100> buffer{ };
+        s32                   res = 0;
         if( mx == 0 ) {
             IO::printRectangle( 0, 40, 255, 192, true, 0 );
             init( true );
@@ -715,7 +716,8 @@ namespace IO {
             IO::regularFont->setColor( IO::WHITE_IDX, 1 );
             return res;
         } else if( mx > 0 ) {
-            snprintf( buffer, 100, GET_STRING( IO::STR_UI_MART_CLERK_HOW_MANY ), p_name.c_str( ) );
+            snprintf( buffer.data( ), buffer.size( ), GET_STRING( IO::STR_UI_MART_CLERK_HOW_MANY ),
+                      p_name.c_str( ) );
 
             for( u8 i = 0; i < 10; ++i ) { oam[ SPR_MSGBOX_OAM_SUB + i ].isHidden = false; }
 
@@ -727,7 +729,7 @@ namespace IO {
                 [ & ]( ) {
                     auto res2 = drawCounter( 0, mx );
                     IO::regularFont->setColor( IO::BLACK_IDX, 1 );
-                    IO::regularFont->printBreakingStringC( buffer, 40, 38, 256 - 80, true );
+                    IO::regularFont->printBreakingStringC( buffer.data( ), 40, 38, 256 - 80, true );
                     IO::regularFont->setColor( IO::WHITE_IDX, 1 );
                     return res2;
                 },
@@ -753,19 +755,20 @@ namespace IO {
         u32 cost = res * p_item.second;
 
         if( p_paymentMethod < 3 ) {
-            snprintf( buffer, 99,
+            snprintf( buffer.data( ), buffer.size( ),
                       GET_STRING( IO::STR_UI_MART_CLERK_TOTAL_MONEYTYPE_START + p_paymentMethod ),
                       p_name.c_str( ), res, cost );
         } else if( p_paymentMethod == 3 ) {
-            snprintf( buffer, 99, GET_STRING( IO::STR_UI_MART_CLERK_TOTAL_MONEYTYPE_ASH ),
-                      p_name.c_str( ), cost );
+            snprintf( buffer.data( ), buffer.size( ),
+                      GET_STRING( IO::STR_UI_MART_CLERK_TOTAL_MONEYTYPE_ASH ), p_name.c_str( ),
+                      cost );
         }
         IO::yesNoBox yn;
         auto         conf = yn.getResult(
             [ & ]( ) {
                 auto tmpres = printYNMessage( 0, MSG_NORMAL, 253 );
                 IO::regularFont->setColor( IO::BLACK_IDX, 1 );
-                IO::regularFont->printBreakingStringC( buffer, 40, 22, 256 - 80, true );
+                IO::regularFont->printBreakingStringC( buffer.data( ), 40, 22, 256 - 80, true );
                 IO::regularFont->setColor( IO::WHITE_IDX, 1 );
                 return tmpres;
             },

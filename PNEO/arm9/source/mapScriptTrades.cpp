@@ -49,9 +49,9 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "sts/partyScreen.h"
 
 namespace MAP {
-    char buffer[ 200 ];
     void mapDrawer::selfTrader( ) {
-        ANIMATE_MAP = false;
+        animateMapGuard       amGuard{ };
+        std::array<char, 200> buffer{ };
 
         // check if self-trader has a pkmn of the player
         if( !SAVE::CURRENT_FILE->m_traderPokemon.getSpecies( ) ) {
@@ -70,14 +70,13 @@ namespace MAP {
         }
 
         snprintf(
-            buffer, 199, GET_MAP_STRING( IO::STR_MAP_ST_MSG2 ),
+            buffer.data( ), buffer.size( ), GET_MAP_STRING( IO::STR_MAP_ST_MSG2 ),
             FS::getDisplayName( SAVE::CURRENT_FILE->m_traderPokemon.getSpecies( ) ).c_str( ) );
-        printMapMessage( buffer, MSG_NORMAL );
+        printMapMessage( buffer.data( ), MSG_NORMAL );
 
         // check if player has at least two pkmn that are not eggs
         if( SAVE::CURRENT_FILE->countAlivePkmn( ) < 2 ) {
             printMapMessage( GET_MAP_STRING( 1106 ), MSG_NORMAL );
-            ANIMATE_MAP = true;
             return;
         }
 
@@ -113,13 +112,11 @@ namespace MAP {
             IO::init( );
         }
         printMapMessage( GET_MAP_STRING( IO::STR_MAP_ST_MSG4 ), MSG_NORMAL );
-
-        ANIMATE_MAP = true;
     }
 
     u8 mapDrawer::ingameTrade( u8 p_tradeIdx, u16 p_targetPkmn, u8 p_targetForme, u16 p_offeredPkmn,
                                u8 p_offeredForme ) {
-        ANIMATE_MAP = false;
+        animateMapGuard amGuard{ };
 
         STS::partyScreen sts
             = STS::partyScreen( SAVE::CURRENT_FILE->m_pkmnTeam,
@@ -155,8 +152,6 @@ namespace MAP {
         bgUpdate( );
         IO::init( );
         MAP::curMap->draw( );
-
-        ANIMATE_MAP = true;
         return res;
     }
 } // namespace MAP

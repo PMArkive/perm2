@@ -115,8 +115,7 @@ namespace MAP {
     u16* mapMemory[ 4 ];
 
     void mapDrawer::loadBlock( block p_curblock, u32 p_memPos ) {
-        // TODO: get rid of magic constants
-        u8   toplayer = 1, bottomlayer = 3;
+        u8   toplayer = MAP_LAYER_TOP, bottomlayer = MAP_LAYER_BOTTOM;
         bool elevateTopLayer = p_curblock.m_topbehave == TBEH_ELEVATE_TOP_LAYER;
 
         mapMemory[ toplayer ][ p_memPos ]      = !elevateTopLayer * p_curblock.m_top[ 0 ][ 0 ];
@@ -157,8 +156,8 @@ namespace MAP {
     // Drawing of Maps and stuff
 
     void mapDrawer::draw( u16 p_globX, u16 p_globY, bool p_init ) {
+        animateMapGuard amGuard;
         if( p_init ) {
-            ANIMATE_MAP = false;
 
             videoSetMode( MODE_3_2D | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE | DISPLAY_BG2_ACTIVE
                           | DISPLAY_BG3_ACTIVE | DISPLAY_SPR_ACTIVE
@@ -260,18 +259,17 @@ namespace MAP {
         u16 mny = p_globY - 8;
         u16 mnx = p_globX - 15;
 
-        ANIMATE_MAP = false;
         for( u16 y = 0; y < NUM_ROWS; y++ )
             for( u16 x = 0; x < NUM_COLS; x++ ) { loadBlock( at( mnx + x, mny + y ), x, y ); }
 
         bgUpdate( );
-        ANIMATE_MAP = true;
     }
 
     void mapDrawer::draw( ObjPriority, bool p_playerHidden, bool p_init ) {
         draw( SAVE::CURRENT_FILE->m_player.m_pos.m_posX, SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
               true ); // Draw the map
-        stepOn( SAVE::CURRENT_FILE->m_player.m_pos.m_posX, SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
+        stepOn( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
+                SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
                 SAVE::CURRENT_FILE->m_player.m_pos.m_posZ, false, false, false );
 
         if( p_init ) { unfadeScreen( ); }
@@ -332,11 +330,9 @@ namespace MAP {
 
             // Hacky optimization: Don't load new slices on inside maps.
             if( ( currentData( ).m_mapType & CAVE ) || !( currentData( ).m_mapType & INSIDE ) ) {
-                ANIMATE_MAP = false;
-                DRAW_TIME   = false;
+                animateMapGuard amGuard;
+                drawTimeGuard   dtGuard;
                 loadSlice( p_direction );
-                ANIMATE_MAP = true;
-                DRAW_TIME   = true;
             }
 #ifdef DESQUID_MORE
             IO::printMessage( "Load Slice" );
@@ -349,13 +345,12 @@ namespace MAP {
         //    || ( dir[ p_direction ][ 1 ] == 1 && _cy % 4 == 3 )
         //    || ( dir[ p_direction ][ 1 ] == -1 && _cy % 4 == 3 ) ) {
         if( true ) {
-            ANIMATE_MAP = false;
+            animateMapGuard amGuard;
             for( u8 i = 0; i < 4; ++i ) {
                 constructAndAddNewMapObjects( _data[ i % 2 ][ i / 2 ],
                                               _slices[ i % 2 ][ i / 2 ].m_x,
                                               _slices[ i % 2 ][ i / 2 ].m_y );
             }
-            ANIMATE_MAP = true;
         }
 
         // Check if a new slice got stepped onto
@@ -376,7 +371,7 @@ namespace MAP {
 
             u8* tileMemory = (u8*) BG_TILE_RAM( 1 );
 
-            ANIMATE_MAP = false;
+            animateMapGuard amGuard;
             if( oldts1 != newts1 && oldts2 != newts2 ) {
                 dmaCopy( CUR_SLICE.m_tileSet.m_tiles, tileMemory, MAX_TILES_PER_TILE_SET * 2 * 32 );
             } else if( oldts2 != newts2 ) {
@@ -391,12 +386,11 @@ namespace MAP {
             }
             dmaCopy( CUR_SLICE.m_pals + currDT * 16, BG_PALETTE, 512 - 32 );
             BG_PALETTE[ 0 ] = 0;
-            ANIMATE_MAP     = true;
 
 #ifdef DESQUID_MORE
-            char buffer[ 100 ];
-            snprintf( buffer, 99, "Switch Slice to (%d, %d)", _curX, _curY );
-            IO::printMessage( buffer );
+            std::array<char, 100> buffer{ };
+            snprintf( buffer.data( ), buffer.size( ), "Switch Slice to (%d, %d)", _curX, _curY );
+            IO::printMessage( buffer.data( ) );
 #endif
         }
 
@@ -484,7 +478,8 @@ namespace MAP {
 
     u16 mapDrawer::getCurrentLocationId( ) const {
         if( FSDATA.isOWMap( SAVE::CURRENT_FILE->m_currentMap ) ) [[likely]] {
-            if( MAP_LOCATIONS.m_bank != SAVE::CURRENT_FILE->m_currentMap || !MAP_LOCATIONS.m_good ) {
+            if( MAP_LOCATIONS.m_bank != SAVE::CURRENT_FILE->m_currentMap
+                || !MAP_LOCATIONS.m_good ) {
                 FS::loadLocationData( SAVE::CURRENT_FILE->m_currentMap );
             }
 

@@ -43,6 +43,8 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "sound/sound.h"
 
 namespace MAP {
+    // TODO: forest clouds/ash/others flicker while walking
+    // TODO: weird artifacts on map load/enter
     void mapDrawer::initWeather( ) {
         // TODO: get rid of magic constants
         _weatherScrollX = 0;
