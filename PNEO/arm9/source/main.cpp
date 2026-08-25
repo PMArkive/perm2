@@ -6,7 +6,7 @@ file        : main.cpp
 author      : Philip Wellnitz
 description : Main ARM9 entry point
 
-Copyright (C) 2012 - 2023
+Copyright (C) 2012 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.

@@ -4,9 +4,9 @@ Pokémon neo
 
 file        : startScreen.cpp
 author      : Philip Wellnitz
-description : Header file. See corresponding source file for details.
+description :
 
-Copyright (C) 2012 - 2024
+Copyright (C) 2012 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.

@@ -6,7 +6,7 @@ file        : mapWeather.cpp
 author      : Philip Wellnitz
 description : map drawing engine; weather related functions
 
-Copyright (C) 2022 - 2022
+Copyright (C) 2022 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.
@@ -43,7 +43,6 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "sound/sound.h"
 
 namespace MAP {
-    // TODO: forest clouds/ash/others flicker while running/fast player movement
     void mapDrawer::initWeather( ) {
         _weatherScrollX = 0;
         _weatherScrollY = 0;

@@ -6,7 +6,7 @@ file        : mapDrawer.cpp
 author      : Philip Wellnitz
 description : Map drawing engine: core rendering functions
 
-Copyright (C) 2012 - 2022
+Copyright (C) 2012 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.

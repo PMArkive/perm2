@@ -6,7 +6,7 @@ file        : mapScriptMisc.cpp
 author      : Philip Wellnitz
 description : Map script engine (special npc that the player can interact with)
 
-Copyright (C) 2023 - 2023
+Copyright (C) 2023 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.

@@ -6,7 +6,7 @@ file        : mapBattle.cpp
 author      : Philip Wellnitz
 description : Map drawing engine: functions related to wild and trainer battles
 
-Copyright (C) 2012 - 2022
+Copyright (C) 2012 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.

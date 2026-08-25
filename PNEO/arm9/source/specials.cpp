@@ -6,7 +6,7 @@
     author      : Philip Wellnitz
     description : Various mini games
 
-    Copyright (C) 2021 - 2023
+    Copyright (C) 2021 - 2026
     Philip Wellnitz
 
     This file is part of Pokémon neo.

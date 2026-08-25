@@ -6,7 +6,7 @@ file        : mapBattleFactory.cpp
 author      : Philip Wellnitz
 description : Battle Factory / Slateport battle tent
 
-Copyright (C) 2023 - 2023
+Copyright (C) 2023 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.

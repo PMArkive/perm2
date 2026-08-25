@@ -6,7 +6,7 @@ file        : mysteryGift.cpp
 author      : Philip Wellnitz
 description : Logic for receiving (and sending) gifts.
 
-Copyright (C) 2023 - 2023
+Copyright (C) 2023 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.

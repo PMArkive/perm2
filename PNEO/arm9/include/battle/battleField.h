@@ -6,7 +6,7 @@ file        : battleField.h
 author      : Philip Wellnitz
 description : Header file. Consult the corresponding source file for details.
 
-Copyright (C) 2012 - 2022
+Copyright (C) 2012 - 2026
 Philip Wellnitz
 
 This file is part of Pokémon neo.
@@ -877,7 +877,8 @@ namespace BATTLE {
                 WAIT( HALF_SEC );
                 return;
             }
-                [[likely]] default : break;
+            [[likely]] default:
+                break;
             }
 
             giveItem( p_ui, p_targetOpp, p_targetSlot, item );
