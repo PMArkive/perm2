@@ -560,9 +560,9 @@ namespace MAP {
         animateMapGuard amGuard{ };
         // animate weather
         if( _weatherScrollX || _weatherScrollY ) {
-            bgScrollf( IO::bg3, ( _weatherScrollX << 8 ) / 10, ( _weatherScrollY << 8 ) / 10 );
-            bgUpdate( );
+            bgScrollf( IO::bg3, _weatherScrollX, _weatherScrollY );
         }
+        bgUpdate( );
 
         // animate map objects
         animateTiles( );

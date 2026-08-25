@@ -149,6 +149,9 @@ namespace MAP {
             break;
         }
 
+        _weatherScrollX = ( _weatherScrollX << 8 ) / 10;
+        _weatherScrollY = ( _weatherScrollY << 8 ) / 10;
+
         swiWaitForVBlank( );
         IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
         if( bgWrap ) { bgWrapOn( IO::bg3 ); }

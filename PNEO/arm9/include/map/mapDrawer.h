@@ -250,8 +250,8 @@ namespace MAP {
         u8       _curX = 0, _curY = 0; // Current main slice from the _slices array
 #define CUR_SLICE _slices[ _curX ][ _curY ]
 
-        s8   _weatherScrollX = 0;
-        s8   _weatherScrollY = 0;
+        s16  _weatherScrollX = 0;
+        s16  _weatherScrollY = 0;
         bool _weatherFollow  = false;
 
         bool _scriptRunning = false; // true while a map script is running.

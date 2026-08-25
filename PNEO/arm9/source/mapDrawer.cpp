@@ -305,7 +305,9 @@ namespace MAP {
 
         loadBlock( at( p_globX, p_globY ), ( _lastcol + NUM_COLS / 2 - curx + p_globX ) % NUM_COLS,
                    ( _lastrow + NUM_ROWS / 2 + 1 - cury + p_globY ) % NUM_ROWS );
-        bgUpdate( );
+        if( !ANIMATE_MAP ) {
+            bgUpdate( ); // will be called in animateMap.
+        }
     }
 
     void mapDrawer::setMovement( u16 p_globX, u16 p_globY, u16 p_newMovement ) {
@@ -432,7 +434,9 @@ namespace MAP {
             break;
         }
         }
-        bgUpdate( );
+        if( !ANIMATE_MAP ) {
+            bgUpdate( ); // will be called in animateMap.
+        }
     }
 
     void mapDrawer::moveCamera( direction p_direction, bool p_updatePlayer, bool p_autoLoadRows ) {
@@ -440,7 +444,9 @@ namespace MAP {
             if( i == IO::bg3 && !_weatherFollow ) { continue; }
             bgScroll( i, dir[ p_direction ][ 0 ], dir[ p_direction ][ 1 ] );
         }
-        bgUpdate( );
+        if( !ANIMATE_MAP ) {
+            bgUpdate( ); // will be called in animateMap
+        }
         _mapSprites.moveCamera( p_direction, 1, !p_updatePlayer );
         if( p_autoLoadRows
             && ( ( dir[ p_direction ][ 0 ]
