@@ -103,13 +103,15 @@ namespace MAP {
     }
 
     void mapDrawer::animateTiles( ) {
-        auto rmpos = std::vector<position>{ };
+        constexpr u8 MAX_REMOVALS = 8;
+        position     rmpos[ MAX_REMOVALS ];
+        u8           rmcount = 0;
         for( auto& [ pos, ad ] : _tileAnimations ) {
             if( ad.m_expiry != 255 && ad.m_expiry-- == 1 ) {
                 // animation frame expires
                 auto nsp = mapSpriteManager::animationNextFrame( ad.m_animType, ad.m_frame );
                 if( !nsp ) {
-                    rmpos.push_back( pos );
+                    if( rmcount < MAX_REMOVALS ) { rmpos[ rmcount++ ] = pos; }
                     continue;
                 }
                 ad.m_frame = nsp;
@@ -117,7 +119,9 @@ namespace MAP {
                 ad.m_expiry = mapSpriteManager::animationExpiry( ad.m_animType );
             }
         }
-        for( auto p : rmpos ) { clearFieldAnimation( p.m_posX, p.m_posY ); }
+        for( u8 i = 0; i < rmcount; ++i ) {
+            clearFieldAnimation( rmpos[ i ].m_posX, rmpos[ i ].m_posY );
+        }
     }
 
     void mapDrawer::animateField( u16 p_globX, u16 p_globY, u8 p_animation, direction p_enterDir,
@@ -385,6 +389,8 @@ namespace MAP {
             cy2 = _followPkmn.m_pos.m_posY;
         }
 
+        u8 rndir = rand( ) & 1;
+
         for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
             auto& o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
 
@@ -405,10 +411,9 @@ namespace MAP {
                     o.second.m_direction = getRandomLookDirection( o.second.m_movement );
                     _mapSprites.setFrameD( o.first, o.second.m_direction, false );
                     change = true;
+                    continue;
                 }
             }
-
-            if( change ) { continue; }
 
             if( o.second.m_currentMovement.m_frame ) {
                 moveMapObject( i, o.second.m_currentMovement );
@@ -417,38 +422,36 @@ namespace MAP {
                 continue;
             }
 
-            u8 rndir = rand( ) & 1;
-
             bool movemnt
                 = ( p_frame & 127 ) == 63
                   || ( ( p_frame & 15 ) == 15 && o.second.m_movement == WALK_CONT_LEFT_RIGHT )
                   || ( ( p_frame & 15 ) == 15 && o.second.m_movement == WALK_CONT_UP_DOWN )
                   || ( ( p_frame & 15 ) == 15 && o.second.m_movement == WALK_CONT_FOLLOW_OBJECT );
 
+            if( !movemnt ) { continue; }
+
             if( o.second.m_movement == WALK_CONT_FOLLOW_OBJECT ) {
                 // printf( "MO %i - ", i );
-                if( movemnt ) {
-                    auto curdir = o.second.m_currentMovement.m_direction;
-                    auto nxdir  = direction( ( curdir + 1 ) % 4 );
+                auto curdir = o.second.m_currentMovement.m_direction;
+                auto nxdir  = direction( ( curdir + 1 ) % 4 );
 
-                    // check if the object could do a right turn (ignoring any events)
-                    if( canMove( o.second.m_pos, nxdir, WALK, false ) ) {
-                        o.second.m_currentMovement = { nxdir, 0 };
-                    }
+                // check if the object could do a right turn (ignoring any events)
+                if( canMove( o.second.m_pos, nxdir, WALK, false ) ) {
+                    o.second.m_currentMovement = { nxdir, 0 };
+                }
 
-                    auto nox = o.second.m_pos.m_posX
-                               + dir[ o.second.m_currentMovement.m_direction ][ 0 ];
-                    auto noy = o.second.m_pos.m_posY
-                               + dir[ o.second.m_currentMovement.m_direction ][ 1 ];
+                auto nox
+                    = o.second.m_pos.m_posX + dir[ o.second.m_currentMovement.m_direction ][ 0 ];
+                auto noy
+                    = o.second.m_pos.m_posY + dir[ o.second.m_currentMovement.m_direction ][ 1 ];
 
-                    // Don't glitch through the player or other objects
-                    if( canMove( o.second.m_pos, o.second.m_currentMovement.m_direction, WALK )
-                        && ( nox != curx || noy != cury ) && ( nox != cx2 || noy != cy2 ) ) {
-                        moveMapObject( i, o.second.m_currentMovement );
-                        o.second.m_currentMovement.m_frame++;
-                    } else {
-                        o.second.m_currentMovement = { curdir, 0 };
-                    }
+                // Don't glitch through the player or other objects
+                if( canMove( o.second.m_pos, o.second.m_currentMovement.m_direction, WALK )
+                    && ( nox != curx || noy != cury ) && ( nox != cx2 || noy != cy2 ) ) {
+                    moveMapObject( i, o.second.m_currentMovement );
+                    o.second.m_currentMovement.m_frame++;
+                } else {
+                    o.second.m_currentMovement = { curdir, 0 };
                 }
             }
 
@@ -456,104 +459,96 @@ namespace MAP {
                 || o.second.m_movement == WALK_LEFT_RIGHT
                 || o.second.m_movement == WALK_CONT_LEFT_RIGHT
                 || ( o.second.m_movement == WALK_AROUND_SQUARE && rndir ) ) {
-                if( movemnt ) {
-                    bool nomove = false;
+                bool nomove = false;
 
-                    auto nxl = o.second.m_pos.m_posX + dir[ LEFT ][ 0 ];
-                    auto nyl = o.second.m_pos.m_posY + dir[ LEFT ][ 1 ];
-                    auto nxr = o.second.m_pos.m_posX + dir[ RIGHT ][ 0 ];
-                    auto nyr = o.second.m_pos.m_posY + dir[ RIGHT ][ 1 ];
-                    auto nox = o.second.m_pos.m_posX
-                               + dir[ o.second.m_currentMovement.m_direction ][ 0 ];
-                    auto noy = o.second.m_pos.m_posY
-                               + dir[ o.second.m_currentMovement.m_direction ][ 1 ];
+                auto nxl = o.second.m_pos.m_posX + dir[ LEFT ][ 0 ];
+                auto nyl = o.second.m_pos.m_posY + dir[ LEFT ][ 1 ];
+                auto nxr = o.second.m_pos.m_posX + dir[ RIGHT ][ 0 ];
+                auto nyr = o.second.m_pos.m_posY + dir[ RIGHT ][ 1 ];
+                auto nox
+                    = o.second.m_pos.m_posX + dir[ o.second.m_currentMovement.m_direction ][ 0 ];
+                auto noy
+                    = o.second.m_pos.m_posY + dir[ o.second.m_currentMovement.m_direction ][ 1 ];
 
-                    if( o.second.m_pos.m_posX % SIZE == ( o.second.m_event.m_posX + 1 ) % SIZE ) {
+                if( o.second.m_pos.m_posX % SIZE == ( o.second.m_event.m_posX + 1 ) % SIZE ) {
 
-                        if( canMove( o.second.m_pos, LEFT, WALK ) && ( nxl != curx || nyl != cury )
-                            && ( nxl != cx2 || nyl != cy2 ) ) {
-                            o.second.m_currentMovement = { LEFT, 0 };
-                        } else {
-                            nomove = true;
-                        }
-                    } else if( ( o.second.m_pos.m_posX + 1 ) % SIZE
-                               == o.second.m_event.m_posX % SIZE ) {
+                    if( canMove( o.second.m_pos, LEFT, WALK ) && ( nxl != curx || nyl != cury )
+                        && ( nxl != cx2 || nyl != cy2 ) ) {
+                        o.second.m_currentMovement = { LEFT, 0 };
+                    } else {
+                        nomove = true;
+                    }
+                } else if( ( o.second.m_pos.m_posX + 1 ) % SIZE
+                           == o.second.m_event.m_posX % SIZE ) {
+                    if( canMove( o.second.m_pos, RIGHT, WALK ) && ( nxr != curx || nyr != cury )
+                        && ( nxr != cx2 || nyr != cy2 ) ) {
+                        o.second.m_currentMovement = { RIGHT, 0 };
+                    } else {
+                        nomove = true;
+                    }
+                } else {
+                    if( o.second.m_currentMovement.m_direction != LEFT
+                        && o.second.m_currentMovement.m_direction != RIGHT ) {
                         if( canMove( o.second.m_pos, RIGHT, WALK ) && ( nxr != curx || nyr != cury )
                             && ( nxr != cx2 || nyr != cy2 ) ) {
                             o.second.m_currentMovement = { RIGHT, 0 };
                         } else {
                             nomove = true;
                         }
-                    } else {
-                        if( o.second.m_currentMovement.m_direction != LEFT
-                            && o.second.m_currentMovement.m_direction != RIGHT ) {
-                            if( canMove( o.second.m_pos, RIGHT, WALK )
-                                && ( nxr != curx || nyr != cury )
-                                && ( nxr != cx2 || nyr != cy2 ) ) {
-                                o.second.m_currentMovement = { RIGHT, 0 };
-                            } else {
-                                nomove = true;
-                            }
-                        } else if( ( nox == curx && noy == cury )
-                                   || ( nox == cx2 && noy == cy2 ) ) {
-                            nomove = true;
-                        }
+                    } else if( ( nox == curx && noy == cury ) || ( nox == cx2 && noy == cy2 ) ) {
+                        nomove = true;
                     }
-                    if( !nomove ) {
-                        moveMapObject( i, o.second.m_currentMovement );
-                        o.second.m_currentMovement.m_frame++;
-                    }
+                }
+                if( !nomove ) {
+                    moveMapObject( i, o.second.m_currentMovement );
+                    o.second.m_currentMovement.m_frame++;
                 }
             }
             if( o.second.m_movement == WALK_AROUND_UP_DOWN || o.second.m_movement == WALK_UP_DOWN
                 || o.second.m_movement == WALK_CONT_UP_DOWN
                 || ( o.second.m_movement == WALK_AROUND_SQUARE && !rndir ) ) {
-                if( movemnt ) {
-                    bool nomove = false;
+                bool nomove = false;
 
-                    auto nxu = o.second.m_pos.m_posX + dir[ UP ][ 0 ];
-                    auto nyu = o.second.m_pos.m_posY + dir[ UP ][ 1 ];
-                    auto nxd = o.second.m_pos.m_posX + dir[ DOWN ][ 0 ];
-                    auto nyd = o.second.m_pos.m_posY + dir[ DOWN ][ 1 ];
-                    auto nox = o.second.m_pos.m_posX
-                               + dir[ o.second.m_currentMovement.m_direction ][ 0 ];
-                    auto noy = o.second.m_pos.m_posY
-                               + dir[ o.second.m_currentMovement.m_direction ][ 1 ];
+                auto nxu = o.second.m_pos.m_posX + dir[ UP ][ 0 ];
+                auto nyu = o.second.m_pos.m_posY + dir[ UP ][ 1 ];
+                auto nxd = o.second.m_pos.m_posX + dir[ DOWN ][ 0 ];
+                auto nyd = o.second.m_pos.m_posY + dir[ DOWN ][ 1 ];
+                auto nox
+                    = o.second.m_pos.m_posX + dir[ o.second.m_currentMovement.m_direction ][ 0 ];
+                auto noy
+                    = o.second.m_pos.m_posY + dir[ o.second.m_currentMovement.m_direction ][ 1 ];
 
-                    if( o.second.m_pos.m_posY % SIZE == ( o.second.m_event.m_posY + 1 ) % SIZE ) {
-                        if( canMove( o.second.m_pos, UP, WALK ) && ( nxu != curx || nyu != cury )
-                            && ( nxu != cx2 || nyu != cy2 ) ) {
-                            o.second.m_currentMovement = { UP, 0 };
-                        } else {
-                            nomove = true;
-                        }
-                    } else if( ( o.second.m_pos.m_posY + 1 ) % SIZE
-                               == o.second.m_event.m_posY % SIZE ) {
+                if( o.second.m_pos.m_posY % SIZE == ( o.second.m_event.m_posY + 1 ) % SIZE ) {
+                    if( canMove( o.second.m_pos, UP, WALK ) && ( nxu != curx || nyu != cury )
+                        && ( nxu != cx2 || nyu != cy2 ) ) {
+                        o.second.m_currentMovement = { UP, 0 };
+                    } else {
+                        nomove = true;
+                    }
+                } else if( ( o.second.m_pos.m_posY + 1 ) % SIZE
+                           == o.second.m_event.m_posY % SIZE ) {
+                    if( canMove( o.second.m_pos, DOWN, WALK ) && ( nxd != curx || nyd != cury )
+                        && ( nxd != cx2 || nyd != cy2 ) ) {
+                        o.second.m_currentMovement = { DOWN, 0 };
+                    } else {
+                        nomove = true;
+                    }
+                } else {
+                    if( o.second.m_currentMovement.m_direction != DOWN
+                        && o.second.m_currentMovement.m_direction != UP ) {
                         if( canMove( o.second.m_pos, DOWN, WALK ) && ( nxd != curx || nyd != cury )
                             && ( nxd != cx2 || nyd != cy2 ) ) {
                             o.second.m_currentMovement = { DOWN, 0 };
                         } else {
                             nomove = true;
                         }
-                    } else {
-                        if( o.second.m_currentMovement.m_direction != DOWN
-                            && o.second.m_currentMovement.m_direction != UP ) {
-                            if( canMove( o.second.m_pos, DOWN, WALK )
-                                && ( nxd != curx || nyd != cury )
-                                && ( nxd != cx2 || nyd != cy2 ) ) {
-                                o.second.m_currentMovement = { DOWN, 0 };
-                            } else {
-                                nomove = true;
-                            }
-                        } else if( ( nox == curx && noy == cury )
-                                   || ( nox == cx2 && noy == cy2 ) ) {
-                            nomove = true;
-                        }
+                    } else if( ( nox == curx && noy == cury ) || ( nox == cx2 && noy == cy2 ) ) {
+                        nomove = true;
                     }
-                    if( !nomove ) {
-                        moveMapObject( i, o.second.m_currentMovement );
-                        o.second.m_currentMovement.m_frame++;
-                    }
+                }
+                if( !nomove ) {
+                    moveMapObject( i, o.second.m_currentMovement );
+                    o.second.m_currentMovement.m_frame++;
                 }
             }
         }
@@ -562,25 +557,24 @@ namespace MAP {
     }
 
     void mapDrawer::animateMap( u8 p_frame ) {
-        ANIMATE_MAP = false;
+        animateMapGuard amGuard{ };
         // animate weather
         if( _weatherScrollX || _weatherScrollY ) {
             bgScrollf( IO::bg3, ( _weatherScrollX << 8 ) / 10, ( _weatherScrollY << 8 ) / 10 );
             bgUpdate( );
         }
 
-        // u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
-        // u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
-
         // animate map objects
         animateTiles( );
-
         animateMapObjects( p_frame );
-
         loadAnimatedTiles( p_frame );
 
-        // checkTrainerEye( curx, cury );
-        ANIMATE_MAP = true;
+        // TODO: properly implement trainer eye
+        if( !_scriptRunning && !PLAYER_IS_FISHING ) {
+            u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+            u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+            checkTrainerEye( curx, cury );
+        }
     }
 
     void mapDrawer::loadAnimatedTiles( u8 p_frame ) {
@@ -616,6 +610,14 @@ namespace MAP {
         u16 tas = getTileAnimation( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
                                     SAVE::CURRENT_FILE->m_player.m_pos.m_posY, true );
 
+        constexpr u8 GRID = 2 * TRACER_AREA + 1;
+        u8           slotTable[ GRID ][ GRID ];
+        for( u16 y = 0; y < GRID; ++y ) {
+            for( u16 x = 0; x < GRID; ++x ) {
+                slotTable[ y ][ x ] = dist( x, y, TRACER_AREA, TRACER_AREA );
+            }
+        }
+
         u8 sid[ TRACER_AREA ] = { }, scnt = 0;
         std::memset( sid, 255, sizeof( sid ) );
 
@@ -626,7 +628,7 @@ namespace MAP {
                     if( _tracerPositions[ y ] & ( 1 << x ) ) {
                         u16 nx   = sx + x;
                         u16 ny   = sy + y;
-                        u8  slot = dist( x, y, TRACER_AREA, TRACER_AREA );
+                        u8  slot = slotTable[ y ][ x ];
                         if( !slot || slot > TRACER_AREA ) { continue; }
                         bool shiny = tracerSlotShiny( slot );
 

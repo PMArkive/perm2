@@ -43,23 +43,22 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "sound/sound.h"
 
 namespace MAP {
-    // TODO: forest clouds/ash/others flicker while walking
-    // TODO: weird artifacts on map load/enter
+    // TODO: forest clouds/ash/others flicker while running/fast player movement
     void mapDrawer::initWeather( ) {
-        // TODO: get rid of magic constants
         _weatherScrollX = 0;
         _weatherScrollY = 0;
         REG_BLDALPHA    = 0;
+
+        // gather data from ROM
+        u32  dataSize = COMPLETE_SCREEN_SQ;
+        bool partial  = false;
+        bool bgWrap   = false;
+
         switch( getWeather( ) ) {
         case RAINY:
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            bgWrapOn( IO::bg3 );
-
             FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "rain",
-                                                        256 * 256 / 4, TEMP, 256, TEMP_PAL );
-            dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
-            dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
-            bgSetScroll( IO::bg3, 0, 0 );
+                                                        dataSize / 4, TEMP, 256, TEMP_PAL );
+            bgWrap          = true;
             _weatherScrollX = 32;
             _weatherScrollY = -64;
             REG_BLDALPHA    = 0xff | ( 0x08 << 8 );
@@ -67,14 +66,9 @@ namespace MAP {
             break;
 
         case FOG:
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            bgWrapOn( IO::bg3 );
-
-            FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "fog",
-                                                        256 * 256 / 4, TEMP, 256, TEMP_PAL );
-            dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
-            dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
-            bgSetScroll( IO::bg3, 0, 0 );
+            FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "fog", dataSize / 4,
+                                                        TEMP, 256, TEMP_PAL );
+            bgWrap          = true;
             _weatherScrollX = 2;
             _weatherScrollY = 0;
             REG_BLDALPHA    = 0xff | ( 0x08 << 8 );
@@ -83,14 +77,9 @@ namespace MAP {
 
         case MIST:
         case DENSE_MIST:
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            bgWrapOn( IO::bg3 );
-
             FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "mist",
-                                                        256 * 256 / 4, TEMP, 256, TEMP_PAL );
-            dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
-            dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
-            bgSetScroll( IO::bg3, 0, 0 );
+                                                        dataSize / 4, TEMP, 256, TEMP_PAL );
+            bgWrap = true;
             if( getWeather( ) == MIST ) {
                 _weatherScrollX = 1;
                 _weatherScrollY = 1;
@@ -104,14 +93,9 @@ namespace MAP {
             break;
 
         case CLOUDY:
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            bgWrapOn( IO::bg3 );
-
             FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "clouds",
-                                                        256 * 256 / 4, TEMP, 256, TEMP_PAL );
-            dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
-            dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
-            bgSetScroll( IO::bg3, 0, 0 );
+                                                        dataSize / 4, TEMP, 256, TEMP_PAL );
+            bgWrap          = true;
             _weatherScrollX = 2;
             _weatherScrollY = 0;
             REG_BLDALPHA    = 0xff | ( 0x08 << 8 );
@@ -119,14 +103,9 @@ namespace MAP {
             break;
 
         case FOREST_CLOUDS:
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            bgWrapOn( IO::bg3 );
-
             FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "forestcloud",
-                                                        256 * 256 / 4, TEMP, 256, TEMP_PAL );
-            dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
-            dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
-            bgSetScroll( IO::bg3, 0, 0 );
+                                                        dataSize / 4, TEMP, 256, TEMP_PAL );
+            bgWrap          = true;
             _weatherScrollX = 0;
             _weatherScrollY = 0;
             REG_BLDALPHA    = 0xff | ( 0x08 << 8 );
@@ -134,14 +113,9 @@ namespace MAP {
             break;
 
         case ASH_RAIN:
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            bgWrapOn( IO::bg3 );
-
             FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "ashrain",
-                                                        256 * 256 / 4, TEMP, 256, TEMP_PAL );
-            dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
-            dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
-            bgSetScroll( IO::bg3, 0, 0 );
+                                                        dataSize / 4, TEMP, 256, TEMP_PAL );
+            bgWrap          = true;
             _weatherScrollX = 2;
             _weatherScrollY = -4;
             _weatherFollow  = true;
@@ -149,18 +123,10 @@ namespace MAP {
         case SANDSTORM: {
             bool goggles = SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
                                                             I_GO_GOGGLES );
-
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            bgWrapOn( IO::bg3 );
-
             FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "sandstorm",
-                                                        256 * 256 / 4, TEMP, 256, TEMP_PAL );
-            dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), 256 * 256 );
-            dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
-            bgSetScroll( IO::bg3, 0, 0 );
-
+                                                        dataSize / 4, TEMP, 256, TEMP_PAL );
             if( goggles ) { REG_BLDALPHA = 0xff | ( 0x05 << 8 ); }
-
+            bgWrap          = true;
             _weatherScrollX = 40;
             _weatherScrollY = 10;
             _weatherFollow  = false;
@@ -171,31 +137,44 @@ namespace MAP {
         case DARK_FLASH_USED:
         case DARK_FLASH_1:
         case DARK_FLASH_2:
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
+            dataSize = COMPLETE_SCREEN;
+            partial  = true;
             FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "flash",
-                                                        256 * 192 / 4, TEMP, 256, TEMP_PAL );
-            dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), 256 * 192 );
-            dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
-            if( getWeather( ) == DARK_FLASH_USED ) {
-                bgSetScale( IO::bg3, 1 << 7, 1 << 7 );
-                bgSetScroll( IO::bg3, 64, 48 );
-            }
-            if( getWeather( ) == DARK_FLASH_1 ) {
-                bgSetScale( IO::bg3, 1 << 7 | 1 << 6 | 1 << 5, 1 << 7 | 1 << 6 | 1 << 5 );
-                bgSetScroll( IO::bg3, 112 - 96, 84 - 72 );
-            }
-            if( getWeather( ) == DARK_FLASH_2 ) {
-                bgSetScale( IO::bg3, 1 << 7 | 1 << 6, 1 << 7 | 1 << 6 );
-                bgSetScroll( IO::bg3, 96 - 64, 72 - 48 );
-            }
+                                                        dataSize / 4, TEMP, 256, TEMP_PAL );
             _weatherFollow = false;
             break;
         default:
-            IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
-            dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), COMPLETE_SCREEN_SQ );
+            partial = true;
+            dmaFillWords( 0, TEMP, dataSize );
             break;
         }
+
+        swiWaitForVBlank( );
+        IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
+        if( bgWrap ) { bgWrapOn( IO::bg3 ); }
+
+        if( partial ) { dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), COMPLETE_SCREEN_SQ ); }
+
+        dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), dataSize );
+        dmaCopy( TEMP_PAL, BG_PALETTE + 240, 32 );
+
+        switch( getWeather( ) ) {
+        case DARK_FLASH_USED:
+            bgSetScale( IO::bg3, 1 << 7, 1 << 7 );
+            bgSetScroll( IO::bg3, 64, 48 );
+            break;
+        case DARK_FLASH_1:
+            bgSetScale( IO::bg3, 1 << 7 | 1 << 6 | 1 << 5, 1 << 7 | 1 << 6 | 1 << 5 );
+            bgSetScroll( IO::bg3, 112 - 96, 84 - 72 );
+            break;
+        case DARK_FLASH_2:
+            bgSetScale( IO::bg3, 1 << 7 | 1 << 6, 1 << 7 | 1 << 6 );
+            bgSetScroll( IO::bg3, 96 - 64, 72 - 48 );
+            break;
+        default: bgSetScroll( IO::bg3, 0, 0 ); break;
+        }
         bgSetPriority( IO::bg3, 0 );
+        bgUpdate( );
     }
 
     void mapDrawer::changeWeather( mapWeather p_newWeather ) {

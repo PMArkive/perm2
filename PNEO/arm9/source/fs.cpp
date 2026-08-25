@@ -207,9 +207,14 @@ namespace FS {
     }
 
     bool readNop( FILE* p_file, u32 p_cnt ) {
-        u8 tmp;
-        for( u32 i = 0; i < p_cnt; ++i )
-            if( !read( p_file, &tmp, sizeof( u8 ), 1 ) ) return false;
+        if( !p_file ) { return false; }
+        constexpr u32 CHUNK = 256;
+        u8            buf[ CHUNK ];
+        while( p_cnt > 0 ) {
+            u32 n = p_cnt < CHUNK ? p_cnt : CHUNK;
+            if( read( p_file, buf, 1, n ) != n ) { return false; }
+            p_cnt -= n;
+        }
         return true;
     }
 

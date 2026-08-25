@@ -48,97 +48,90 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 namespace MAP {
     bool mapDrawer::checkTrainerEye( u16 p_globX, u16 p_globY ) {
         bool hadBattle = false;
-        if( !_scriptRunning ) {
-            // Check for trainer
-            for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
-                auto& o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
+        if( _scriptRunning ) [[unlikely]] { return false; }
 
-                if( o.second.m_event.m_type == EVENT_TRAINER ) [[unlikely]] {
-                    // Check if trainer can see player
+        // Check for trainer
+        for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
+            auto& o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
 
-                    if( std::abs( p_globX - o.second.m_pos.m_posX ) > o.second.m_range )
-                        [[likely]] {
-                        continue;
-                    }
-                    if( std::abs( p_globY - o.second.m_pos.m_posY ) > o.second.m_range )
-                        [[likely]] {
-                        continue;
-                    }
-                    if( std::abs( p_globY - o.second.m_pos.m_posY )
-                        && std::abs( p_globX - o.second.m_pos.m_posX ) ) [[likely]] {
-                        continue;
-                    }
+            if( o.second.m_event.m_type != EVENT_TRAINER ) [[likely]] { continue; }
 
-                    direction trainerDir = UP;
-                    direction playerDir  = DOWN;
-                    if( p_globY > o.second.m_pos.m_posY ) {
-                        trainerDir = DOWN;
-                        playerDir  = UP;
-                    }
-                    if( p_globX < o.second.m_pos.m_posX ) {
-                        trainerDir = LEFT;
-                        playerDir  = RIGHT;
-                    }
-                    if( p_globX > o.second.m_pos.m_posX ) {
-                        trainerDir = RIGHT;
-                        playerDir  = LEFT;
-                    }
+            // Check if trainer can see player
+            if( std::abs( p_globX - o.second.m_pos.m_posX ) > o.second.m_range ) [[likely]] {
+                continue;
+            }
+            if( std::abs( p_globY - o.second.m_pos.m_posY ) > o.second.m_range ) [[likely]] {
+                continue;
+            }
+            if( std::abs( p_globY - o.second.m_pos.m_posY )
+                && std::abs( p_globX - o.second.m_pos.m_posX ) ) [[likely]] {
+                continue;
+            }
 
-                    if( trainerDir != o.second.m_direction ) { continue; }
+            direction trainerDir = UP;
+            direction playerDir  = DOWN;
+            if( p_globY > o.second.m_pos.m_posY ) {
+                trainerDir = DOWN;
+                playerDir  = UP;
+            }
+            if( p_globX < o.second.m_pos.m_posX ) {
+                trainerDir = LEFT;
+                playerDir  = RIGHT;
+            }
+            if( p_globX > o.second.m_pos.m_posX ) {
+                trainerDir = RIGHT;
+                playerDir  = LEFT;
+            }
 
-                    // Check if anything is blocking the path between trainer and player
-                    bool pathblocked = false;
-                    auto stpos       = o.second.m_pos;
-                    for( u8 d = 1;
-                         d < dist( p_globX, p_globY, o.second.m_pos.m_posX, o.second.m_pos.m_posY );
-                         ++d ) {
-                        if( !canMove( stpos, trainerDir, WALK, true )
-                            && !canMove( stpos, trainerDir, SURF, true ) ) {
-                            pathblocked = true;
-                            break;
-                        }
-                        stpos.m_posX += dir[ trainerDir ][ 0 ];
-                        stpos.m_posY += dir[ trainerDir ][ 1 ];
-                        if( _pkmnFollowsPlayer && stpos.m_posX == _followPkmn.m_pos.m_posX
-                            && stpos.m_posY == _followPkmn.m_pos.m_posY ) {
-                            pathblocked = true;
-                            break;
-                        }
-                    }
+            if( trainerDir != o.second.m_direction ) { continue; }
 
-                    if( pathblocked ) [[unlikely]] { continue; }
-                    // Check for exclamation mark / music change
-                    if( !SAVE::CURRENT_FILE->checkFlag( SAVE::F_TRAINER_BATTLED(
-                            o.second.m_event.m_data.m_trainer.m_trainerId ) ) ) [[likely]] {
-                        // player did not defeat the trainer yet
-                        auto tr
-                            = FS::getBattleTrainer( o.second.m_event.m_data.m_trainer.m_trainerId );
+            // Check if anything is blocking the path between trainer and player
+            bool pathblocked = false;
+            auto stpos       = o.second.m_pos;
+            for( u8 d = 1;
+                 d < dist( p_globX, p_globY, o.second.m_pos.m_posX, o.second.m_pos.m_posY ); ++d ) {
+                if( !canMove( stpos, trainerDir, WALK, true )
+                    && !canMove( stpos, trainerDir, SURF, true ) ) {
+                    pathblocked = true;
+                    break;
+                }
+                stpos.m_posX += dir[ trainerDir ][ 0 ];
+                stpos.m_posY += dir[ trainerDir ][ 1 ];
+                if( _pkmnFollowsPlayer && stpos.m_posX == _followPkmn.m_pos.m_posX
+                    && stpos.m_posY == _followPkmn.m_pos.m_posY ) {
+                    pathblocked = true;
+                    break;
+                }
+            }
 
-                        // Check if the battle would be a double battle; if so and if the
-                        // player has only a single pkmn, the battle is optional
-                        if( !BATTLE::isDoubleBattleTrainerClass( tr.m_data.m_trainerClass )
-                            || SAVE::CURRENT_FILE->countAlivePkmn( ) >= 2 ) {
+            if( pathblocked ) [[unlikely]] { continue; }
+            // Check for exclamation mark / music change
+            if( !SAVE::CURRENT_FILE->checkFlag( SAVE::F_TRAINER_BATTLED(
+                    o.second.m_event.m_data.m_trainer.m_trainerId ) ) ) [[likely]] {
+                // player did not defeat the trainer yet
+                auto tr = FS::getBattleTrainer( o.second.m_event.m_data.m_trainer.m_trainerId );
 
-                            SAVE::CURRENT_FILE->m_mapObjects[ i ].second.m_movement = NO_MOVEMENT;
-                            showExclamationAboveMapObject( i );
-                            SOUND::playBGM(
-                                SOUND::BGMforTrainerEncounter( tr.m_data.m_trainerClass ) );
+                // Check if the battle would be a double battle; if so and if the
+                // player has only a single pkmn, the battle is optional
+                if( !BATTLE::isDoubleBattleTrainerClass( tr.m_data.m_trainerClass )
+                    || SAVE::CURRENT_FILE->countAlivePkmn( ) >= 2 ) {
 
-                            // walk trainer to player
-                            redirectPlayer( playerDir, false );
+                    SAVE::CURRENT_FILE->m_mapObjects[ i ].second.m_movement = NO_MOVEMENT;
+                    showExclamationAboveMapObject( i );
+                    SOUND::playBGM( SOUND::BGMforTrainerEncounter( tr.m_data.m_trainerClass ) );
 
-                            while( dist( p_globX, p_globY, o.second.m_pos.m_posX,
-                                         o.second.m_pos.m_posY )
-                                   > 1 ) {
-                                for( u8 j = 0; j < 16; ++j ) {
-                                    moveMapObject( i, { trainerDir, j } );
-                                    swiWaitForVBlank( );
-                                }
-                            }
-                            runEvent( o.second.m_event, i );
-                            hadBattle = true;
+                    // walk trainer to player
+                    redirectPlayer( playerDir, false );
+
+                    while( dist( p_globX, p_globY, o.second.m_pos.m_posX, o.second.m_pos.m_posY )
+                           > 1 ) {
+                        for( u8 j = 0; j < 16; ++j ) {
+                            moveMapObject( i, { trainerDir, j } );
+                            swiWaitForVBlank( );
                         }
                     }
+                    runEvent( o.second.m_event, i );
+                    hadBattle = true;
                 }
             }
         }

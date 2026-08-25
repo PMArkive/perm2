@@ -201,7 +201,9 @@ constexpr u32 DEFAULT_SPRITE_PID = 0x88888888;
 
 #define loop( )     while( 1 )
 #define TIMER_SPEED ( BUS_CLOCK / 1024 )
-#define sq( a )     ( ( a ) * ( a ) )
+constexpr u32 sq( s32 a ) {
+    return u32( a * a );
+}
 
 #define IN_DEX( pidx ) \
     ( SAVE::SAV.getActiveFile( ).m_caughtPkmn[ ( pidx ) / 8 ] & ( 1 << ( ( pidx ) % 8 ) ) )
