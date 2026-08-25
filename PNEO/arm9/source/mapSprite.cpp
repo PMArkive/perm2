@@ -473,12 +473,14 @@ namespace MAP {
             guard& operator=( const guard& ) = delete;
         } g( reordering );
 
-        for( u8 i = 0; i < MAX_OAM; ++i ) {
-            for( u8 j = i + 1; j < MAX_OAM; ++j ) {
+        for( u8 i = 1; i < MAX_OAM; ++i ) {
+            for( u8 j = i; j > 0; --j ) {
                 // take care of potentially negative coordinates
-                auto cmp = cmpSprY( i, j );
-                if( cmp < 0 || ( cmp == 0 && _oamPositionR[ i ] > _oamPositionR[ j ] ) ) {
-                    swapSprites( i, j, false );
+                auto cmp = cmpSprY( j - 1, j );
+                if( cmp < 0 || ( cmp == 0 && _oamPositionR[ j - 1 ] > _oamPositionR[ j ] ) ) {
+                    swapSprites( j, j - 1, false );
+                } else {
+                    break;
                 }
             }
         }
@@ -949,7 +951,7 @@ namespace MAP {
                     .c_str( ) );
 #endif
         }
-        _reorderDirty = true;
+        // _reorderDirty = true; // not set here, all sprites translate uniformly
         if( p_update ) {
             if( _reorderDirty ) {
                 reorderSprites( false );
