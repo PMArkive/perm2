@@ -33,7 +33,7 @@ GAME_ICON       :=  $(CURDIR)/icon.bmp
 export DEV_CODE			:=	01
 export GAME_CODE		:=	ADAJ
 export GAME_TITLE		:=	POKEMON NEO
-export VERSION			:=	10
+export VERSION			:=	11
 export VERSION_NAME		:=	Mimicking Mimikyu
 
 export TARGET		:=	$(shell basename $(CURDIR))

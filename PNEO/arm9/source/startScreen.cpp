@@ -102,7 +102,7 @@ namespace SAVE {
 
         // BG_PALETTE[ 3 ] = BG_PALETTE_SUB[ 3 ] = RGB15( 0, 0, 0 );
 
-        printf( "Free Software, PW 2012 - 2024\n"
+        printf( "Free Software, PW 2012 - 2026\n"
                 "                             \n"
                 "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" );
 
