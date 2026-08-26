@@ -52,6 +52,7 @@ namespace MAP {
         u32  dataSize = COMPLETE_SCREEN_SQ;
         bool partial  = false;
         bool bgWrap   = false;
+        u16  bgAlpha  = 0;
 
         switch( getWeather( ) ) {
         case RAINY:
@@ -60,7 +61,7 @@ namespace MAP {
             bgWrap          = true;
             _weatherScrollX = 32;
             _weatherScrollY = -64;
-            REG_BLDALPHA    = 0xff | ( 0x08 << 8 );
+            bgAlpha         = 0xff | ( 0x08 << 8 );
             _weatherFollow  = true;
             break;
 
@@ -70,7 +71,7 @@ namespace MAP {
             bgWrap          = true;
             _weatherScrollX = 2;
             _weatherScrollY = 0;
-            REG_BLDALPHA    = 0xff | ( 0x08 << 8 );
+            bgAlpha         = 0xff | ( 0x08 << 8 );
             _weatherFollow  = true;
             break;
 
@@ -82,11 +83,11 @@ namespace MAP {
             if( getWeather( ) == MIST ) {
                 _weatherScrollX = 1;
                 _weatherScrollY = 1;
-                REG_BLDALPHA    = 0xff | ( 0x05 << 8 );
+                bgAlpha         = 0xff | ( 0x05 << 8 );
             } else {
                 _weatherScrollX = 2;
                 _weatherScrollY = 2;
-                REG_BLDALPHA    = 0xff | ( 0x0A << 8 );
+                bgAlpha         = 0xff | ( 0x0A << 8 );
             }
             _weatherFollow = true;
             break;
@@ -97,7 +98,7 @@ namespace MAP {
             bgWrap          = true;
             _weatherScrollX = 2;
             _weatherScrollY = 0;
-            REG_BLDALPHA    = 0xff | ( 0x08 << 8 );
+            bgAlpha         = 0xff | ( 0x08 << 8 );
             _weatherFollow  = true;
             break;
 
@@ -107,7 +108,7 @@ namespace MAP {
             bgWrap          = true;
             _weatherScrollX = 0;
             _weatherScrollY = 0;
-            REG_BLDALPHA    = 0xff | ( 0x08 << 8 );
+            bgAlpha         = 0xff | ( 0x08 << 8 );
             _weatherFollow  = true;
             break;
 
@@ -124,7 +125,7 @@ namespace MAP {
                                                             I_GO_GOGGLES );
             FS::readData<unsigned int, unsigned short>( "nitro:/PICS/WEATHER/", "sandstorm",
                                                         dataSize / 4, TEMP, 256, TEMP_PAL );
-            if( goggles ) { REG_BLDALPHA = 0xff | ( 0x05 << 8 ); }
+            if( goggles ) { bgAlpha = 0xff | ( 0x05 << 8 ); }
             bgWrap          = true;
             _weatherScrollX = 40;
             _weatherScrollY = 10;
@@ -154,7 +155,6 @@ namespace MAP {
         swiWaitForVBlank( );
         IO::bg3 = bgInit( 3, BgType_Bmp8, BgSize_B8_256x256, 3, 0 );
         if( bgWrap ) { bgWrapOn( IO::bg3 ); }
-
         if( partial ) { dmaFillWords( 0, bgGetGfxPtr( IO::bg3 ), COMPLETE_SCREEN_SQ ); }
 
         dmaCopy( TEMP, bgGetGfxPtr( IO::bg3 ), dataSize );
@@ -174,6 +174,12 @@ namespace MAP {
             bgSetScroll( IO::bg3, 96 - 64, 72 - 48 );
             break;
         default: bgSetScroll( IO::bg3, 0, 0 ); break;
+        }
+        REG_BLDALPHA = bgAlpha;
+        if( REG_BLDALPHA ) {
+            REG_BLDCNT = WEATHER_BLEND;
+        } else {
+            REG_BLDCNT = BLEND_NONE;
         }
         bgSetPriority( IO::bg3, 0 );
         bgUpdate( );
