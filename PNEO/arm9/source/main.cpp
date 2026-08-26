@@ -179,15 +179,23 @@ void vblankIRQ( ) {
         if( IN_GAME ) { SAVE::CURRENT_FILE->increaseTime( ); }
     }
 
-    if( !ANIMATE_MAP ) { return; }
-    if( IO::LOCATION_TIMER && !--IO::LOCATION_TIMER ) {
-        IO::hideLocation( );
-    } else if( IO::LOCATION_TIMER > 0 && IO::LOCATION_TIMER < 16 ) {
-        IO::hideLocation( IO::LOCATION_TIMER );
+    if( ANIMATE_MAP ) {
+        if( IO::LOCATION_TIMER && !--IO::LOCATION_TIMER ) {
+            IO::hideLocation( );
+        } else if( IO::LOCATION_TIMER > 0 && IO::LOCATION_TIMER < 16 ) {
+            IO::hideLocation( IO::LOCATION_TIMER );
+        }
+        FRAME_COUNT++;
+        if( MAP::curMap ) { MAP::curMap->animateMap( FRAME_COUNT ); }
     }
-
-    FRAME_COUNT++;
-    if( ANIMATE_MAP && MAP::curMap ) { MAP::curMap->animateMap( FRAME_COUNT ); }
+    if( IO::LOCATION_TIMER ) {
+        IO::commitOAMbgUpdate( false ); // commits bgUpdate in sync with OAM update
+        IO::commitOAM( true );
+    } else {
+        bgUpdate( );
+        IO::commitOAM( false );
+        IO::commitOAM( true );
+    }
 }
 
 void pollRTC( ) {
@@ -245,6 +253,7 @@ START:
     // keysSetRepeat( 25, 5 );
     // sysSetBusOwners( true, true );
 
+    irqSet( IRQ_VBLANK, vblankIRQ );
     irqEnable( IRQ_VBLANK );
     initGraphics( );
 #ifdef DESQUID
@@ -316,8 +325,6 @@ START:
         // SOUND::onLocationChange( curLoc, false );
         // for( u8 i = 0; i < 60; ++i ) { swiWaitForVBlank( ); }
         // IO::showNewLocation( curLoc, false );
-
-        irqSet( IRQ_VBLANK, vblankIRQ );
     }
 
     IN_GAME      = true;

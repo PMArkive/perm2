@@ -125,7 +125,18 @@ namespace IO {
         76, 82, 70, 67, 73, 76, 79, 85,  67, 75, 67, 80, 67, 84, 67, 90, 68, 93, 74, 68, 75, 74, 83,
         90, 74, 77, 83, 85, 83, 87, 67,  75, 86, 85, 85, 85, 76, 88, 67, 89, 91, 94, 93, 90, 82 };
 
-    void updateOAM( bool p_bottom ) {
+    bool OAM_DIRTY[ 2 ];
+
+    void commitOAMbgUpdate( bool p_bottom ) {
+        if( !OAM_DIRTY[ p_bottom ] ) { return; }
+        commitOAM( p_bottom );
+        bgUpdate( );
+    }
+
+    void commitOAM( bool p_bottom ) {
+        if( !OAM_DIRTY[ p_bottom ] ) { return; }
+        OAM_DIRTY[ p_bottom ] = false;
+
         OAMTable* oam = ( p_bottom ? Oam : OamTop );
         DC_FlushAll( );
         if( p_bottom ) {
@@ -136,6 +147,11 @@ namespace IO {
                               SPRITE_COUNT * sizeof( SpriteEntry ) );
         }
     }
+
+    void updateOAM( bool p_bottom ) {
+        OAM_DIRTY[ p_bottom ] = true;
+    }
+
     void initOAMTable( bool p_bottom ) {
         OAMTable* oam = ( p_bottom ? Oam : OamTop );
         /*

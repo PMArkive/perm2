@@ -314,46 +314,47 @@ namespace MAP {
                         == IO::yesNoBox::YES ) {
 
                         FADE_TOP_DARK( );
-                        ANIMATE_MAP = false;
-                        swiWaitForVBlank( );
+                        {
+                            animateMapGuard amg{ };
+                            swiWaitForVBlank( );
 
-                        IO::clearScreen( false );
-                        videoSetMode( MODE_5_2D );
-                        bgUpdate( );
+                            IO::clearScreen( false );
+                            videoSetMode( MODE_5_2D );
+                            bgUpdate( );
 
-                        auto playerPrio = _mapSprites.getPriority( _playerSprite );
+                            auto playerPrio = _mapSprites.getPriority( _playerSprite );
 
-                        // Make player choose berry
-                        SOUND::dimVolume( );
-                        BAG::bagViewer bv  = BAG::bagViewer( SAVE::CURRENT_FILE->m_pkmnTeam,
-                                                             BAG::bagViewer::CHOOSE_BERRY );
-                        u16            itm = bv.getItem( true );
+                            // Make player choose berry
+                            SOUND::dimVolume( );
+                            BAG::bagViewer bv  = BAG::bagViewer( SAVE::CURRENT_FILE->m_pkmnTeam,
+                                                                 BAG::bagViewer::CHOOSE_BERRY );
+                            u16            itm = bv.getItem( true );
 
-                        FADE_TOP_DARK( );
-                        FADE_SUB_DARK( );
-                        IO::clearScreen( false );
-                        videoSetMode( MODE_5_2D );
-                        bgUpdate( );
+                            FADE_TOP_DARK( );
+                            FADE_SUB_DARK( );
+                            IO::clearScreen( false );
+                            videoSetMode( MODE_5_2D );
+                            bgUpdate( );
 
-                        if( itm ) {
-                            // plant the berry
-                            SAVE::CURRENT_FILE->plantBerry(
-                                mdata.m_events[ i ].m_data.m_berryTree.m_treeIdx, itm );
-                        }
+                            if( itm ) {
+                                // plant the berry
+                                SAVE::CURRENT_FILE->plantBerry(
+                                    mdata.m_events[ i ].m_data.m_berryTree.m_treeIdx, itm );
+                            }
 
-                        FADE_TOP_DARK( );
-                        IO::init( );
-                        draw( playerPrio );
-                        _mapSprites.setPriority( _playerSprite, SAVE::CURRENT_FILE->m_playerPriority
-                                                                = playerPrio );
-                        SOUND::restartBGM( );
-                        ANIMATE_MAP = true;
-                        SOUND::restoreVolume( );
-                        if( itm ) {
-                            std::array<char, 100> buffer{ };
-                            snprintf( buffer.data( ), buffer.size( ), GET_STRING( 572 ),
-                                      FS::getItemName( itm ).c_str( ) );
-                            IO::printMessage( buffer.data( ), MSG_INFO );
+                            FADE_TOP_DARK( );
+                            IO::init( );
+                            draw( playerPrio );
+                            _mapSprites.setPriority(
+                                _playerSprite, SAVE::CURRENT_FILE->m_playerPriority = playerPrio );
+                            SOUND::restartBGM( );
+                            SOUND::restoreVolume( );
+                            if( itm ) {
+                                std::array<char, 100> buffer{ };
+                                snprintf( buffer.data( ), buffer.size( ), GET_STRING( 572 ),
+                                          FS::getItemName( itm ).c_str( ) );
+                                IO::printMessage( buffer.data( ), MSG_INFO );
+                            }
                         }
                         return;
                     } else {

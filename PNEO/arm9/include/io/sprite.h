@@ -60,6 +60,9 @@ namespace IO {
         SpriteEntry* m_entry;
     };
 
+    void commitOAMbgUpdate( bool p_bottom );
+    void commitOAM( bool p_bottom );
+
     void updateOAM( bool p_bottom );
 
     void initOAMTable( bool p_bottom );

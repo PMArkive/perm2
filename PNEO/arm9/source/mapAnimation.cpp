@@ -562,18 +562,19 @@ namespace MAP {
         if( _weatherScrollX || _weatherScrollY ) {
             bgScrollf( IO::bg3, _weatherScrollX, _weatherScrollY );
         }
-        bgUpdate( );
 
         // animate map objects
         animateTiles( );
         animateMapObjects( p_frame );
         loadAnimatedTiles( p_frame );
 
-        // TODO: properly implement trainer eye
+        // TODO: properly implement trainer eye:
+        // enabling here causes black screen after first trainer battle if multiple
+        // trainers can see player
         if( !_scriptRunning && !PLAYER_IS_FISHING ) {
-            u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
-            u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
-            checkTrainerEye( curx, cury );
+            //          u16 curx = SAVE::CURRENT_FILE->m_player.m_pos.m_posX;
+            //          u16 cury = SAVE::CURRENT_FILE->m_player.m_pos.m_posY;
+            //          checkTrainerEye( curx, cury );
         }
     }
 

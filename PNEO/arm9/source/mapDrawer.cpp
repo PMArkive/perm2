@@ -240,6 +240,7 @@ namespace MAP {
             if( SAVE::CURRENT_FILE->m_objectAttached ) {
                 attachMapObjectToPlayer( SAVE::CURRENT_FILE->m_mapObjAttachedIdx );
             }
+            _mapSprites.update( );
 
             runLevelScripts( _data[ _curX ][ _curY ], mx / SIZE, my / SIZE );
             runLevelScripts( _data[ _curX ^ 1 ][ _curY ], mx / SIZE + currentHalf( mx ),
@@ -261,8 +262,6 @@ namespace MAP {
 
         for( u16 y = 0; y < NUM_ROWS; y++ )
             for( u16 x = 0; x < NUM_COLS; x++ ) { loadBlock( at( mnx + x, mny + y ), x, y ); }
-
-        bgUpdate( );
     }
 
     void mapDrawer::draw( ObjPriority, bool p_playerHidden, bool p_init ) {
@@ -305,9 +304,6 @@ namespace MAP {
 
         loadBlock( at( p_globX, p_globY ), ( _lastcol + NUM_COLS / 2 - curx + p_globX ) % NUM_COLS,
                    ( _lastrow + NUM_ROWS / 2 + 1 - cury + p_globY ) % NUM_ROWS );
-        if( !ANIMATE_MAP ) {
-            bgUpdate( ); // will be called in animateMap.
-        }
     }
 
     void mapDrawer::setMovement( u16 p_globX, u16 p_globY, u16 p_newMovement ) {
@@ -434,18 +430,12 @@ namespace MAP {
             break;
         }
         }
-        if( !ANIMATE_MAP ) {
-            bgUpdate( ); // will be called in animateMap.
-        }
     }
 
     void mapDrawer::moveCamera( direction p_direction, bool p_updatePlayer, bool p_autoLoadRows ) {
         for( u8 i = 0; i < 4; ++i ) {
             if( i == IO::bg3 && !_weatherFollow ) { continue; }
             bgScroll( i, dir[ p_direction ][ 0 ], dir[ p_direction ][ 1 ] );
-        }
-        if( !ANIMATE_MAP ) {
-            bgUpdate( ); // will be called in animateMap
         }
         _mapSprites.moveCamera( p_direction, 1, !p_updatePlayer );
         if( p_autoLoadRows

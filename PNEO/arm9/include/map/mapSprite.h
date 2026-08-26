@@ -289,6 +289,7 @@ namespace MAP {
 
       private:
         bool _reorderDirty;
+        bool _oamDirty;
 
         managedSprite _player;         // 32x32
         managedSprite _playerPlatform; // 32x32

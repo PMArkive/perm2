@@ -115,6 +115,7 @@ namespace MAP {
                 // player has only a single pkmn, the battle is optional
                 if( !BATTLE::isDoubleBattleTrainerClass( tr.m_data.m_trainerClass )
                     || SAVE::CURRENT_FILE->countAlivePkmn( ) >= 2 ) {
+                    animateMapGuard amg{ };
 
                     SAVE::CURRENT_FILE->m_mapObjects[ i ].second.m_movement = NO_MOVEMENT;
                     showExclamationAboveMapObject( i );
@@ -1430,7 +1431,7 @@ namespace MAP {
             }
         }
 
-        if( SAVE::CURRENT_FILE->m_player.m_movement != WALK ) p_fast = false;
+        if( SAVE::CURRENT_FILE->m_player.m_movement != WALK ) { p_fast = false; }
 
         // movement for attached objects
         auto olddir         = _lastPlayerMove;
