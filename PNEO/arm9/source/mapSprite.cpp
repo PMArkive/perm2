@@ -498,13 +498,14 @@ namespace MAP {
                 p_sprite,
                 { p_posX, p_posY, 0, 0, camShift( p_camX, p_posX ), camShift( p_camY, p_posY ) },
                 SPTYPE_DOOR,
+                false,
                 false };
             doLoadSprite( screenX( p_camX, p_posX, p_sprite.getData( ).m_width ),
                           screenY( p_camY, p_posY, p_sprite.getData( ).m_height ), p_posZ,
                           _oamPosition[ SPR_DOOR_OAM ], SPR_DOOR_GFX, p_sprite, p_hidden );
             return SPR_DOOR_OAM;
         case SPTYPE_PLAYER:
-            _player = { p_sprite, { p_posX, p_posY, 0, 0, 0, 0 }, SPTYPE_PLAYER, false };
+            _player = { p_sprite, { p_posX, p_posY, 0, 0, 0, 0 }, SPTYPE_PLAYER, false, false };
             doLoadSprite( screenX( p_camX, p_posX, p_sprite.getData( ).m_width ),
                           screenY( p_camY, p_posY, p_sprite.getData( ).m_height ), p_posZ,
                           _oamPosition[ SPR_MAIN_PLAYER_OAM ], SPR_MAIN_PLAYER_GFX, p_sprite,
@@ -528,6 +529,7 @@ namespace MAP {
                                     { p_posX, p_posY, 0, 0, camShift( p_camX, p_posX ),
                                       camShift( p_camY, p_posY ) },
                                     p_type,
+                                    false,
                                     false } };
                 doLoadSprite( screenX( p_camX, p_posX, p_sprite.getData( ).m_width ),
                               screenY( p_camY, p_posY, p_sprite.getData( ).m_height ), p_posZ,
@@ -551,6 +553,7 @@ namespace MAP {
                                          { p_posX, p_posY, 0, 0, camShift( p_camX, p_posX ),
                                            camShift( p_camY, p_posY ) },
                                          p_type,
+                                         false,
                                          false } };
                 doLoadSprite( screenX( p_camX, p_posX, p_sprite.getData( ).m_width ),
                               screenY( p_camY, p_posY, p_sprite.getData( ).m_height ), p_posZ,
@@ -572,6 +575,7 @@ namespace MAP {
                                            { p_posX, p_posY, 0, 0, camShift( p_camX, p_posX ),
                                              camShift( p_camY, p_posY ) },
                                            p_type,
+                                           false,
                                            false } };
                 doLoadSprite( screenX( p_camX, p_posX, p_sprite.getData( ).m_width ),
                               screenY( p_camY, p_posY, p_sprite.getData( ).m_height ), p_posZ,
@@ -935,11 +939,10 @@ namespace MAP {
         } else if( p_spriteId != SPR_DOOR_OAM ) {
             auto& spr = getManagedSprite( p_spriteId );
             spr.m_pos.translateSprite( p_dx, p_dy );
-            IO::OamTop->oamBuffer[ _oamPosition[ p_spriteId ] ].isHidden = !spr.m_pos.isVisible( );
+            IO::OamTop->oamBuffer[ _oamPosition[ p_spriteId ] ].isHidden = !spr.isVisible( );
 
             if( spr.m_reflectionVisible ) {
-                IO::OamTop->oamBuffer[ SPR_REFLECTION( p_spriteId ) ].isHidden
-                    = !spr.m_pos.isVisible( );
+                IO::OamTop->oamBuffer[ SPR_REFLECTION( p_spriteId ) ].isHidden = !spr.isVisible( );
                 IO::OamTop->oamBuffer[ SPR_REFLECTION( p_spriteId ) ].x += p_dx;
                 IO::OamTop->oamBuffer[ SPR_REFLECTION( p_spriteId ) ].y += p_dy;
             }
@@ -971,6 +974,15 @@ namespace MAP {
         if( p_spriteId == 255 ) { return; }
 
         IO::OamTop->oamBuffer[ _oamPosition[ p_spriteId ] ].isHidden = p_value;
+        getManagedSprite( p_spriteId ).m_forcedHidden                = false;
+        if( p_update ) { update( ); }
+    }
+
+    void mapSpriteManager::forceHide( u8 p_spriteId, bool p_update ) {
+        if( p_spriteId == 255 ) { return; }
+
+        IO::OamTop->oamBuffer[ _oamPosition[ p_spriteId ] ].isHidden = true;
+        getManagedSprite( p_spriteId ).m_forcedHidden                = true;
         if( p_update ) { update( ); }
     }
 

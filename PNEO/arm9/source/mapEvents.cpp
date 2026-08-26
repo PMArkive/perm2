@@ -71,9 +71,38 @@ namespace MAP {
         }
         case EVENT_OW_PKMN: {
             if( !SAVE::CURRENT_FILE->checkFlag( p_event.m_deactivateFlag ) ) {
-                ANIMATE_MAP = false;
-                DRAW_TIME   = false;
-                resetTracerChain( true );
+                // check for invisible pkmn
+                bool invisible = p_event.m_data.m_owPkmn.m_movementType == KECLEON_FIGHT
+                                 || p_event.m_data.m_owPkmn.m_movementType == KECLEON_FLEE;
+
+                // check for devon scope
+                if( invisible ) {
+                    // "something invisible is blocking the way"
+                    printMapMessage( std::string( GET_STRING( 815 ) ), MSG_INFO );
+                    if( !SAVE::CURRENT_FILE->m_bag.count( BAG::toBagType( BAG::ITEMTYPE_KEYITEM ),
+                                                          I_DEVON_SCOPE ) ) {
+                        break;
+                    }
+
+                    // ask player if they want to use the devon scope
+                    if( IO::yesNoBox::NO
+                        == IO::yesNoBox( ).getResult( GET_STRING( 816 ), MSG_INFO_NOCLOSE ) ) {
+                        // no -> break
+                        IO::init( );
+                        break;
+                    }
+                    IO::init( );
+                    // "player used davon scope"
+                    printMapMessage( std::string( GET_STRING( 817 ) ), MSG_INFO );
+
+                    _mapSprites.setVisibility( SAVE::CURRENT_FILE->m_mapObjects[ p_objectId ].first,
+                                               false, true );
+                    swiWaitForVBlank( );
+
+                    // "A previously invisible Pokemon\nbecame visible to the naked eye!"
+                    printMapMessage( std::string( GET_STRING( 818 ) ), MSG_INFO );
+                }
+
                 u16  pkmnIdx = p_event.m_data.m_owPkmn.m_speciesId;
                 u8   level   = p_event.m_data.m_owPkmn.m_level;
                 u8   forme   = p_event.m_data.m_owPkmn.m_forme & ( ~( ( 1 << 6 ) | ( 1 << 7 ) ) );
@@ -87,6 +116,20 @@ namespace MAP {
                 SOUND::playCry( pkmnIdx, forme, female );
                 swiWaitForVBlank( );
                 swiWaitForVBlank( );
+
+                if( p_event.m_data.m_owPkmn.m_movementType == KECLEON_FIGHT ) {
+                    // "The startled Pokemon attacked!"
+                    printMapMessage( std::string( GET_STRING( 819 ) ), MSG_INFO );
+                } else if( p_event.m_data.m_owPkmn.m_movementType == KECLEON_FLEE ) {
+                    printMapMessage( std::string( GET_STRING( 820 ) ), MSG_INFO );
+                    SAVE::CURRENT_FILE->setFlag( p_event.m_deactivateFlag, 1 );
+                    constructAndAddNewMapObjects( currentData( ), mapX, mapY );
+                    break;
+                }
+
+                ANIMATE_MAP = false;
+                DRAW_TIME   = false;
+                resetTracerChain( true );
 
                 bool luckyenc = SAVE::CURRENT_FILE->m_bag.count(
                                     BAG::toBagType( BAG::ITEMTYPE_KEYITEM ), I_WISHING_CHARM )
@@ -114,7 +157,7 @@ namespace MAP {
                     std::array<char, 100> buffer{ };
                     snprintf( buffer.data( ), buffer.size( ), GET_STRING( 672 ),
                               WILD_PKMN.m_boxdata.m_name );
-                    printMapMessage( std::string( buffer.data( ) ), MSG_NORMAL );
+                    printMapMessage( std::string( buffer.data( ) ), MSG_INFO );
                 }
             }
             break;
@@ -164,17 +207,15 @@ namespace MAP {
             switch( p_event.m_data.m_hmObject.m_hmType ) {
             case mapSpriteManager::SPR_STRENGTH:
                 if( _strengthUsed ) {
-                    IO::printMessage( GET_STRING( 558 ), MSG_NORMAL );
+                    IO::printMessage( GET_STRING( 558 ), MSG_INFO );
                 } else {
-                    IO::printMessage( GET_STRING( 318 ), MSG_NORMAL );
+                    IO::printMessage( GET_STRING( 318 ), MSG_INFO );
                 }
                 break;
             case mapSpriteManager::SPR_ROCKSMASH:
-                IO::printMessage( GET_STRING( 314 ), MSG_NORMAL );
+                IO::printMessage( GET_STRING( 314 ), MSG_INFO );
                 break;
-            case mapSpriteManager::SPR_CUT:
-                IO::printMessage( GET_STRING( 313 ), MSG_NORMAL );
-                break;
+            case mapSpriteManager::SPR_CUT: IO::printMessage( GET_STRING( 313 ), MSG_INFO ); break;
             default: break;
             }
             break;

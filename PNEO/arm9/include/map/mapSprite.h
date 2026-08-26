@@ -245,7 +245,8 @@ namespace MAP {
             mapSprite    m_sprite;
             mapSpritePos m_pos;
             spriteType   m_type;
-            bool         m_reflectionVisible;
+            bool         m_forcedHidden : 4;
+            bool         m_reflectionVisible : 4;
 
             constexpr void translateSprite( s8 p_dx, s8 p_dy ) {
                 m_pos.translateSprite( p_dx, p_dy );
@@ -256,7 +257,7 @@ namespace MAP {
             }
 
             constexpr bool isVisible( ) const {
-                return m_pos.isVisible( );
+                return !m_forcedHidden && m_pos.isVisible( );
             }
         };
 
@@ -450,6 +451,8 @@ namespace MAP {
          * @brief: Sets the visibility of the specified sprite.
          */
         void setVisibility( u8 p_spriteId, bool p_value, bool p_update = true );
+
+        void forceHide( u8 p_spriteId, bool p_update = true );
 
         bool getVisibility( u8 p_spriteId );
 

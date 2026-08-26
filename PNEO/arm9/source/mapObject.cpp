@@ -103,7 +103,7 @@ namespace MAP {
                 if( p_mapObject.second.m_movement == KECLEON_FIGHT
                     || p_mapObject.second.m_movement == KECLEON_FLEE ) {
                     // hide object
-                    _mapSprites.setVisibility( p_mapObject.first, true );
+                    _mapSprites.forceHide( p_mapObject.first );
                 }
 
                 break;
@@ -836,14 +836,18 @@ namespace MAP {
             }
 
             case EVENT_OW_PKMN: {
-                mapObject obj  = mapObject( );
-                obj.m_pos      = { u16( p_mapX * SIZE + p_data.m_events[ i ].m_posX ),
-                                   u16( p_mapY * SIZE + p_data.m_events[ i ].m_posY ),
-                                   p_data.m_events[ i ].m_posZ };
-                obj.m_picNum   = p_data.m_events[ i ].m_data.m_owPkmn.m_speciesId + PKMN_SPRITE;
-                obj.m_movement = NO_MOVEMENT;
-                obj.m_range    = ( ( p_data.m_events[ i ].m_data.m_owPkmn.m_forme & 0x3f ) << 1 )
-                                 | ( ( p_data.m_events[ i ].m_data.m_owPkmn.m_shiny & 0x3f ) == 2 );
+                mapObject obj = mapObject( );
+                obj.m_pos     = { u16( p_mapX * SIZE + p_data.m_events[ i ].m_posX ),
+                                  u16( p_mapY * SIZE + p_data.m_events[ i ].m_posY ),
+                                  p_data.m_events[ i ].m_posZ };
+                obj.m_picNum  = p_data.m_events[ i ].m_data.m_owPkmn.m_speciesId + PKMN_SPRITE;
+                obj.m_movement
+                    = (MAP::moveMode) p_data.m_events[ i ].m_data.m_owPkmn.m_movementType;
+                if( obj.m_movement != KECLEON_FIGHT && obj.m_movement != KECLEON_FLEE ) {
+                    obj.m_movement = NO_MOVEMENT;
+                }
+                obj.m_range = ( ( p_data.m_events[ i ].m_data.m_owPkmn.m_forme & 0x3f ) << 1 )
+                              | ( ( p_data.m_events[ i ].m_data.m_owPkmn.m_shiny & 0x3f ) == 2 );
                 obj.m_direction = DOWN;
                 obj.m_event     = p_data.m_events[ i ];
 

@@ -163,10 +163,12 @@ namespace MAP {
         WALK_AROUND_SQUARE      = 23, // randomly walks around in a 3x3 square
         WALK_CONT_FOLLOW_OBJECT = 24, // walks along the edge of an object, touching w/ right hand
         KECLEON_FIGHT           = 25, // hidden kecleon that will fight once silph scope is used
-        KECLEON_FLEE            = 26, // hidden kecleon that will flee once silph scope is used
-        NINJA_ASH               = 27, // ninja hidden in ash
-        NINJA_TREE              = 28, // ninja hidden behind tree
-        NINJA_ROCK              = 29, // ninja hidden behind rock
+                                      // kecleon should be EVENT_OW_PKMN with a properly
+                                      // populated kecleon (or another pkmn)
+        KECLEON_FLEE = 26,            // hidden kecleon that will flee once silph scope is used
+        NINJA_ASH    = 27,            // ninja hidden in ash
+        NINJA_TREE   = 28,            // ninja hidden behind tree
+        NINJA_ROCK   = 29,            // ninja hidden behind rock
     };
 
     direction getRandomLookDirection( moveMode p_movement );
@@ -323,6 +325,7 @@ namespace MAP {
                     u8  m_forme; // BIT(6) female; BIT(7) genderless
 
                     u8 m_shiny; // BIT(6) hidden ability, BIT(7) fateful
+                    u8 m_movementType;
                 } m_owPkmn;
                 struct {
                     u16 m_spriteId;
