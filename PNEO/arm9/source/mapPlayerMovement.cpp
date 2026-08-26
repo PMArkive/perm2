@@ -208,18 +208,14 @@ namespace MAP {
         if( p_events ) {
             // Check if any event is occupying the target block
             for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
-                auto o = SAVE::CURRENT_FILE->m_mapObjects[ i ];
-                if( ( o.second.m_pos.m_posX == nx && o.second.m_pos.m_posY == ny )
-                    || ( o.second.m_currentMovement.m_frame
-                         && o.second.m_pos.m_posX
-                                    + dir[ o.second.m_currentMovement.m_direction ][ 0 ]
-                                == nx
-                         && o.second.m_pos.m_posY
-                                    + dir[ o.second.m_currentMovement.m_direction ][ 1 ]
-                                == ny ) ) {
-                    switch( o.second.m_event.m_type ) {
+                auto& o = SAVE::CURRENT_FILE->m_mapObjects[ i ].second;
+                if( ( o.m_pos.m_posX == nx && o.m_pos.m_posY == ny )
+                    || ( o.m_currentMovement.m_frame
+                         && o.m_pos.m_posX + dir[ o.m_currentMovement.m_direction ][ 0 ] == nx
+                         && o.m_pos.m_posY + dir[ o.m_currentMovement.m_direction ][ 1 ] == ny ) ) {
+                    switch( o.m_event.m_type ) {
                     case EVENT_HMOBJECT:
-                        if( o.second.m_event.m_data.m_hmObject.m_hmType
+                        if( o.m_event.m_data.m_hmObject.m_hmType
                             == mapSpriteManager::SPR_STRENGTH ) {
                             // Check if the boulder could be moved by using strength
                             if( p_moveMode == STRENGTH
@@ -230,10 +226,10 @@ namespace MAP {
                             if( !_strengthUsed ) { return false; }
                             break;
                         }
-                        if( o.second.m_event.m_data.m_hmObject.m_hmType ) { return false; }
+                        if( o.m_event.m_data.m_hmObject.m_hmType ) { return false; }
                         break;
                     case EVENT_ITEM:
-                        if( o.second.m_event.m_data.m_item.m_itemType ) {
+                        if( o.m_event.m_data.m_item.m_itemType ) {
                             return false;
                         } // item is not hidden
                         break;
@@ -243,7 +239,7 @@ namespace MAP {
                     case EVENT_OW_PKMN:
                     case EVENT_BERRYTREE: return false;
                     case EVENT_GENERIC:
-                        if( o.second.m_event.m_trigger & TRIGGER_INTERACT ) { return false; }
+                        if( o.m_event.m_trigger & TRIGGER_INTERACT ) { return false; }
                     default: break;
                     }
                 }

@@ -103,7 +103,7 @@ namespace MAP {
                 if( p_mapObject.second.m_movement == KECLEON_FIGHT
                     || p_mapObject.second.m_movement == KECLEON_FLEE ) {
                     // hide object
-                    _mapSprites.setVisibility( p_mapObject.first, false );
+                    _mapSprites.setVisibility( p_mapObject.first, true );
                 }
 
                 break;
@@ -278,6 +278,9 @@ namespace MAP {
             animateExitField( px, py, false, p_movement.m_direction, p_movement.m_direction );
 
             if( p_adjustAnim && _tileAnimations.count( { px, py, 0 } ) ) {
+                // TODO: check that this works for mapobjects running around objects on
+                // sand/etc where footprints/particles are spawned
+                //
                 // this function may get called while the player is moving, so the player may
                 // be at a fractional grid point and we need to fix this shift by hand
                 // This is extremely hacky, I know
