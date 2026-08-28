@@ -156,19 +156,19 @@ namespace MAP {
     // Drawing of Maps and stuff
 
     void mapDrawer::draw( u16 p_globX, u16 p_globY, bool p_init ) {
-        animateMapGuard amGuard;
+        AM_GUARD_UNAWARE( amGuard );
+        GFX_GUARD( gfGuard );
         if( p_init ) {
+            swiWaitForVBlank( );
 
+            FADE_TOP_DARK( );
+            dmaFillHalfWords( 0, BG_PALETTE, 512 );
             videoSetMode( MODE_3_2D | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE | DISPLAY_BG2_ACTIVE
                           | DISPLAY_BG3_ACTIVE | DISPLAY_SPR_ACTIVE
                           | ( ( DISPLAY_SPR_1D | DISPLAY_SPR_1D_SIZE_128 | DISPLAY_SPR_1D_BMP
                                 | DISPLAY_SPR_1D_BMP_SIZE_128 | ( 5 << 28 ) | 2 )
                               & 0xffffff0 ) );
             vramSetBankA( VRAM_A_MAIN_BG_0x06000000 );
-
-            FADE_TOP_DARK( );
-            dmaFillHalfWords( 0, BG_PALETTE, 512 );
-            bgUpdate( );
 
             _curX = _curY = 0;
 
@@ -188,24 +188,6 @@ namespace MAP {
                             &_slices[ _curX ^ 1 ][ _curY ^ 1 ], &_data[ _curX ^ 1 ][ _curY ^ 1 ],
                             _slices );
 
-            for( u8 i = 1; i < 4; ++i ) {
-                bgInit( i - 1, BgType_Text4bpp, BgSize_T_512x256, 2 * i - 1, 1 );
-                bgSetScroll( i - 1, 120, 40 );
-            }
-            u8* tileMemory = (u8*) BG_TILE_RAM( 1 );
-            dmaCopy( CUR_SLICE.m_tileSet.m_tiles, tileMemory, MAX_TILES_PER_TILE_SET * 2 * 32 );
-
-            // for palettes, the unchanged day-time pal comes first
-            u8 currDT = ( getCurrentDaytime( ) + 3 ) % 5;
-            if( ( currentData( ).m_mapType & INSIDE ) || ( currentData( ).m_mapType & CAVE ) ) {
-                currDT = 0;
-            }
-            BG_PALETTE[ 0 ] = 0;
-
-            for( u8 i = 1; i < 4; ++i ) {
-                mapMemory[ i ] = (u16*) BG_MAP_RAM( 2 * i - 1 );
-                bgSetPriority( i - 1, i );
-            }
             // reset frame animation of objects
             for( u8 i = 0; i < SAVE::CURRENT_FILE->m_mapObjectCount; ++i ) {
                 auto& o                            = SAVE::CURRENT_FILE->m_mapObjects[ i ];
@@ -218,8 +200,40 @@ namespace MAP {
                                               _slices[ i % 2 ][ i / 2 ].m_y );
             }
 
+            for( u8 i = 1; i < 4; ++i ) {
+                bgInit( i - 1, BgType_Text4bpp, BgSize_T_512x256, 2 * i - 1, 1 );
+                bgSetScroll( i - 1, 120, 40 );
+            }
+            for( u8 i = 1; i < 4; ++i ) {
+                mapMemory[ i ] = (u16*) BG_MAP_RAM( 2 * i - 1 );
+                bgSetPriority( i - 1, i );
+            }
+
+            swiWaitForVBlank( );
+            u8* tileMemory = (u8*) BG_TILE_RAM( 1 );
+            dmaCopy( CUR_SLICE.m_tileSet.m_tiles, tileMemory, MAX_TILES_PER_TILE_SET * 2 * 32 );
+
+            // for palettes, the unchanged day-time pal comes first
+            u8 currDT = ( getCurrentDaytime( ) + 3 ) % 5;
+            if( ( currentData( ).m_mapType & INSIDE ) || ( currentData( ).m_mapType & CAVE ) ) {
+                currDT = 0;
+            }
+            BG_PALETTE[ 0 ] = 0;
+
+            _lastrow = NUM_ROWS - 1;
+            _lastcol = NUM_COLS - 1;
+
+            _cx = p_globX;
+            _cy = p_globY;
+
+            u16 mny = p_globY - 8;
+            u16 mnx = p_globX - 15;
+
+            for( u16 y = 0; y < NUM_ROWS; y++ )
+                for( u16 x = 0; x < NUM_COLS; x++ ) { loadBlock( at( mnx + x, mny + y ), x, y ); }
+
             dmaCopy( CUR_SLICE.m_pals + currDT * 16, BG_PALETTE, 512 - 32 );
-            initWeather( );
+
             BG_PALETTE[ 0 ] = 0;
 
             _mapSprites.reset( );
@@ -240,7 +254,10 @@ namespace MAP {
             if( SAVE::CURRENT_FILE->m_objectAttached ) {
                 attachMapObjectToPlayer( SAVE::CURRENT_FILE->m_mapObjAttachedIdx );
             }
-            _mapSprites.update( );
+
+            // manually force sprite refresh.
+            // automatic refresh in VBlank is disabled, so we should be good
+            IO::commitOAM( false );
 
             runLevelScripts( _data[ _curX ][ _curY ], mx / SIZE, my / SIZE );
             runLevelScripts( _data[ _curX ^ 1 ][ _curY ], mx / SIZE + currentHalf( mx ),
@@ -249,22 +266,32 @@ namespace MAP {
                              my / SIZE + currentHalf( my ) );
             runLevelScripts( _data[ _curX ^ 1 ][ _curY ^ 1 ], mx / SIZE + currentHalf( mx ),
                              my / SIZE + currentHalf( my ) );
+
+            swiWaitForVBlank( );
+            bgUpdate( );
+
+            unfadeScreen( ); // init weather will do so for us anyway
+            initWeather( true );
+        } else {
+
+            _lastrow = NUM_ROWS - 1;
+            _lastcol = NUM_COLS - 1;
+
+            _cx = p_globX;
+            _cy = p_globY;
+
+            u16 mny = p_globY - 8;
+            u16 mnx = p_globX - 15;
+
+            for( u16 y = 0; y < NUM_ROWS; y++ )
+                for( u16 x = 0; x < NUM_COLS; x++ ) { loadBlock( at( mnx + x, mny + y ), x, y ); }
         }
-
-        _lastrow = NUM_ROWS - 1;
-        _lastcol = NUM_COLS - 1;
-
-        _cx = p_globX;
-        _cy = p_globY;
-
-        u16 mny = p_globY - 8;
-        u16 mnx = p_globX - 15;
-
-        for( u16 y = 0; y < NUM_ROWS; y++ )
-            for( u16 x = 0; x < NUM_COLS; x++ ) { loadBlock( at( mnx + x, mny + y ), x, y ); }
+        swiWaitForVBlank( );
+        bgUpdate( );
     }
 
     void mapDrawer::draw( ObjPriority, bool p_playerHidden, bool p_init ) {
+        GFX_GUARD( gfGuard );
         draw( SAVE::CURRENT_FILE->m_player.m_pos.m_posX, SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
               true ); // Draw the map
         stepOn( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
@@ -275,12 +302,14 @@ namespace MAP {
 
         drawPlayer( SAVE::CURRENT_FILE->m_playerPriority,
                     p_playerHidden ); // Draw the player
-
+        IO::commitOAM( false );
         unfadeScreen( );
 
         for( const auto& fn : _newBankCallbacks ) { fn( SAVE::CURRENT_FILE->m_currentMap ); }
         auto curLocId = getCurrentLocationId( );
         for( const auto& fn : _newLocationCallbacks ) { fn( curLocId, false ); }
+
+        for( const auto& fn : _newWeatherCallbacks ) { fn( getWeather( ) ); }
 
         if( !_scriptRunning ) {
             handleEvents( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
@@ -328,8 +357,8 @@ namespace MAP {
 
             // Hacky optimization: Don't load new slices on inside maps.
             if( ( currentData( ).m_mapType & CAVE ) || !( currentData( ).m_mapType & INSIDE ) ) {
-                animateMapGuard amGuard;
-                drawTimeGuard   dtGuard;
+                AM_GUARD_UNAWARE( amGuard );
+                DT_GUARD( dtGuard );
                 loadSlice( p_direction );
             }
 #ifdef DESQUID_MORE
@@ -343,7 +372,7 @@ namespace MAP {
         //    || ( dir[ p_direction ][ 1 ] == 1 && _cy % 4 == 3 )
         //    || ( dir[ p_direction ][ 1 ] == -1 && _cy % 4 == 3 ) ) {
         if( true ) {
-            animateMapGuard amGuard;
+            AM_GUARD_UNAWARE( amGuard );
             for( u8 i = 0; i < 4; ++i ) {
                 constructAndAddNewMapObjects( _data[ i % 2 ][ i / 2 ],
                                               _slices[ i % 2 ][ i / 2 ].m_x,
@@ -369,7 +398,7 @@ namespace MAP {
 
             u8* tileMemory = (u8*) BG_TILE_RAM( 1 );
 
-            animateMapGuard amGuard;
+            AM_GUARD_UNAWARE( amGuard );
             if( oldts1 != newts1 && oldts2 != newts2 ) {
                 dmaCopy( CUR_SLICE.m_tileSet.m_tiles, tileMemory, MAX_TILES_PER_TILE_SET * 2 * 32 );
             } else if( oldts2 != newts2 ) {

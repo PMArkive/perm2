@@ -155,6 +155,8 @@ extern bool INIT_NITROFS;
 extern bool HAD_NEW_GAME;
 extern bool RESET_GAME;
 
+extern bool FLUSH_GFX_UPDATE;
+
 extern char** ARGV;
 
 extern int           pressed, held, last;
@@ -208,24 +210,53 @@ constexpr u32 sq( s32 a ) {
 #define IN_DEX( pidx ) \
     ( SAVE::SAV.getActiveFile( ).m_caughtPkmn[ ( pidx ) / 8 ] & ( 1 << ( ( pidx ) % 8 ) ) )
 
-struct animateMapGuard {
-    animateMapGuard( ) {
-        ANIMATE_MAP = false;
+struct guard {
+    bool& m_ref;
+    bool  m_destrVal;
+    guard( bool& p_var, bool p_constrVal = false, bool p_destrVal = true )
+        : m_ref{ p_var }, m_destrVal{ p_destrVal } {
+        m_ref = p_constrVal;
     }
-    ~animateMapGuard( ) {
-        ANIMATE_MAP = true;
+    ~guard( ) {
+        m_ref = m_destrVal;
     }
-    animateMapGuard( const animateMapGuard& )            = delete;
-    animateMapGuard& operator=( const animateMapGuard& ) = delete;
+    guard( const guard& )            = delete;
+    guard& operator=( const guard& ) = delete;
 };
 
-struct drawTimeGuard {
-    drawTimeGuard( ) {
-        DRAW_TIME = false;
+struct guard_unaware {
+    bool& m_ref;
+    guard_unaware( bool& p_var ) : m_ref{ p_var } {
+        m_ref = false;
     }
-    ~drawTimeGuard( ) {
-        DRAW_TIME = true;
+    ~guard_unaware( ) {
+        m_ref = true;
     }
-    drawTimeGuard( const drawTimeGuard& )            = delete;
-    drawTimeGuard& operator=( const drawTimeGuard& ) = delete;
+    guard_unaware( const guard_unaware& )            = delete;
+    guard_unaware& operator=( const guard_unaware& ) = delete;
 };
+
+#define GUARD( p_name, p_var, p_constrVal, p_destrVal ) \
+    guard p_name {                                      \
+        p_var, p_constrVal, p_destrVal                  \
+    }
+
+#define AM_GUARD_UNAWARE( p_name ) \
+    guard_unaware p_name {         \
+        ANIMATE_MAP                \
+    }
+
+#define AM_GUARD( p_name )              \
+    guard p_name {                      \
+        ANIMATE_MAP, false, ANIMATE_MAP \
+    }
+
+#define DT_GUARD( p_name )          \
+    guard p_name {                  \
+        DRAW_TIME, false, DRAW_TIME \
+    }
+
+#define GFX_GUARD( p_name )                       \
+    guard p_name {                                \
+        FLUSH_GFX_UPDATE, false, FLUSH_GFX_UPDATE \
+    }

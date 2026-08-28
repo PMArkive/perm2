@@ -115,7 +115,7 @@ namespace MAP {
                 // player has only a single pkmn, the battle is optional
                 if( !BATTLE::isDoubleBattleTrainerClass( tr.m_data.m_trainerClass )
                     || SAVE::CURRENT_FILE->countAlivePkmn( ) >= 2 ) {
-                    animateMapGuard amg{ };
+                    AM_GUARD_UNAWARE( amGuard );
 
                     SAVE::CURRENT_FILE->m_mapObjects[ i ].second.m_movement = NO_MOVEMENT;
                     showExclamationAboveMapObject( i );
@@ -159,6 +159,7 @@ namespace MAP {
         } else {
             REG_BLDCNT = BLEND_NONE;
         }
+        GFX_GUARD( gf );
         bgUpdate( );
     }
 
@@ -186,7 +187,10 @@ namespace MAP {
         default: break;
         }
 
-        if( p_unfade ) { unfadeScreen( ); }
+        if( p_unfade ) {
+            GFX_GUARD( gfGuard );
+            unfadeScreen( );
+        }
 
         if( p_allowWildPkmn && !_scriptRunning ) {
             if( !checkTrainerEye( p_globX, p_globY ) ) { handleWildPkmn( p_globX, p_globY ); }
@@ -1127,7 +1131,6 @@ namespace MAP {
 
         // reset hm objects
         _destroyedMapObjects.clear( );
-
         if( crossbank ) { resetMapSprites( ); }
 
         SAVE::CURRENT_FILE->m_player.m_pos = p_target.second;
@@ -1145,11 +1148,9 @@ namespace MAP {
         } else {
             SAVE::CURRENT_FILE->m_currentMapWeather = (mapWeather) ndata.m_weather;
         }
-        if( oldw != SAVE::CURRENT_FILE->m_currentMapWeather ) { initWeather( ); }
-
+        if( oldw != SAVE::CURRENT_FILE->m_currentMapWeather ) { initWeather( false ); }
         // hide player, may need to open a door first
-        bool oldsc     = _scriptRunning;
-        _scriptRunning = true;
+        GUARD( srGuard, _scriptRunning, true, _scriptRunning );
 
         if( p_type == ESCALATOR_UP || p_type == ESCALATOR_DOWN ) {
             redirectPlayer( RIGHT, false, true );
@@ -1198,9 +1199,8 @@ namespace MAP {
             }
         }
 
-        bool oldforce  = _forceNoFollow;
-        _forceNoFollow = true;
-        bool handleE   = true;
+        GUARD( fnGuard, _forceNoFollow, true, _forceNoFollow );
+        bool handleE = true;
 
         if( p_type == ESCALATOR_UP || p_type == ESCALATOR_DOWN ) {
             handleE = false;
@@ -1219,9 +1219,7 @@ namespace MAP {
 
         default: break;
         }
-        _forceNoFollow = oldforce;
         unfadeScreen( );
-        _scriptRunning = oldsc;
 
         if( handleE ) {
             handleEvents( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
@@ -1898,7 +1896,8 @@ namespace MAP {
         removeFollowPkmn( );
         SAVE::CURRENT_FILE->increaseVar( SAVE::V_NUM_FAINTED );
         IO::fadeScreen( IO::CLEAR_DARK_IMMEDIATE, true, true );
-        ANIMATE_MAP = false;
+        AM_GUARD_UNAWARE( amGuard );
+        GFX_GUARD( gfGuard );
         videoSetMode( MODE_5_2D );
         IO::initVideo( true );
         IO::clearScreen( true, true, true );
@@ -1944,6 +1943,5 @@ namespace MAP {
         IO::init( );
         redirectPlayer( DOWN, false );
         warpPlayer( NO_SPECIAL, tgpos );
-        ANIMATE_MAP = true;
     }
 } // namespace MAP

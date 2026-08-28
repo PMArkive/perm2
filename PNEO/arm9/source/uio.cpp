@@ -74,7 +74,6 @@ namespace IO {
                 REG_BLDCNT = BLEND_NONE;
             }
         }
-        bgUpdate( );
     }
     void initVideoSub( bool p_noFade ) {
         // vramSetBankC( VRAM_C_SUB_BG_0x06200000 );

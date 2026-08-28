@@ -43,7 +43,8 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "sound/sound.h"
 
 namespace MAP {
-    void mapDrawer::initWeather( ) {
+    void mapDrawer::initWeather( bool p_bgUpdate ) {
+        GFX_GUARD( gfGuard );
         _weatherScrollX = 0;
         _weatherScrollY = 0;
         REG_BLDALPHA    = 0;
@@ -175,21 +176,24 @@ namespace MAP {
             break;
         default: bgSetScroll( IO::bg3, 0, 0 ); break;
         }
-        REG_BLDALPHA = bgAlpha;
-        if( REG_BLDALPHA ) {
-            REG_BLDCNT = WEATHER_BLEND;
-        } else {
-            REG_BLDCNT = BLEND_NONE;
+        if( p_bgUpdate ) {
+            // this will unfade the screen
+            REG_BLDALPHA = bgAlpha;
+            if( REG_BLDALPHA ) {
+                REG_BLDCNT = WEATHER_BLEND;
+            } else {
+                REG_BLDCNT = BLEND_NONE;
+            }
         }
         bgSetPriority( IO::bg3, 0 );
-        bgUpdate( );
+        if( p_bgUpdate ) { bgUpdate( ); }
     }
 
-    void mapDrawer::changeWeather( mapWeather p_newWeather ) {
+    void mapDrawer::changeWeather( mapWeather p_newWeather, bool p_bgUpdate ) {
         if( getWeather( ) != p_newWeather ) {
             SAVE::CURRENT_FILE->m_currentMapWeather = p_newWeather;
             for( const auto& fn : _newWeatherCallbacks ) { fn( getWeather( ) ); }
-            initWeather( );
+            initWeather( p_bgUpdate );
             if( ANIMATE_MAP ) {
                 if( REG_BLDALPHA ) {
                     REG_BLDCNT = WEATHER_BLEND;

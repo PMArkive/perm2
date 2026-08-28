@@ -557,7 +557,7 @@ namespace MAP {
     }
 
     void mapDrawer::animateMap( u8 p_frame ) {
-        animateMapGuard amGuard{ };
+        AM_GUARD_UNAWARE( amGuard );
         // animate weather
         if( _weatherScrollX || _weatherScrollY ) {
             bgScrollf( IO::bg3, _weatherScrollX, _weatherScrollY );

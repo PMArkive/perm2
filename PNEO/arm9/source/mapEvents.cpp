@@ -356,7 +356,7 @@ namespace MAP {
 
                         FADE_TOP_DARK( );
                         {
-                            animateMapGuard amg{ };
+                            AM_GUARD_UNAWARE( amGuard );
                             swiWaitForVBlank( );
 
                             IO::clearScreen( false );

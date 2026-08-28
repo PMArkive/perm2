@@ -87,6 +87,7 @@ bool          IN_GAME           = false;
 bool          RTC_BAD           = false;
 bool          HAD_NEW_GAME      = false;
 bool          RESET_GAME        = false;
+bool          FLUSH_GFX_UPDATE  = false;
 
 static volatile bool RTC_POLL_PENDING = false;
 
@@ -104,6 +105,7 @@ u8 getCurrentDaytime( ) {
 }
 
 void initGraphics( ) {
+    GFX_GUARD( gfGuard );
     IO::vramSetup( );
 
     IO::bg3sub = bgInitSub( 3, BgType_Bmp8, BgSize_B8_256x256, 5, 0 );
@@ -180,21 +182,24 @@ void vblankIRQ( ) {
     }
 
     if( ANIMATE_MAP ) {
+        FRAME_COUNT++;
+        if( MAP::curMap ) { MAP::curMap->animateMap( FRAME_COUNT ); }
         if( IO::LOCATION_TIMER && !--IO::LOCATION_TIMER ) {
             IO::hideLocation( );
         } else if( IO::LOCATION_TIMER > 0 && IO::LOCATION_TIMER < 16 ) {
             IO::hideLocation( IO::LOCATION_TIMER );
         }
-        FRAME_COUNT++;
-        if( MAP::curMap ) { MAP::curMap->animateMap( FRAME_COUNT ); }
     }
-    if( IO::LOCATION_TIMER ) {
-        IO::commitOAMbgUpdate( false ); // commits bgUpdate in sync with OAM update
-        IO::commitOAM( true );
-    } else {
-        bgUpdate( );
-        IO::commitOAM( false );
-        IO::commitOAM( true );
+
+    if( FLUSH_GFX_UPDATE ) {
+        if( IO::LOCATION_TIMER ) {
+            IO::commitOAMbgUpdate( false ); // commits bgUpdate in sync with OAM update
+            IO::commitOAM( true );
+        } else {
+            bgUpdate( );
+            IO::commitOAM( false );
+            IO::commitOAM( true );
+        }
     }
 }
 
@@ -248,7 +253,8 @@ START:
     // Init
     powerOn( POWER_ALL_2D );
     nitroFSInit( p_argv );
-    ARGV = p_argv;
+    ARGV        = p_argv;
+    ANIMATE_MAP = true;
 
     // keysSetRepeat( 25, 5 );
     // sysSetBusOwners( true, true );
@@ -256,75 +262,71 @@ START:
     irqSet( IRQ_VBLANK, vblankIRQ );
     irqEnable( IRQ_VBLANK );
     initGraphics( );
-#ifdef DESQUID
-    printf( "\n\nBooting NEO. %u %d\n"
-            "- Init Graphics     [ OK ]\n"
-            "- Init FSROOT       ",
-            sizeof( boxPokemon ), sizeof( SAVE::saveGame::playerInfo ) );
-#endif
-#ifdef DESQUID
-    if( FS::readFsInfo( ) ) {
-        printf( "[ OK ]\n" );
-    } else {
-        printf( "[FAIL]\n" );
-    }
-    printf( "- Init time and RND " );
-#else
-    FS::readFsInfo( );
-#endif
-    initTimeAndRnd( );
-#ifdef DESQUID
-    printf( "[ OK ]\n- Init sound        " );
-#endif
-    initSound( );
-#ifdef DESQUID
-    printf( "[ OK ]\n- Init map          " );
-#endif
-
-    MAP::curMap = new MAP::mapDrawer( );
-#ifdef DESQUID
-    printf( "[ OK ]\n- Loading SAV       " );
-#endif
-
-    // Read the savegame
-    if( gMod == EMULATOR || ( !FS::CARD::checkCard( ) && !p_argv[ 0 ] )
-        || !FS::readSave( p_argv[ 0 ] ) ) {
-#ifdef DESQUID
-        printf( "[FAIL]\n- Creating new SAV  " );
-#endif
-        std::memset( &SAVE::SAV, 0, sizeof( SAVE::saveGame ) );
-        SAVE::SAV.clear( );
-    }
-    SAVE::CURRENT_FILE = &SAVE::SAV.getActiveFile( );
-
-#ifdef DESQUID
-    printf( "[ OK ]\nALL GOOD!" );
-#endif
-    SAVE::startScreen( ).run( );
-    IO::clearScreenConsole( false, true );
-    IO::clearScreen( false, true );
-
-    FADE_TOP( );
-    SOUND::stopBGM( );
+    FLUSH_GFX_UPDATE = true;
 
     {
-        animateMapGuard amGuard;
+        AM_GUARD_UNAWARE( amG );
+
+#ifdef DESQUID
+        printf( "\n\nBooting NEO. %u %d\n"
+                "- Init Graphics     [ OK ]\n"
+                "- Init FSROOT       ",
+                sizeof( boxPokemon ), sizeof( SAVE::saveGame::playerInfo ) );
+#endif
+#ifdef DESQUID
+        if( FS::readFsInfo( ) ) {
+            printf( "[ OK ]\n" );
+        } else {
+            printf( "[FAIL]\n" );
+        }
+        printf( "- Init time and RND " );
+#else
+        FS::readFsInfo( );
+#endif
+        initTimeAndRnd( );
+#ifdef DESQUID
+        printf( "[ OK ]\n- Init sound        " );
+#endif
+        initSound( );
+#ifdef DESQUID
+        printf( "[ OK ]\n- Init map          " );
+#endif
+        MAP::curMap = new MAP::mapDrawer( );
+#ifdef DESQUID
+        printf( "[ OK ]\n- Loading SAV       " );
+#endif
+
+        // Read the savegame
+        if( gMod == EMULATOR || ( !FS::CARD::checkCard( ) && !p_argv[ 0 ] )
+            || !FS::readSave( p_argv[ 0 ] ) ) {
+#ifdef DESQUID
+            printf( "[FAIL]\n- Creating new SAV  " );
+#endif
+            std::memset( &SAVE::SAV, 0, sizeof( SAVE::saveGame ) );
+            SAVE::SAV.clear( );
+        }
+        SAVE::CURRENT_FILE = &SAVE::SAV.getActiveFile( );
+
+#ifdef DESQUID
+        printf( "[ OK ]\nALL GOOD!" );
+#endif
+        SAVE::startScreen( ).run( );
+        IO::clearScreenConsole( false, true );
+        IO::clearScreen( false, true );
+
+        FADE_TOP( );
+        SOUND::stopBGM( );
+
         // Reset infinity cave on reload
         SAVE::CURRENT_FILE->infinityCaveCurrentLayer( ) = 0;
 
+        IO::init( );
         MAP::curMap->registerOnLocationChangedHandler( SOUND::onLocationChange );
         MAP::curMap->registerOnMoveModeChangedHandler( SOUND::onMovementTypeChange );
         MAP::curMap->registerOnWeatherChangedHandler( SOUND::onWeatherChange );
-
-        IO::init( );
         //    MAP::curMap->registerOnBankChangedHandler( IO::showNewMap );
         MAP::curMap->registerOnLocationChangedHandler( IO::showNewLocation );
         MAP::curMap->draw( OBJPRIORITY_2, false, HAD_NEW_GAME );
-
-        // auto curLoc = MAP::curMap->getCurrentLocationId( );
-        // SOUND::onLocationChange( curLoc, false );
-        // for( u8 i = 0; i < 60; ++i ) { swiWaitForVBlank( ); }
-        // IO::showNewLocation( curLoc, false );
     }
 
     IN_GAME      = true;
@@ -349,7 +351,7 @@ START:
             std::array<char, 100> buffer{ };
             snprintf( buffer.data( ), buffer.size( ),
                       "POS %hhu-(%hx,%hx,%hhx). %i:%i, (%02u,%02u)\n"
-                      "S-Rou %hhu | %6s (%hu) | %hx %hx | TM %hhu %02hhu :%02hhu ",
+                      "S-Rou %hhu | %6s (%hu) | %hx %hx | TM %hhu %02hhu :%02hhu\nANIMATE_MAP %u",
                       SAVE::CURRENT_FILE->m_currentMap, SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
                       SAVE::CURRENT_FILE->m_player.m_pos.m_posY,
                       SAVE::CURRENT_FILE->m_player.m_pos.m_posZ,
@@ -367,7 +369,8 @@ START:
                           ->at( SAVE::CURRENT_FILE->m_player.m_pos.m_posX,
                                 SAVE::CURRENT_FILE->m_player.m_pos.m_posY )
                           .m_topbehave,
-                      getCurrentDaytime( ), SAVE::CURRENT_TIME.m_hours, SAVE::CURRENT_TIME.m_mins );
+                      getCurrentDaytime( ), SAVE::CURRENT_TIME.m_hours, SAVE::CURRENT_TIME.m_mins,
+                      ANIMATE_MAP );
             IO::printMessage( buffer.data( ) );
         }
 #endif

@@ -23,7 +23,7 @@ namespace SOUND::SSEQ {
     u16  NEXT_SEQUENCE_ID[ 2 ] = { 0, 0 };
     bool SEQ_SWAP_IN_PROGRESS  = false;
 
-    bool SEQ_SWAP_AM = false;
+    bool SEQ_SWAP_AM = true;
 
     void freeSequenceData( sequenceData *p_userdata ) {
         if( p_userdata->m_size > 0 && p_userdata->m_data ) {

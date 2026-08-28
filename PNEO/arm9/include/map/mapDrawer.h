@@ -132,7 +132,7 @@ namespace MAP {
             BEH_WARP_ON_WALK_DOWN_DIVE = 0x6D,
             BEH_WARP_THEN_WALK_UP      = 0x6E,
 
-            BEH_ALLOW_10_to_3C_WITHOUT_0_UNUSED = 0x72,  // originally used for wooden
+            BEH_ALLOW_10_to_3C_WITHOUT_0_UNUSED  = 0x72, // originally used for wooden
                                                          // bridges
             BEH_ALLOW_10_to_3C_WITHOUT_0_UNUSED2 = 0x73, // originally used for wooden
                                                          // bridges
@@ -166,8 +166,8 @@ namespace MAP {
             BEH_BLOCK_UP_DOWN    = 0xC0,
             BEH_BLOCK_LEFT_RIGHT = 0xC1,
 
-            BEH_MUD_SLIDE
-            = 0xD0, // slide down player unless FASTBIKE_SPEED_NO_TILE_BREAK fast on bike
+            BEH_MUD_SLIDE = 0xD0, // slide down player unless FASTBIKE_SPEED_NO_TILE_BREAK fast on
+                                  // bike
 
             BEH_BIKE_BOULDER               = 0xD1, // TODO
             BEH_BREAKABLE_TILE             = 0xD2,
@@ -471,7 +471,7 @@ namespace MAP {
 
         void updatePlayer( );
 
-        void initWeather( );
+        void initWeather( bool p_bgUpdate = true );
 
         void unfadeScreen( );
 
@@ -795,7 +795,7 @@ namespace MAP {
 
         void animateDoor( u16 p_globX, u16 p_globY, u8 p_z = 3, bool p_close = false );
 
-        void changeWeather( mapWeather p_newWeather );
+        void changeWeather( mapWeather p_newWeather, bool p_bgUpdate = true );
 
         void draw( ObjPriority p_playerPrio = OBJPRIORITY_2, bool p_playerHidden = false,
                    bool p_init = false );

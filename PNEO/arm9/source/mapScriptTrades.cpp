@@ -50,7 +50,7 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MAP {
     void mapDrawer::selfTrader( ) {
-        animateMapGuard       amGuard{ };
+        AM_GUARD( amGuard );
         std::array<char, 200> buffer{ };
 
         // check if self-trader has a pkmn of the player
@@ -116,7 +116,7 @@ namespace MAP {
 
     u8 mapDrawer::ingameTrade( u8 p_tradeIdx, u16 p_targetPkmn, u8 p_targetForme, u16 p_offeredPkmn,
                                u8 p_offeredForme ) {
-        animateMapGuard amGuard{ };
+        AM_GUARD( amGuard );
 
         STS::partyScreen sts
             = STS::partyScreen( SAVE::CURRENT_FILE->m_pkmnTeam,
