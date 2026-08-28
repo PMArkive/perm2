@@ -146,6 +146,7 @@ namespace FS {
     FILE* openNPCBank( u16 p_imageId ) {
         if( !NPC_BANK_FILE || !NPC_BANK_FILE_HEADER ) {
             NPC_BANK_FILE = fopen( OW_NPC_BANK_PATH, "rb" );
+            if( !NPC_BANK_FILE ) { return nullptr; }
             fread( &NPC_BANK_FILE_HEADER, 1, sizeof( u32 ), NPC_BANK_FILE );
         }
 
@@ -159,6 +160,7 @@ namespace FS {
     FILE* openBerryBank( u16 p_imageId ) {
         if( !BERRY_BANK_FILE || !BERRY_BANK_FILE_HEADER ) {
             BERRY_BANK_FILE = fopen( BERRY_BANK_PATH, "rb" );
+            if( !BERRY_BANK_FILE ) { return nullptr; }
             fread( &BERRY_BANK_FILE_HEADER, 1, sizeof( u32 ), BERRY_BANK_FILE );
         }
 
@@ -173,6 +175,7 @@ namespace FS {
         auto idx = 2 * p_female + p_shiny;
         if( !NPCP_BANK_FILE[ idx ] || !NPCP_BANK_FILE_HEADER[ idx ] ) {
             NPCP_BANK_FILE[ idx ] = fopen( NPCP_BANK_PATH[ idx ], "rb" );
+            if( !NPCP_BANK_FILE[ idx ] ) { return nullptr; }
             fread( &NPCP_BANK_FILE_HEADER[ idx ], 1, sizeof( u32 ), NPCP_BANK_FILE[ idx ] );
         }
 
@@ -187,20 +190,21 @@ namespace FS {
         fclose( p_file );
     }
     size_t read( FILE* p_stream, void* p_buffer, size_t p_size, size_t p_count ) {
-        if( !p_stream ) return 0;
+        if( !p_stream ) { return 0; }
         auto res = fread( p_buffer, p_size, p_count, p_stream );
-        DC_FlushRange( p_buffer, p_size * p_count );
+        DC_InvalidateRange( p_buffer, p_size * p_count );
         return res;
     }
     size_t write( FILE* p_stream, const void* p_buffer, size_t p_size, size_t p_count ) {
-        if( !p_stream ) return 0;
+        if( !p_stream ) { return 0; }
+        DC_FlushRange( p_buffer, p_size * p_count );
         return fwrite( p_buffer, p_size, p_count, p_stream );
     }
 
     bool readData( const char* p_path, const char* p_name, unsigned short p_dataCnt,
                    unsigned short* p_data ) {
         FILE* fd = open( p_path, p_name );
-        if( !fd ) return false;
+        if( !fd ) { return false; }
         read( fd, p_data, sizeof( unsigned short ), p_dataCnt );
         close( fd );
         return true;

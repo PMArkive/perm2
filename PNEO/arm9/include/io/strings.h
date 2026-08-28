@@ -88,6 +88,8 @@ namespace IO {
     constexpr u16 STR_UI_GIFT_ALREADY_COLLECTED = 730;
     constexpr u16 STR_UI_GIFT_RECEIVED          = 731;
     constexpr u16 STR_UI_THANK_YOU_FOR_PLAYING  = 738;
+    constexpr u16 STR_UI_WFC_SETUP_FAILED       = 821;
+    constexpr u16 STR_UI_WFC_SERVER_ERROR       = 822;
 
     constexpr u16 STR_UI_PLEASE_COLLECT_GIFT = 732;
     constexpr u16 STR_UI_WONDERCARD          = 733;

@@ -501,7 +501,8 @@ START:
 
     if( RESET_GAME ) {
         SOUND::stopBGM( );
-        RESET_GAME = false;
+        RESET_GAME       = false;
+        RTC_POLL_PENDING = false;
         goto START;
     }
 

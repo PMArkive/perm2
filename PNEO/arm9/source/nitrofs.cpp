@@ -35,6 +35,8 @@ static int       nitroFSChdir( struct _reent *p_r, const char *p_name );
 
 #define NITROISDIR 0x80 // mask to indicate this name entry is a dir, other 7 bits = name length
 
+#define NDS_BLOCK 0x200
+
 // Directory filename subtable entry structure
 struct ROM_FNTDir {
     u32 entry_start;
@@ -64,6 +66,12 @@ struct nitroDIRStruct {
     u8  spc;        // system path count.. used by dirnext, when 0=./ 1=../ >=2 actual dirs
 };
 
+struct BlockCache {
+    u32  addr;
+    u8   data[ NDS_BLOCK ];
+    bool valid;
+};
+
 // Globals!
 static u32          fntOffset;   // offset to start of filename table
 static u32          fatOffset;   // offset to start of file alloc table
@@ -71,6 +79,7 @@ static u16          chdirpathid; // default dir path id...
 static int          ndsFileFD = -1;
 static unsigned int ndsFileLastpos; // Used to determine need to fseek or not
 static bool         cardRead = false;
+static BlockCache   blockCache;
 
 devoptab_t nitroFSdevoptab = {
     "nitro",
@@ -148,7 +157,16 @@ bool nitroFSInit( char **p_basepath ) {
 
 // cannot read across block boundaries (multiples of 0x200 bytes)
 static void nitroSubReadBlock( u32 p_pos, u8 *p_data, u32 p_length ) {
-    if( ( p_length & 3 ) == 0 && ( ( (u32) p_data ) & 3 ) == 0 && ( p_pos & 3 ) == 0 ) {
+    u32 blockAddr = p_pos & ~( NDS_BLOCK - 1 );
+    u32 offset    = p_pos & ( NDS_BLOCK - 1 );
+
+    // Check the 512 B cache first
+    if( blockCache.valid && blockCache.addr == blockAddr ) {
+        std::memcpy( p_data, blockCache.data + offset, p_length );
+        return;
+    }
+
+    if( ( p_length & 3 ) == 0 && ( ( (u32) p_data ) & 3 ) == 0 && ( offset & 3 ) == 0 ) {
         // if everything is word-aligned, read directly
         cardParamCommand( 0xB7, p_pos,
                           CARD_DELAY1( 0x1FFF ) | CARD_DELAY2( 0x3F ) | CARD_CLK_SLOW | CARD_nRESET
@@ -156,12 +174,13 @@ static void nitroSubReadBlock( u32 p_pos, u8 *p_data, u32 p_length ) {
                           (u32 *) p_data, p_length >> 2 );
     } else {
         // otherwise, use a temporary buffer
-        static u32 temp[ 128 ];
-        cardParamCommand( 0xB7, ( p_pos & ~0x1ff ),
+        cardParamCommand( 0xB7, blockAddr,
                           CARD_DELAY1( 0x1FFF ) | CARD_DELAY2( 0x3F ) | CARD_CLK_SLOW | CARD_nRESET
                               | CARD_SEC_CMD | CARD_SEC_DAT | CARD_ACTIVATE | CARD_BLK_SIZE( 1 ),
-                          temp, 0x200 >> 2 );
-        memcpy( p_data, ( (u8 *) temp ) + ( p_pos & 0x1FF ), p_length );
+                          (u32 *) blockCache.data, NDS_BLOCK >> 2 );
+        blockCache.addr  = blockAddr;
+        blockCache.valid = true;
+        memcpy( p_data, blockCache.data + offset, p_length );
     }
 }
 
@@ -169,8 +188,8 @@ static int nitroSubReadCard( unsigned int *p_npos, void *p_data, u32 p_length ) 
     u8 *ptr_u8    = (u8 *) p_data;
     u32 remaining = p_length;
 
-    if( ( *p_npos ) & 0x1FF ) {
-        u32 amt = 0x200 - ( *p_npos & 0x1FF );
+    if( ( *p_npos ) & ( NDS_BLOCK - 1 ) ) {
+        u32 amt = NDS_BLOCK - ( *p_npos & ( NDS_BLOCK - 1 ) );
         if( amt > remaining ) { amt = remaining; }
         nitroSubReadBlock( *p_npos, ptr_u8, amt );
         remaining -= amt;
@@ -178,11 +197,11 @@ static int nitroSubReadCard( unsigned int *p_npos, void *p_data, u32 p_length ) 
         *p_npos += amt;
     }
 
-    while( remaining >= 0x200 ) {
-        nitroSubReadBlock( *p_npos, ptr_u8, 0x200 );
-        remaining -= 0x200;
-        ptr_u8 += 0x200;
-        *p_npos += 0x200;
+    while( remaining >= NDS_BLOCK ) {
+        nitroSubReadBlock( *p_npos, ptr_u8, NDS_BLOCK );
+        remaining -= NDS_BLOCK;
+        ptr_u8 += NDS_BLOCK;
+        *p_npos += NDS_BLOCK;
     }
 
     if( remaining > 0 ) {
@@ -193,6 +212,8 @@ static int nitroSubReadCard( unsigned int *p_npos, void *p_data, u32 p_length ) 
 }
 
 static inline int nitroSubRead( unsigned int *p_npos, void *p_data, u32 p_length ) {
+    if( !p_length ) { return 0; }
+
     if( cardRead ) {
         unsigned int tmpPos = *p_npos;
         p_length            = nitroSubReadCard( &tmpPos, p_data, p_length );
@@ -231,6 +252,7 @@ static DIR_ITER *nitroFSDirOpen( struct _reent *p_r, DIR_ITER *p_dirState, const
     }
 
     strncpy( dirpath, p_path, sizeof( mydirpath ) - 1 );
+    dirpath[ sizeof( mydirpath ) - 1 ] = '\0';
 
     dirStruct->pos = 0;
 
@@ -270,7 +292,7 @@ static DIR_ITER *nitroFSDirOpen( struct _reent *p_r, DIR_ITER *p_dirState, const
         };
         if( !pathfound ) { break; }
         dirpath = cptr + 1; // move to right after last / we found
-    } while( cptr );        // go till after the last /
+    } while( cptr ); // go till after the last /
 
     if( pathfound ) {
         return p_dirState;
@@ -456,11 +478,6 @@ static int nitroFSstat( struct _reent *p_r, const char *p_file, struct stat *p_s
     }
 
     dirState.dirStruct = &dirStruct;
-    if( nitroFSOpen( NULL, &fatStruct, p_file, 0, 0 ) >= 0 ) {
-        p_st->st_mode = S_IFREG;
-        p_st->st_size = fatStruct.end - fatStruct.start;
-        return 0;
-    }
     if( ( nitroFSDirOpen( p_r, &dirState, p_file ) != NULL ) ) {
         p_st->st_mode = S_IFDIR;
         nitroFSDirClose( p_r, &dirState );

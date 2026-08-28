@@ -50,6 +50,8 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "sound/sound.h"
 
 namespace SAVE {
+    // TODO: Implement sharing of wonder cards locally via Ni-Fi (NDS to NDS protocol) to nearby
+    // other players (in particular vanilla Gen 4 games)
 
 #define SPR_SMALL_CHOICE_OAM_SUB       0
 #define SPR_LARGE_CHOICE_OAM_SUB       1
@@ -331,6 +333,26 @@ namespace SAVE {
         IO::updateOAM( true );
     }
 
+    bool setSocketTimeouts( int p_sock, u32 p_ms ) {
+        struct timeval tv{ static_cast<time_t>( p_ms / 1000 ),
+                           static_cast<suseconds_t>( ( p_ms % 1000 ) * 1000 ) };
+        if( setsockopt( p_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) ) < 0 ) { return false; }
+        if( setsockopt( p_sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof( tv ) ) < 0 ) { return false; }
+        return true;
+    }
+
+    static int selectRecv( int p_sock, char* p_buf, int p_len, u32 p_timeout_ms ) {
+        fd_set rfds;
+        FD_ZERO( &rfds );
+        FD_SET( p_sock, &rfds );
+        struct timeval tv{ static_cast<time_t>( p_timeout_ms / 1000 ),
+                           static_cast<suseconds_t>( ( p_timeout_ms % 1000 ) * 1000 ) };
+        int            sel = select( p_sock + 1, &rfds, nullptr, nullptr, &tv );
+        if( sel < 0 ) { return -1; }
+        if( sel == 0 ) { return 0; } // timeout
+        return recv( p_sock, p_buf, p_len, 0 );
+    }
+
     bool checkAndDownloadWCLocal( ) {
         // search for wc, download into TMP_WC
         TMP_WC = wonderCard{ };
@@ -353,6 +375,7 @@ namespace SAVE {
     }
 
     bool checkAndDownloadWCFriend( ) {
+        // TODO: Implement using Ni-Fi protocol
         // search for wc, download into TMP_WC
 
 #ifdef DESQUID
@@ -374,78 +397,130 @@ namespace SAVE {
     }
 
     bool checkAndDownloadWCInternet( ) {
-#ifdef DESQUID
         static bool WIFI_INITIALIZED = false;
 
         // search for wc, download into TMP_WC
         TMP_WC = wonderCard{ };
         message( GET_STRING( IO::STR_UI_SEARCHING_FOR_GIFT ) );
 
-        if( !WIFI_INITIALIZED && !Wifi_InitDefault( WFC_CONNECT ) ) { return false; }
+        // Note: This will only ever work for properly configured systems.
+        if( !WIFI_INITIALIZED && !Wifi_InitDefault( WFC_CONNECT ) ) {
+            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
+            IO::waitForInteractS( );
+            return false;
+        }
         WIFI_INITIALIZED = true;
 
-        const char*   url          = "localhost";
+        const char*   url          = "neocard-serv.home.arpa";
         const char*   request_text = "GET / HTTP/1.1\r\n"
                                      "Host: localhost\r\n"
                                      "User-Agent: Nintendo DS\r\n"
-                                     "Accept: */*\r\n\r\n";
+                                     "Accept: */*\r\n"
+                                     "Connection: close\r\n\r\n";
         constexpr u32 port         = 8000;
+
+        // Create a TCP socket
+        int my_socket = socket( AF_INET, SOCK_STREAM, 0 );
+        if( my_socket < 0 ) {
+#ifdef DESQUID
+            message( "(Socket creation failed.)" );
+#else
+            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
+#endif
+            IO::waitForInteractS( );
+            return false;
+        }
+
+        if( !setSocketTimeouts( my_socket, 5000 ) ) {
+            closesocket( my_socket );
+#ifdef DESQUID
+            message( "(Setting socket timeout failed.)" );
+#else
+            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
+#endif
+            IO::waitForInteractS( );
+            return false;
+        }
 
         // Find the IP address of the server, with gethostbyname
         struct hostent* myhost = gethostbyname( url );
+        if( !myhost || !myhost->h_addr_list[ 0 ] ) {
+#ifdef DESQUID
+            message( "(DNS lookup failed.)" );
+#else
+            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
+#endif
+            IO::waitForInteractS( );
+            return false;
+        }
 
-        // Create a TCP socket
-        int my_socket;
-        my_socket = socket( AF_INET, SOCK_STREAM, 0 );
-
-        // Tell the socket to connect to the IP address we found, on port 80 (HTTP)
-        struct sockaddr_in sain;
+        // Tell the socket to connect to the IP address we found
+        struct sockaddr_in sain{ };
         sain.sin_family      = AF_INET;
         sain.sin_port        = htons( port );
-        sain.sin_addr.s_addr = *( (unsigned long*) ( myhost->h_addr_list[ 0 ] ) );
-        connect( my_socket, (struct sockaddr*) &sain, sizeof( sain ) );
+        sain.sin_addr.s_addr = *( (u32*) ( myhost->h_addr_list[ 0 ] ) );
+        if( connect( my_socket, (struct sockaddr*) &sain, sizeof( sain ) ) < 0 ) {
+            closesocket( my_socket );
+
+#ifdef DESQUID
+            message( "(Connection failed / timed out.)" );
+#else
+            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
+#endif
+            IO::waitForInteractS( );
+            return false;
+        }
 
         // send our request
-        send( my_socket, request_text, strlen( request_text ), 0 );
+        if( send( my_socket, request_text, strlen( request_text ), 0 ) < 0 ) {
+            closesocket( my_socket );
 
-        int  recvd_len;
-        char incoming_buffer[ 256 ];
-
-        char result[ 250 ];
-        int  respos = 0;
-
-        const char endm[ 5 ] = "\r\n\r\n";
-        int        endmpos   = 0;
-
-        // skip header
-        while( ( recvd_len = recv( my_socket, incoming_buffer, 1, 0 ) ) != 0 ) {
-            if( recvd_len > 0 ) {
-                if( incoming_buffer[ 0 ] == endm[ endmpos ] ) {
-                    if( ++endmpos == 4 ) { break; }
-                } else {
-                    endmpos = 0;
-                }
-            }
-        }
-        while( ( recvd_len = recv( my_socket, incoming_buffer, 1, 0 ) ) != 0 && respos < 204 ) {
-            if( recvd_len > 0 ) {
-                for( int k = 0; k < recvd_len; ++k ) { result[ respos++ ] = incoming_buffer[ k ]; }
-            }
-        }
-
-        shutdown( my_socket, 0 ); // good practice to shutdown the socket.
-        closesocket( my_socket ); // remove the socket.
-
-        memcpy( &TMP_WC, &result, sizeof( wonderCard ) );
-
-        for( u8 k = 0; k < 250; ++k ) { swiWaitForVBlank( ); }
-        return true;
+#ifdef DESQUID
+            message( "(Request failed.)" );
 #else
-        TMP_WC = wonderCard{ };
-        message( GET_STRING( IO::STR_UI_SEARCHING_FOR_GIFT ) );
-        for( u8 k = 0; k < 250; ++k ) { swiWaitForVBlank( ); }
-        return false;
+            message( GET_STRING( IO::STR_UI_WFC_SERVER_ERROR ) );
 #endif
+            IO::waitForInteractS( );
+            return false;
+        }
+
+        constexpr u32 BUF_SIZE = 512;
+        char          incoming_buffer[ BUF_SIZE ];
+        int           recvd_len  = 0;
+        bool          got_header = false;
+        bool          got_body   = false;
+        const char    endm[ 5 ]  = "\r\n\r\n";
+
+        while( recvd_len < (int) BUF_SIZE - 1 ) {
+            int n = selectRecv( my_socket, incoming_buffer + recvd_len, BUF_SIZE - 1 - recvd_len,
+                                5000 );
+            if( n <= 0 ) { break; }
+            recvd_len += n;
+
+            if( !got_header ) {
+                for( int i = 0; i + 3 < recvd_len; ++i ) {
+                    if( incoming_buffer[ i ] == endm[ 0 ] && incoming_buffer[ i + 1 ] == endm[ 1 ]
+                        && incoming_buffer[ i + 2 ] == endm[ 2 ]
+                        && incoming_buffer[ i + 3 ] == endm[ 3 ] ) {
+                        // body starts at i+4
+                        int bodyLen = recvd_len - ( i + 4 );
+                        if( bodyLen >= (int) sizeof( wonderCard ) ) {
+                            memcpy( &TMP_WC, incoming_buffer + i + 4, sizeof( wonderCard ) );
+                            got_body = true;
+                        }
+                        got_header = true;
+                        break;
+                    }
+                }
+                if( got_header ) { break; }
+            }
+        }
+
+        shutdown( my_socket, SHUT_RDWR );
+        closesocket( my_socket );
+
+        for( u8 k = 0; k < 250; ++k ) { swiWaitForVBlank( ); }
+        return got_body && TMP_WC.m_type != SAVE::WCTYPE_NONE;
     }
 
     void displayWonderCard( u8 p_cardIdx, bool p_reverse = false ) {
@@ -556,8 +631,11 @@ namespace SAVE {
         loop( ) {
             // TODO: "Details" (flips card)
             // "Delete card" (deletes card)
+            // "Share with a friend"
             // "Back"
             // "left" / "right"
+            // TODO: allow redistributing the card to a friend (new option to be
+            // implemented); friend downloads via "receive from friend" method
 
             IO::choiceBox    cb = IO::choiceBox( IO::choiceBox::MODE_UP_DOWN );
             std::vector<u16> wcopts;
