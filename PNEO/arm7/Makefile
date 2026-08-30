@@ -105,10 +105,6 @@ endif
 	$(ADD_COMPILE_COMMAND) add $(CC) "-x assembler-with-cpp $(CPPFLAGS) $(ASFLAGS) -c $< -o $@" $<
 	$(SILENTCMD)$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d -x assembler-with-cpp $(CPPFLAGS) $(ASFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
-ifneq ($(strip $(NITRO_FILES)),)
-_ADDFILES	:=	-d $(NITRO_FILES)
-endif
-
 #---------------------------------------------------------------------------------
 %.arm7: %.elf
 	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
@@ -160,7 +156,7 @@ CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-rtti -std=c++23
 
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -Wl,--nmagic -Wl,-Map,$(notdir $*).map
+LDFLAGS	=	-specs=$(CURDIR)/../link/neo_ds_arm7.specs -g $(ARCH) -Wl,--nmagic -Wl,-Map,$(notdir $*).map
 
 LIBS	:=	-ldswifi7 -lnds7
 

@@ -57,7 +57,7 @@ PNEO/emulator/
 *.FNT
 *.arm7
 *.arm9
-*.elf
+*.elf*
 *.stackdump
 *.dsm
 *.evt

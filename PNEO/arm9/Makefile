@@ -101,10 +101,6 @@ endif
 	$(ADD_COMPILE_COMMAND) add $(CC) "-x assembler-with-cpp $(CPPFLAGS) $(ASFLAGS) -c $< -o $@" $<
 	$(SILENTCMD)$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d -x assembler-with-cpp $(CPPFLAGS) $(ASFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
-ifneq ($(strip $(NITRO_FILES)),)
-_ADDFILES	:=	-d $(NITRO_FILES)
-endif
-
 #---------------------------------------------------------------------------------
 %.arm9: %.elf
 	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
@@ -169,7 +165,7 @@ CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -std=c++23 -Wno-multichar
 
 ASFLAGS	:=	-g $(ARCH) -march=armv5te -mtune=arm946e-s
 
-LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=$(CURDIR)/../link/neo_ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -195,16 +191,57 @@ export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(GRAPHICS),$(CURDIR)/$(dir))
 
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+ALL_CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+ALL_CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+ALL_SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+
+OV_CFILES		:=	$(sort $(filter ov_%.c, $(ALL_CFILES)))
+OV_CPPFILES		:=	$(sort $(filter ov_%.cpp, $(ALL_CPPFILES)))
+OV_SFILES		:=	$(sort $(filter ov_%.s, $(ALL_SFILES)))
+ALL_OVERLAYS	:=	$(OV_CFILES) $(OV_CPPFILES) $(OV_SFILES)
+
+CFILES		:=	$(filter-out ov_%.c, $(ALL_CFILES))
+CPPFILES	:=	$(filter-out ov_%.cpp, $(ALL_CPPFILES))
+SFILES		:=	$(filter-out ov_%.s, $(ALL_SFILES))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 PNGFILES	:=	$(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.png)))
+
+
+export CONFIG_FILE  := $(CURDIR)/link/overlays.config
+export EXPORTED_OVERLAYS :=
+
+ifneq ($(wildcard $(CONFIG_FILE)),)
+# Strip comments and collect every raw line definition
+RAW_LINES := $(shell grep -v '^\s*\#' $(CONFIG_FILE) | grep -v '^\s*$$' | tr '\n' ';')
+$(foreach line,$(subst ;, ,$(RAW_LINES)), \
+	$(eval _ID  := $(word 1,$(subst |, ,$(line)))) \
+	$(eval _GRP := $(word 2,$(subst |, ,$(line)))) \
+	$(eval _LIM := $(word 3,$(subst |, ,$(line)))) \
+	$(eval _AFT := $(word 4,$(subst |, ,$(line)))) \
+	$(eval _AFT_CLEAN := $(patsubst after=%,%,$(_AFT))) \
+	$(eval EXPORTED_OVERLAYS += $(_ID)) \
+	$(eval export OVERLAY_$(_ID)_GRP := $(_GRP)) \
+	$(eval export OVERLAY_$(_ID)_LIM := $(_LIM)) \
+	$(eval export OVERLAY_$(_ID)_AFT := $(_AFT_CLEAN)) \
+)
+endif
+
+export OVERLAY_RAW_IDS	:=	$(sort $(EXPORTED_OVERLAYS))
+
+RAW_STRIPPED		:=	$(patsubst ov_%,%,$(ALL_OVERLAYS))
+PURE_NUMERIC_IDS	:=
+$(foreach item,$(RAW_STRIPPED), \
+	$(eval _ID := $(firstword $(subst _, ,$(item)))) \
+	$(eval _ID_CLEAN := $(patsubst %.cpp,%,$(patsubst %.c,%,$(patsubst %.s,%,$(_ID))))) \
+	$(eval PURE_NUMERIC_IDS += $(_ID_CLEAN)) \
+)
+
+export OVERLAY_RAW_IDS	:=	$(sort $(PURE_NUMERIC_IDS))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
 #---------------------------------------------------------------------------------
-ifeq ($(strip $(CPPFILES)),)
+ifeq ($(strip $(ALL_CPPFILES)),)
 #---------------------------------------------------------------------------------
 	export LD	:=	$(CC)
 #---------------------------------------------------------------------------------
@@ -215,9 +252,12 @@ else
 endif
 #---------------------------------------------------------------------------------
 
+$(OV_CPPFILES:.cpp=.o):	CXXFLAGS	+= -DCOMPILING_OVERLAY_MODULE=1 $(filter-out -O3,$(CXXFLAGS)) -O1 -mlong-calls
+$(OV_CFILES:.c=.o):		CFLAGS		+= -DCOMPILING_OVERLAY_MODULE=1 $(filter-out -O3,$(CFLAGS)) -O1 -mlong-calls
+
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 					$(PNGFILES:.png=.o) \
-					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+					$(ALL_CPPFILES:.cpp=.o) $(ALL_CFILES:.c=.o) $(ALL_SFILES:.s=.o)
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(abspath $(CURDIR)/$(dir))) \
 			$(foreach dir,$(LIBDIRS),-I$(abspath $(dir)/include)) \
@@ -230,12 +270,79 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(abspath $(dir)/lib))
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
+	@$(MAKE) --no-print-directory -f $(CURDIR)/Makefile generate_header
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -f $(CURDIR)/Makefile validate_sizes
+
+
+generate_header:
+	$(SILENTMSG) generating overlay definition header...
+	$(SILENTCMD)mkdir -p $(BUILD)
+	$(SILENTCMD)out_file="$(BUILD)/overlay_table.h"; \
+	echo "#pragma once" > $$out_file; \
+	echo "#include <nds/ndstypes.h>" >> $$out_file; \
+	echo "#include <overlay.h>" >> $$out_file; \
+	echo "" >> $$out_file; \
+	echo "extern \"C\" {" >> $$out_file; \
+	grep -v '^\s*#' "$(CONFIG_FILE)" | grep -v '^\s*$$' | while read -r line || [ -n "$$line" ]; do \
+		id=$$(echo "$$line" | cut -d'|' -f1 | xargs); \
+		echo "    extern u8 __ov$${id}_start[];" >> $$out_file; \
+		echo "    extern u8 __ov$${id}_end[];" >> $$out_file; \
+		echo "    extern u8 __ov$${id}_ctors_start[];" >> $$out_file; \
+		echo "    extern u8 __ov$${id}_ctors_end[];" >> $$out_file; \
+	done; \
+	echo "}" >> $$out_file; \
+	echo "" >> $$out_file; \
+	grep -v '^\s*#' "$(CONFIG_FILE)" | grep -v '^\s*$$' | while read -r line || [ -n "$$line" ]; do \
+		id=$$(echo "$$line" | cut -d'|' -f1 | xargs); \
+		echo "static const OvHeader __ov_hdr_ov$${id} = {" >> $$out_file; \
+		echo "    .m_id           = ( $${id} )," >> $$out_file; \
+		echo "    .m_ramAddress   = (u32) __ov$${id}_start," >> $$out_file; \
+		echo "    .m_ramSize      = (u32) ( __ov$${id}_end - __ov$${id}_start )," >> $$out_file; \
+		echo "    .m_bssSize      = 0," >> $$out_file; \
+		echo "    .m_sinitInit    = (u32) __ov$${id}_ctors_start," >> $$out_file; \
+		echo "    .m_sinitInitEnd = (u32) __ov$${id}_ctors_end," >> $$out_file; \
+		echo "    .m_fileName     = ( $${id} )," >> $$out_file; \
+		echo "    .m_comprSize    = 0," >> $$out_file; \
+		echo "    .m_flag         = 0" >> $$out_file; \
+		echo "};" >> $$out_file; \
+		echo "" >> $$out_file; \
+	done; \
+	echo "static const OvHeader OVERLAYS[] = {" >> $$out_file; \
+	grep -v '^\s*#' "$(CONFIG_FILE)" | grep -v '^\s*$$' | while read -r line || [ -n "$$line" ]; do \
+		id=$$(echo "$$line" | cut -d'|' -f1 | xargs); \
+		echo "    __ov_hdr_ov$${id}," >> $$out_file; \
+	done; \
+	echo "};" >> $$out_file; \
+	echo "static const u32 OVERLAY_COUNT = sizeof( OVERLAYS ) / sizeof( OVERLAYS[ 0 ] );" >> $$out_file
+
+validate_sizes:
+	@echo "Checking overlay memory usage..."
+	$(SILENTCMD)if [ ! -f "$(CONFIG_FILE)" ]; then echo "(missing overlay configuration.)"; exit 0; fi; \
+	grep -v '^\s*#' "$(CONFIG_FILE)" | grep -v '^\s*$$' | while read -r line || [ -n "$$line" ]; do \
+		id=$$(echo "$$line" | cut -d'|' -f1 | xargs); \
+		grp=$$(echo "$$line" | cut -d'|' -f2 | xargs); \
+		lim=$$(echo "$$line" | cut -d'|' -f3 | xargs); \
+		if [ -z "$$lim" ]; then lim=0; fi; \
+		bin_file="$(CURDIR)/../FSROOT/ov/$${id}"; \
+		if [ -f "$$bin_file" ]; then \
+			v_size=$$(wc -c < "$$bin_file" | xargs); \
+		else \
+			v_size=-1; \
+		fi; \
+		if [ -z "$$v_size" ]; then v_size=0; fi; \
+		if [ "$$v_size" -gt "$$lim" ]; then \
+			echo "[FAIL] $${id} ($$grp): $$v_size / $$lim"; \
+			exit 1; \
+		else \
+			echo "[ OK ] $${id} ($$grp): $$v_size / $$lim"; \
+		fi; \
+	done
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) *.elf *.nds* *.bin
+	@rm -fr $(BUILD) *.elf *.nds* *.bin ../FSROOT/ov
 
 rebuild: clean $(BUILD)
 
@@ -245,9 +352,73 @@ else
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(ARM9ELF)	:	$(OFILES)
+$(ARM9ELF):	 _overlay.ld $(OFILES)
 	@echo linking $(notdir $@)
-	@$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
+	$(ADD_COMPILE_COMMAND) end
+	$(SILENTCMD)$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@.full 2> >(grep -v "not in segment" >&2)
+	$(SILENTMSG) processing overlay binary assets...
+	$(SILENTCMD)mkdir -p $(CURDIR)/../../FSROOT/ov
+	$(SILENTCMD)for id in $$(grep -v '^\s*\#' "$(CONFIG_FILE)" | grep -v '^\s*$$' | cut -d'|' -f1 | xargs); do \
+		$(OBJCOPY) -O binary -j .ov$${id} $@.full $(CURDIR)/../../FSROOT/ov/$${id}; \
+	done
+	$(SILENTMSG) cleaning ELF...
+	$(SILENTCMD)$(OBJCOPY) \
+		$$(grep -v '^\s*\#' "$(CONFIG_FILE)" | grep -v '^\s*$$' | cut -d'|' -f1 | sed 's/^/--remove-section=.ov/') \
+		--strip-all \
+		$@.full $@
+
+_overlay.ld:
+	$(SILENTMSG) generating overlay table definitions...
+	$(SILENTCMD)echo "/* Automatically Generated */" > $@
+	$(SILENTCMD)echo "__overlay_peak_vma = __overlay_vma_start;" >> $@
+	$(SILENTCMD)PREV_LMA="__overlay_vma_start"; \
+		while read -r line || [ -n "$$line" ]; do \
+			id=$$(echo "$$line" | cut -d'|' -f1 | xargs); \
+			grp=$$(echo "$$line" | cut -d'|' -f2 | xargs); \
+			lim=$$(echo "$$line" | cut -d'|' -f3 | xargs); \
+			aft=$$(echo "$$line" | cut -d'|' -f4 | grep "after=" | sed 's/after=//' | xargs); \
+			echo "/* --- Module ID: $${id} [Group: $$grp] --- */" >> $@; \
+			if [ -z "$$aft" ]; then \
+				target_vma="__overlay_vma_start"; \
+			else \
+				ifs_save=$$IFS; IFS=','; \
+				max_expr=""; \
+				for parent in $$aft; do \
+					parent_clean=$$(echo "$$parent" | xargs); \
+					if [ -z "$$max_expr" ]; then \
+						max_expr="__ov$${parent_clean}_end"; \
+					else \
+						max_expr="MAX($$max_expr, __ov$${parent_clean}_end)"; \
+					fi; \
+				done; \
+				IFS=$$ifs_save; \
+				target_vma="$$max_expr"; \
+			fi; \
+			echo ".ov$${id} $$target_vma : AT($$PREV_LMA)" >> $@; \
+			echo "{" >> $@; \
+			echo "    __ov$${id}_start = .;" >> $@; \
+			echo "    KEEP(*ov_$${id}.o(.text.ov_$${id}_main))" >> $@; \
+			echo "    KEEP(*ov_$${id}_*.o(.text .text.* .rodata .rodata.* .data .data.* .bss .bss.* COMMON))" >> $@; \
+			echo "    KEEP(*(.ov$${id} .ov$${id}.* .ov$${id}_* .ov$${id}_*.*))" >> $@; \
+			echo "    __ov$${id}_ctors_start = .;" >> $@; \
+			echo "    KEEP(*ov_$${id}.o(.ctors .ctors.* .init_array .init_array.*))" >> $@; \
+			echo "    KEEP(*ov_$${id}_*.o(.ctors .ctors.* .init_array .init_array.*))" >> $@; \
+			echo "    __ov$${id}_ctors_end = .;" >> $@; \
+			echo "    __ov$${id}_dtors_start = .;" >> $@; \
+			echo "    KEEP(*ov_$${id}.o(.dtors .dtors.* .fini_array .fini_array.*))" >> $@; \
+			echo "    KEEP(*ov_$${id}_*.o(.dtors .dtors.* .fini_array .fini_array.*))" >> $@; \
+			echo "    __ov$${id}_dtors_end = .;" >> $@; \
+			echo "    KEEP(*ov_$${id}.o(.text .text.* .rodata .rodata.* .data .data.* .bss .bss.* COMMON))" >> $@; \
+			echo "    . = ALIGN(4);" >> $@; \
+			echo "    __ov$${id}_end = .;" >> $@; \
+			echo "}" >> $@; \
+			echo "PROVIDE(__ov$${id}_lma = LOADADDR(.ov$${id}));" >> $@; \
+			echo "PROVIDE(__ov$${id}_size = SIZEOF(.ov$${id}));" >> $@; \
+			echo "" >> $@; \
+			echo "__overlay_peak_vma = DEFINED(.ov$${id}) ? MAX(__overlay_peak_vma, __ov$${id}_end) : __overlay_peak_vma;" >> $@; \
+			PREV_LMA="$$PREV_LMA + DEFINED(.ov$${id}) ? SIZEOF(.ov$${id}) : 0"; \
+		done < <(grep -v '^\s*#' "$(CONFIG_FILE)" | grep -v '^\s*$$')
+		$(SILENTCMD)echo "" >> $@
 
 .PRECIOUS: %.h %.s
 

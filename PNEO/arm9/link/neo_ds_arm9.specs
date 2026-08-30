@@ -1,0 +1,7 @@
+%include <sync-none.specs>
+
+*link:
++ -T ../link/neo_ds_arm9.mem%s -T ../link/neo_ds_arm9.ld%s --gc-sections --no-warn-rwx-segments
+
+*startfile:
+../link/neo_ds_arm9_crt0%O%s crti%O%s crtbegin%O%s

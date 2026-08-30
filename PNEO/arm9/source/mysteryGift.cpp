@@ -24,15 +24,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <sys/select.h>
-
 #include <nds.h>
 #include <nds/system.h>
-
-#include <dswifi9.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 
 #include "defines.h"
 #include "fs/fs.h"
@@ -44,6 +37,8 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "io/uio.h"
 #include "io/yesNoBox.h"
 #include "map/mapDrawer.h"
+#include "ov.h"
+#include "overlay_table.h"
 #include "save/gameStart.h"
 #include "save/mysteryGift.h"
 #include "save/startScreen.h"
@@ -52,28 +47,6 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 namespace SAVE {
     // TODO: Implement sharing of wonder cards locally via Ni-Fi (NDS to NDS protocol) to nearby
     // other players (in particular vanilla Gen 4 games)
-
-#define SPR_SMALL_CHOICE_OAM_SUB       0
-#define SPR_LARGE_CHOICE_OAM_SUB       1
-#define SPR_ARROW_LEFT_OAM_SUB         5
-#define SPR_ARROW_RIGHT_OAM_SUB        6
-#define SPR_PAGE_LEFT_OAM_SUB          7
-#define SPR_PAGE_RIGHT_OAM_SUB         8
-#define SPR_CHOICE_OAM_SUB( p_choice ) ( 30 + 10 * ( p_choice ) )
-#define SPR_PKMN_OAM_SUB               120
-
-    constexpr u8 SPR_MBOX_PAL_TOP        = 3;
-    constexpr u8 SPR_MBOX_OAM_START_TOP  = 8;
-    constexpr u8 SPR_MBOX_PAL_TOP2       = 4;
-    constexpr u8 SPR_MBOX_OAM_START_TOP2 = 30;
-    constexpr u8 SPR_MBOX_OAM_LENGTH     = 13;
-    constexpr u8 SPR_CARD_ICON_OAM       = 0;
-    constexpr u8 SPR_CARD_ICON_PAL       = 0;
-
-#define SPR_BOX_PAL_SUB      0
-#define SPR_SELECTED_PAL_SUB 1
-#define SPR_ARROW_X_PAL_SUB  2
-#define SPR_PKMN_PAL_SUB     15
 
     wonderCard TMP_WC;
 
@@ -130,6 +103,28 @@ namespace SAVE {
                   RIBBON2,
                   ITEMS2 };
 #endif
+    void runMGAlbum( ) {
+        // TODO: this currently hangs
+        OV::ovGuard mgAlbum{ OV_MG_ALBUM };
+        int         res = mgAlbum.load( );
+        if( res < 0 ) {
+            message( std::to_string( res ).c_str( ) );
+            IO::waitForInteractS( );
+            return;
+        }
+        ov_0_main( );
+    }
+
+    bool MGWifiDownload( ) {
+        OV::ovGuard mgWifi{ OV_MG_WIFI };
+        if( !mgWifi.load( ) ) {
+            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
+            IO::waitForInteractS( );
+            return false;
+        }
+        return checkAndDownloadWCInternet( );
+    }
+
     void movePkmn( s16 p_dx, s16 p_dy ) {
         for( u8 i = 0; i < 4; ++i ) {
             IO::Oam->oamBuffer[ SPR_PKMN_OAM_SUB + i ].x += p_dx;
@@ -150,7 +145,7 @@ namespace SAVE {
         dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
     }
 
-    void message( const char* p_message, bool p_init = true ) {
+    void message( const char* p_message, bool p_init ) {
         if( p_init ) { clearText( ); }
         IO::regularFont->printStringC( p_message, 12, 192 - 40, false );
     }
@@ -235,8 +230,8 @@ namespace SAVE {
     }
 
     std::vector<std::pair<IO::inputTarget, startScreen::choice>>
-    drawChoice( u16 p_message, const std::vector<u16>& p_choices, bool p_init = true,
-                bool p_left = false, bool p_right = false ) {
+    drawChoice( u16 p_message, const std::vector<u16>& p_choices, bool p_init, bool p_left,
+                bool p_right ) {
         if( p_init ) {
             REG_BLDCNT_SUB   = BLEND_ALPHA | BLEND_DST_BG3;
             REG_BLDALPHA_SUB = 0xff | ( 0x04 << 8 );
@@ -333,26 +328,6 @@ namespace SAVE {
         IO::updateOAM( true );
     }
 
-    bool setSocketTimeouts( int p_sock, u32 p_ms ) {
-        struct timeval tv{ static_cast<time_t>( p_ms / 1000 ),
-                           static_cast<suseconds_t>( ( p_ms % 1000 ) * 1000 ) };
-        if( setsockopt( p_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) ) < 0 ) { return false; }
-        if( setsockopt( p_sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof( tv ) ) < 0 ) { return false; }
-        return true;
-    }
-
-    static int selectRecv( int p_sock, char* p_buf, int p_len, u32 p_timeout_ms ) {
-        fd_set rfds;
-        FD_ZERO( &rfds );
-        FD_SET( p_sock, &rfds );
-        struct timeval tv{ static_cast<time_t>( p_timeout_ms / 1000 ),
-                           static_cast<suseconds_t>( ( p_timeout_ms % 1000 ) * 1000 ) };
-        int            sel = select( p_sock + 1, &rfds, nullptr, nullptr, &tv );
-        if( sel < 0 ) { return -1; }
-        if( sel == 0 ) { return 0; } // timeout
-        return recv( p_sock, p_buf, p_len, 0 );
-    }
-
     bool checkAndDownloadWCLocal( ) {
         // search for wc, download into TMP_WC
         TMP_WC = wonderCard{ };
@@ -394,306 +369,6 @@ namespace SAVE {
         for( u8 k = 0; k < 250; ++k ) { swiWaitForVBlank( ); }
 #endif
         return false;
-    }
-
-    bool checkAndDownloadWCInternet( ) {
-        static bool WIFI_INITIALIZED = false;
-
-        // search for wc, download into TMP_WC
-        TMP_WC = wonderCard{ };
-        message( GET_STRING( IO::STR_UI_SEARCHING_FOR_GIFT ) );
-
-        // Note: This will only ever work for properly configured systems.
-        if( !WIFI_INITIALIZED && !Wifi_InitDefault( WFC_CONNECT ) ) {
-            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
-            IO::waitForInteractS( );
-            return false;
-        }
-        WIFI_INITIALIZED = true;
-
-        const char*   url          = "neocard-serv.home.arpa";
-        const char*   request_text = "GET / HTTP/1.1\r\n"
-                                     "Host: localhost\r\n"
-                                     "User-Agent: Nintendo DS\r\n"
-                                     "Accept: */*\r\n"
-                                     "Connection: close\r\n\r\n";
-        constexpr u32 port         = 8000;
-
-        // Create a TCP socket
-        int my_socket = socket( AF_INET, SOCK_STREAM, 0 );
-        if( my_socket < 0 ) {
-#ifdef DESQUID
-            message( "(Socket creation failed.)" );
-#else
-            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
-#endif
-            IO::waitForInteractS( );
-            return false;
-        }
-
-        if( !setSocketTimeouts( my_socket, 5000 ) ) {
-            closesocket( my_socket );
-#ifdef DESQUID
-            message( "(Setting socket timeout failed.)" );
-#else
-            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
-#endif
-            IO::waitForInteractS( );
-            return false;
-        }
-
-        // Find the IP address of the server, with gethostbyname
-        struct hostent* myhost = gethostbyname( url );
-        if( !myhost || !myhost->h_addr_list[ 0 ] ) {
-#ifdef DESQUID
-            message( "(DNS lookup failed.)" );
-#else
-            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
-#endif
-            IO::waitForInteractS( );
-            return false;
-        }
-
-        // Tell the socket to connect to the IP address we found
-        struct sockaddr_in sain{ };
-        sain.sin_family      = AF_INET;
-        sain.sin_port        = htons( port );
-        sain.sin_addr.s_addr = *( (u32*) ( myhost->h_addr_list[ 0 ] ) );
-        if( connect( my_socket, (struct sockaddr*) &sain, sizeof( sain ) ) < 0 ) {
-            closesocket( my_socket );
-
-#ifdef DESQUID
-            message( "(Connection failed / timed out.)" );
-#else
-            message( GET_STRING( IO::STR_UI_WFC_SETUP_FAILED ) );
-#endif
-            IO::waitForInteractS( );
-            return false;
-        }
-
-        // send our request
-        if( send( my_socket, request_text, strlen( request_text ), 0 ) < 0 ) {
-            closesocket( my_socket );
-
-#ifdef DESQUID
-            message( "(Request failed.)" );
-#else
-            message( GET_STRING( IO::STR_UI_WFC_SERVER_ERROR ) );
-#endif
-            IO::waitForInteractS( );
-            return false;
-        }
-
-        constexpr u32 BUF_SIZE = 512;
-        char          incoming_buffer[ BUF_SIZE ];
-        int           recvd_len  = 0;
-        bool          got_header = false;
-        bool          got_body   = false;
-        const char    endm[ 5 ]  = "\r\n\r\n";
-
-        while( recvd_len < (int) BUF_SIZE - 1 ) {
-            int n = selectRecv( my_socket, incoming_buffer + recvd_len, BUF_SIZE - 1 - recvd_len,
-                                5000 );
-            if( n <= 0 ) { break; }
-            recvd_len += n;
-
-            if( !got_header ) {
-                for( int i = 0; i + 3 < recvd_len; ++i ) {
-                    if( incoming_buffer[ i ] == endm[ 0 ] && incoming_buffer[ i + 1 ] == endm[ 1 ]
-                        && incoming_buffer[ i + 2 ] == endm[ 2 ]
-                        && incoming_buffer[ i + 3 ] == endm[ 3 ] ) {
-                        // body starts at i+4
-                        int bodyLen = recvd_len - ( i + 4 );
-                        if( bodyLen >= (int) sizeof( wonderCard ) ) {
-                            memcpy( &TMP_WC, incoming_buffer + i + 4, sizeof( wonderCard ) );
-                            got_body = true;
-                        }
-                        got_header = true;
-                        break;
-                    }
-                }
-                if( got_header ) { break; }
-            }
-        }
-
-        shutdown( my_socket, SHUT_RDWR );
-        closesocket( my_socket );
-
-        for( u8 k = 0; k < 250; ++k ) { swiWaitForVBlank( ); }
-        return got_body && TMP_WC.m_type != SAVE::WCTYPE_NONE;
-    }
-
-    void displayWonderCard( u8 p_cardIdx, bool p_reverse = false ) {
-        bgSetScale( IO::bg3, 1 << 7, 1 << 7 );
-        bgSetScroll( IO::bg3, 0, 0 );
-        bgUpdate( );
-        FS::readPictureData( bgGetGfxPtr( IO::bg3 ), "nitro:/PICS/", "wcbg", 0, 256 * 256 / 2,
-                             false );
-        if( p_reverse ) {
-            FS::readPictureData( bgGetGfxPtr( IO::bg2 ), "nitro:/PICS/", "wc2", 200, 3, 256 * 192,
-                                 false );
-        } else {
-            FS::readPictureData( bgGetGfxPtr( IO::bg2 ), "nitro:/PICS/", "wc1", 200, 3, 256 * 192,
-                                 false );
-        }
-
-        BG_PALETTE[ 1 ]     = 0xfbba;
-        BG_PALETTE[ 2 ]     = 0xf775;
-        BG_PALETTE_SUB[ 1 ] = 0xfbba;
-        BG_PALETTE_SUB[ 2 ] = 0xf775;
-
-        initTopSprites( false );
-
-        const auto& wc = SAVE::CURRENT_FILE->m_storedWonderCards[ p_cardIdx ];
-
-        BG_PALETTE[ IO::BLACK_IDX ] = IO::BLACK2;
-        BG_PALETTE[ IO::GRAY_IDX ]  = IO::STEEL_COLOR;
-        IO::regularFont->setColor( IO::BLACK_IDX, 1 );
-        IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-
-        for( u8 i = 0; i < 3; ++i ) {
-            IO::OamTop->oamBuffer[ SPR_CARD_ICON_OAM + i ].isHidden = true;
-        }
-        if( !p_reverse ) {
-            IO::regularFont->printStringC( GET_STRING( IO::STR_UI_WONDERCARD ), 16, 28, false );
-            if( SAVE::CURRENT_FILE->collectedWC( wc.m_id ) ) {
-                IO::regularFont->printStringC( GET_STRING( IO::STR_UI_THANK_YOU_FOR_PLAYING ), 16,
-                                               85, false );
-            } else {
-                IO::regularFont->printStringC( GET_STRING( IO::STR_UI_PLEASE_COLLECT_GIFT ), 16, 85,
-                                               false );
-            }
-            IO::regularFont->printStringC(
-                IO::formatDate( SAVE::date{ wc.m_year, wc.m_month, wc.m_day } ).c_str( ), 144, 150,
-                false );
-
-#ifdef DESQUID
-            IO::regularFont->printStringC( std::to_string( wc.m_id ).c_str( ), 16, 149, false );
-#endif
-
-            IO::regularFont->setColor( IO::WHITE_IDX, 1 );
-            IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-            IO::regularFont->printStringC( wc.m_title, 16, 62, false );
-            IO::regularFont->printStringC( GET_STRING( IO::STR_UI_DATE_RECEIVED ), 48, 149, false );
-
-            IO::regularFont->setColor( IO::BLACK_IDX, 1 );
-            IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-
-            // depending on wc type, load icon
-            switch( wc.m_type ) {
-            case SAVE::WCTYPE_ITEM: {
-                u8  idx   = 0;
-                u16 tccnt = 0;
-                for( u8 i = 0; i < 3; ++i ) {
-                    if( !wc.m_data.m_item.m_itemId[ 2 - i ] ) { continue; }
-                    tccnt = IO::loadItemIcon(
-                        wc.m_data.m_item.m_itemId[ 2 - i ], 256 - 24 * ( idx + 1 ) - 20, 18,
-                        SPR_CARD_ICON_OAM + idx, SPR_CARD_ICON_PAL + idx, tccnt, false );
-                    ++idx;
-                }
-                IO::updateOAM( false );
-                break;
-            }
-            case SAVE::WCTYPE_PKMN: {
-                if( wc.m_data.m_pkmn.m_isEgg ) {
-                    IO::loadEggIcon( 256 - 32 - 24 - 14, 14, SPR_CARD_ICON_OAM, SPR_CARD_ICON_PAL,
-                                     0, false, wc.m_data.m_pkmn.m_species == PKMN_MANAPHY );
-                } else {
-                    auto sInfo = pkmnSpriteInfo{ wc.m_data.m_pkmn.m_species,
-                                                 wc.m_data.m_pkmn.m_forme,
-                                                 wc.m_data.m_pkmn.m_female,
-                                                 wc.m_data.m_pkmn.m_shiny == 2,
-                                                 false,
-                                                 DEFAULT_SPRITE_PID };
-                    IO::loadPKMNIcon( sInfo, 256 - 32 - 24 - 14, 14, SPR_CARD_ICON_OAM,
-                                      SPR_CARD_ICON_PAL, 0, false );
-                }
-                IO::updateOAM( false );
-                break;
-            }
-            default: break;
-            }
-        } else {
-            IO::updateOAM( false );
-
-            IO::regularFont->setColor( IO::BLACK_IDX, 1 );
-            IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-            IO::regularFont->printStringC( GET_WC_STRING( SAVE::CURRENT_FILE->collectedWC( wc.m_id )
-                                                          + 2 * wc.m_descriptionId ),
-                                           16, 36, false );
-        }
-    }
-
-    void wcAlbum( ) {
-        u8   currentCard = 0;
-        bool reverse     = false;
-
-        loop( ) {
-            // TODO: "Details" (flips card)
-            // "Delete card" (deletes card)
-            // "Share with a friend"
-            // "Back"
-            // "left" / "right"
-            // TODO: allow redistributing the card to a friend (new option to be
-            // implemented); friend downloads via "receive from friend" method
-
-            IO::choiceBox    cb = IO::choiceBox( IO::choiceBox::MODE_UP_DOWN );
-            std::vector<u16> wcopts;
-            auto             res = cb.getResult(
-                [ & ]( u8 p_slot ) {
-                    currentCard = p_slot;
-                    auto& wc    = SAVE::CURRENT_FILE->m_storedWonderCards[ currentCard ];
-
-                    dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), COMPLETE_SCREEN );
-                    wcopts.clear( );
-                    wcopts.push_back( IO::STR_UI_WC_FLIP );
-                    if( SAVE::CURRENT_FILE->collectedWC( wc.m_id ) ) {
-                        wcopts.push_back( IO::STR_UI_WC_TOSS );
-                    }
-                    wcopts.push_back( IO::STR_UI_CANCEL );
-
-                    IO::regularFont->setColor( IO::WHITE_IDX, 1 );
-                    IO::regularFont->setColor( IO::GRAY_IDX, 2 );
-                    auto rs = drawChoice( 0, wcopts, false, currentCard > 0,
-                                          currentCard + 1 < SAVE::MAX_STORED_WC
-                                              && SAVE::SAV.getActiveFile( )
-                                                         .m_storedWonderCards[ currentCard + 1 ]
-                                                         .m_type
-                                                     != SAVE::WCTYPE_NONE );
-                    displayWonderCard( currentCard, reverse );
-                    return rs;
-                },
-                [ & ]( u8 p_choice ) { selectMainChoice( p_choice ); }, 0,
-                [ & ]( ) {
-                    // ++frame;
-                    // IO::animateBG( frame, IO::bg3 );
-                    // IO::animateBG( frame, IO::bg3sub );
-                    // bgUpdate( );
-                },
-                currentCard );
-
-            if( res == wcopts.size( ) - 1 || res == IO::choiceBox::BACK_CHOICE ) {
-                clearText( );
-                hideSpritesSub( );
-                return;
-            } else if( res == 0 ) {
-                reverse = !reverse;
-            } else if( res == 1 && res == wcopts.size( ) - 2 ) {
-                for( u8 i = currentCard; i + 1 < SAVE::MAX_STORED_WC; ++i ) {
-                    memcpy( &SAVE::CURRENT_FILE->m_storedWonderCards[ i ],
-                            &SAVE::CURRENT_FILE->m_storedWonderCards[ i + 1 ],
-                            sizeof( wonderCard ) );
-                }
-                memset( &SAVE::CURRENT_FILE->m_storedWonderCards[ SAVE::MAX_STORED_WC - 1 ], 0,
-                        sizeof( wonderCard ) );
-
-                if( SAVE::CURRENT_FILE->m_storedWonderCards[ 0 ].m_type == SAVE::WCTYPE_NONE ) {
-                    clearText( );
-                    hideSpritesSub( );
-                    return;
-                }
-            }
-        }
     }
 
     bool acceptWC( ) {
@@ -979,7 +654,7 @@ namespace SAVE {
                     }
                 } else if( res2 == 2 ) {
                     // receive from internet
-                    if( checkAndDownloadWCInternet( ) && TMP_WC.m_type != SAVE::WCTYPE_NONE ) {
+                    if( MGWifiDownload( ) && TMP_WC.m_type != SAVE::WCTYPE_NONE ) {
                         // event found, ask if player wants to accept
                         acceptWC( );
                     } else {
@@ -992,15 +667,15 @@ namespace SAVE {
                 clearText( );
                 hideSpritesSub( );
                 initTopSprites( false );
-                wcAlbum( );
+                runMGAlbum( );
             }
         }
+
         FADE_TOP_DARK( );
         FADE_SUB_DARK( );
         IO::clearScreen( true, true, true );
         IO::resetScale( true, true );
         bgUpdate( );
-
         SOUND::stopBGM( );
     }
 } // namespace SAVE

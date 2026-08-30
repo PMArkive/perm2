@@ -433,10 +433,6 @@ namespace SPX {
         // TODO
     }
 
-    void runPokeBlockMaker( ) {
-        // TODO
-    }
-
     void drawBadges( u8 p_page ) {
         dmaFillWords( 0, bgGetGfxPtr( IO::bg2sub ), MBOX_SCREEN_HALF );
         IO::regularFont->setColor( 0, 0 );

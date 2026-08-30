@@ -53,6 +53,7 @@ along with Pokémon neo.  If not, see <http://www.gnu.org/licenses/>.
 #include "map/mapDrawer.h"
 #include "map/mapObject.h"
 #include "map/mapSlice.h"
+#include "ov.h"
 #include "pokemon.h"
 #include "save/saveGame.h"
 #include "save/startScreen.h"
@@ -256,11 +257,14 @@ START:
     ARGV        = p_argv;
     ANIMATE_MAP = true;
 
+    // init overlay table
+    OV::overlayInit( );
+
     // keysSetRepeat( 25, 5 );
     // sysSetBusOwners( true, true );
 
     irqSet( IRQ_VBLANK, vblankIRQ );
-    irqEnable( IRQ_VBLANK );
+    // irqEnable( IRQ_VBLANK );
     initGraphics( );
     FLUSH_GFX_UPDATE = true;
 
